@@ -1,70 +1,87 @@
-import { useAuth } from "../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import AdminLayout from "../components/admin/AdminLayout";
 
 export default function AdminDashboard() {
-  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-ms-cream">
-      {/* Header */}
-      <header className="bg-white border-b border-ms-light-gray">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-ms-lavender rounded-xl flex items-center justify-center text-white font-bold shadow-sm">
-              M
-            </div>
-            <span className="text-lg font-bold text-ms-dark">
-              Mission Savoirs
-            </span>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-ms-gray font-medium">
-              {user?.firstName} {user?.lastName}
-            </span>
-            <button
-              onClick={logout}
-              className="px-4 py-2 text-sm font-semibold text-ms-gray bg-ms-cream hover:bg-ms-light-gray rounded-xl transition"
-            >
-              Se déconnecter
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main */}
-      <main className="max-w-5xl mx-auto px-6 py-10">
-        <h1 className="text-3xl font-extrabold text-ms-dark mb-2">
+    <AdminLayout>
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-2xl lg:text-3xl font-extrabold text-ms-dark mb-2">
           Tableau de bord
         </h1>
         <p className="text-ms-gray mb-8">
-          Gérez vos élèves et vos contenus pédagogiques.
+          Gerez vos eleves et vos contenus pedagogiques.
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white rounded-3xl border border-ms-light-gray/50 p-8 hover:shadow-md transition-shadow cursor-pointer">
-            <div className="w-14 h-14 bg-ms-blue-light rounded-2xl flex items-center justify-center text-2xl mb-4">
-              👩‍🎓
+        {/* Stats cards (placeholder) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+          <div className="bg-white rounded-2xl border border-ms-light-gray/50 p-6">
+            <div className="w-11 h-11 bg-ms-blue-light rounded-xl flex items-center justify-center text-lg mb-3">
+              <svg className="w-6 h-6 text-ms-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
             </div>
-            <h3 className="text-xl font-bold text-ms-dark mb-2">
-              Gestion des élèves
-            </h3>
-            <p className="text-ms-gray">
-              Ajouter, modifier et gérer les comptes élèves.
-            </p>
+            <p className="text-sm text-ms-gray font-medium">Total eleves</p>
+            <p className="text-2xl font-extrabold text-ms-dark mt-1">--</p>
           </div>
-
-          <div className="bg-white rounded-3xl border border-ms-light-gray/50 p-8 hover:shadow-md transition-shadow cursor-pointer">
-            <div className="w-14 h-14 bg-ms-peach-light rounded-2xl flex items-center justify-center text-2xl mb-4">
-              📝
+          <div className="bg-white rounded-2xl border border-ms-light-gray/50 p-6">
+            <div className="w-11 h-11 bg-ms-green-light rounded-xl flex items-center justify-center text-lg mb-3">
+              <svg className="w-6 h-6 text-ms-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
             </div>
-            <h3 className="text-xl font-bold text-ms-dark mb-2">
-              Gestion des contenus
-            </h3>
-            <p className="text-ms-gray">
-              Créer et organiser vos thèmes, quiz et questions.
-            </p>
+            <p className="text-sm text-ms-gray font-medium">Quiz completes</p>
+            <p className="text-2xl font-extrabold text-ms-dark mt-1">--</p>
+          </div>
+          <div className="bg-white rounded-2xl border border-ms-light-gray/50 p-6">
+            <div className="w-11 h-11 bg-ms-peach-light rounded-xl flex items-center justify-center text-lg mb-3">
+              <svg className="w-6 h-6 text-ms-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+            </div>
+            <p className="text-sm text-ms-gray font-medium">Themes actifs</p>
+            <p className="text-2xl font-extrabold text-ms-dark mt-1">--</p>
           </div>
         </div>
-      </main>
-    </div>
+
+        {/* Quick actions */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <button
+            onClick={() => navigate("/admin/users")}
+            className="bg-white rounded-2xl border border-ms-light-gray/50 p-7 hover:shadow-md transition-shadow text-left group"
+          >
+            <div className="w-12 h-12 bg-ms-blue-light rounded-2xl flex items-center justify-center text-xl mb-4 group-hover:scale-105 transition-transform">
+              <svg className="w-6 h-6 text-ms-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold text-ms-dark mb-1">
+              Gestion des eleves
+            </h3>
+            <p className="text-sm text-ms-gray">
+              Ajouter, modifier et gerer les comptes eleves.
+            </p>
+          </button>
+
+          <div className="bg-white rounded-2xl border border-ms-light-gray/50 p-7 opacity-60 cursor-not-allowed">
+            <div className="w-12 h-12 bg-ms-peach-light rounded-2xl flex items-center justify-center text-xl mb-4">
+              <svg className="w-6 h-6 text-ms-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold text-ms-dark mb-1">
+              Gestion des contenus
+            </h3>
+            <p className="text-sm text-ms-gray">
+              Creer et organiser vos themes, quiz et questions.
+            </p>
+            <span className="inline-block mt-2 text-xs bg-ms-light-gray text-ms-gray px-3 py-1 rounded-full font-bold">
+              Bientot disponible
+            </span>
+          </div>
+        </div>
+      </div>
+    </AdminLayout>
   );
 }
