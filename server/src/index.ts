@@ -1,6 +1,8 @@
-import express from "express";
+import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import authRouter from "./routes/auth";
+import adminUsersRouter from "./routes/admin/users";
 
 dotenv.config();
 
@@ -16,11 +18,15 @@ app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-// TODO: Routes
-// app.use("/api/auth", authRouter);
-// app.use("/api/themes", themesRouter);
-// app.use("/api/quizzes", quizzesRouter);
-// app.use("/api/admin", adminRouter);
+// Routes
+app.use("/api/auth", authRouter);
+app.use("/api/admin/users", adminUsersRouter);
+
+// Error handler
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+  console.error("Unhandled error:", err);
+  res.status(500).json({ error: "Erreur interne du serveur" });
+});
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

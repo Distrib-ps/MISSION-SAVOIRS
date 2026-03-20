@@ -1,12 +1,78 @@
 @import "tailwindcss";
 
+@theme {
+  /* Palette pastel Mission Savoirs */
+  --color-ms-cream: #FFF9F0;
+  --color-ms-pink: #FFB3BA;
+  --color-ms-pink-light: #FFE0E3;
+  --color-ms-lavender: #C4ACF4;
+  --color-ms-lavender-light: #EDE5FF;
+  --color-ms-blue: #98E2FD;
+  --color-ms-blue-light: #D6F3FF;
+  --color-ms-yellow: #FFDE55;
+  --color-ms-yellow-light: #FFF4CC;
+  --color-ms-green: #B5EAD7;
+  --color-ms-green-light: #DFFFF2;
+  --color-ms-peach: #F8C291;
+  --color-ms-peach-light: #FFEBD6;
+  --color-ms-dark: #2D2D3A;
+  --color-ms-gray: #6B6B80;
+  --color-ms-light-gray: #E8E8EE;
+
+  --font-family-rounded: "Nunito", "Quicksand", system-ui, -apple-system, sans-serif;
+}
+
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--font-family-rounded);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-ms-cream);
+  color: var(--color-ms-dark);
 }
 
 #root {
   min-height: 100vh;
+}
+
+/* Blob shapes for backgrounds */
+.blob {
+  border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%;
+  position: absolute;
+  opacity: 0.4;
+  filter: blur(40px);
+  animation: blob-float 8s ease-in-out infinite;
+}
+
+.blob-2 {
+  border-radius: 58% 42% 30% 70% / 55% 45% 55% 45%;
+  animation-delay: -4s;
+  animation-duration: 10s;
+}
+
+.blob-3 {
+  border-radius: 30% 70% 42% 58% / 45% 55% 45% 55%;
+  animation-delay: -2s;
+  animation-duration: 12s;
+}
+
+@keyframes blob-float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(20px, -15px) scale(1.05); }
+  66% { transform: translate(-10px, 10px) scale(0.95); }
+}
+
+/* Smooth wave divider */
+.wave-divider {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+}
+
+.wave-divider svg {
+  position: relative;
+  display: block;
+  width: calc(100% + 1.3px);
+  height: 60px;
 }
