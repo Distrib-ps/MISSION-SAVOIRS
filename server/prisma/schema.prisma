@@ -1,0 +1,153 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ========== UTILISATEURS ==========
+
+enum Role {
+  ADMIN
+  STUDENT
+}
+
+enum SchoolLevel {
+  CP
+  CE1
+  CE2
+  CM1
+  CM2
+}
+
+model User {
+  id        Int         @id @default(autoincrement())
+  username  String      @unique // format: PrenomN (ex: AdamO, ClemenceP)
+  password  String      // hash bcrypt, 5 chars max côté client
+  firstName String
+  lastName  String
+  role      Role        @default(STUDENT)
+  level     SchoolLevel?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations élève
+  quizAttempts QuizAttempt[]
+
+  @@map("users")
+}
+
+// ========== CONTENU PÉDAGOGIQUE ==========
+
+model Theme {
+  id          Int        @id @default(autoincrement())
+  name        String     @unique
+  description String?
+  order       Int        @default(0)
+  createdAt   DateTime   @default(now())
+
+  subThemes SubTheme[]
+
+  @@map("themes")
+}
+
+model SubTheme {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  order       Int      @default(0)
+  themeId     Int
+  createdAt   DateTime @default(now())
+
+  theme   Theme  @relation(fields: [themeId], references: [id], onDelete: Cascade)
+  quizzes Quiz[]
+
+  @@unique([themeId, name])
+  @@map("sub_themes")
+}
+
+model Quiz {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  order       Int      @default(0)
+  subThemeId  Int
+  createdAt   DateTime @default(now())
+
+  subTheme  SubTheme      @relation(fields: [subThemeId], references: [id], onDelete: Cascade)
+  questions Question[]
+  attempts  QuizAttempt[]
+
+  @@map("quizzes")
+}
+
+// ========== QUESTIONS ==========
+
+enum QuestionType {
+  QCM        // Choix multiples
+  TEXT       // Réponse textuelle
+}
+
+model Question {
+  id         Int          @id @default(autoincrement())
+  text       String       // Énoncé de la question
+  type       QuestionType
+  hint       String?      // Indice affiché en cas d'erreur
+  solution   String?      // Explication affichée si l'élève échoue après l'indice
+  order      Int          @default(0)
+  quizId     Int
+  createdAt  DateTime     @default(now())
+
+  quiz    Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  answers Answer[]
+  questionAttempts QuestionAttempt[]
+
+  @@map("questions")
+}
+
+model Answer {
+  id         Int     @id @default(autoincrement())
+  text       String
+  isCorrect  Boolean @default(false)
+  questionId Int
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@map("answers")
+}
+
+// ========== PROGRESSION & SCORES ==========
+
+model QuizAttempt {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  quizId      Int
+  score       Int      @default(0) // nombre de bonnes réponses
+  totalQuestions Int   @default(0)
+  completedAt DateTime @default(now())
+
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quiz     Quiz              @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  questionAttempts QuestionAttempt[]
+
+  @@map("quiz_attempts")
+}
+
+model QuestionAttempt {
+  id            Int     @id @default(autoincrement())
+  quizAttemptId Int
+  questionId    Int
+  givenAnswer   String  // réponse donnée par l'élève
+  isCorrect     Boolean
+  usedHint      Boolean @default(false) // l'élève a-t-il utilisé l'indice ?
+  attempts      Int     @default(1) // nombre de tentatives sur cette question
+
+  quizAttempt QuizAttempt @relation(fields: [quizAttemptId], references: [id], onDelete: Cascade)
+  question    Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@map("question_attempts")
+}
