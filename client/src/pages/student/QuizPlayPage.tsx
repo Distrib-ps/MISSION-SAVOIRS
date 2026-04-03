@@ -95,6 +95,7 @@ export default function QuizPlayPage() {
       if (!session || !currentQuestion || submitting) return;
       setSubmitting(true);
 
+      const isMulti = (currentQuestion.correctCount ?? 1) > 1;
       const usedHint = attempt.usedHint || attempt.hint !== null;
 
       try {
@@ -133,7 +134,7 @@ export default function QuizPlayPage() {
             solution: result.solution ?? null,
             correctAnswer: result.correctAnswer ?? null,
             showingSolution: true,
-            disabledAnswerIds: answerId
+            disabledAnswerIds: !isMulti && answerId
               ? [...prev.disabledAnswerIds, answerId]
               : prev.disabledAnswerIds,
           }));
@@ -145,7 +146,7 @@ export default function QuizPlayPage() {
             feedback: "wrong",
             usedHint: result.hint ? true : usedHint,
             hint: result.hint ?? null,
-            disabledAnswerIds: answerId
+            disabledAnswerIds: !isMulti && answerId
               ? [...prev.disabledAnswerIds, answerId]
               : prev.disabledAnswerIds,
           }));
@@ -440,6 +441,7 @@ function PlayingScreen({
               submitting={submitting}
               isMulti={(question.correctCount ?? 1) > 1}
               correctCount={question.correctCount ?? 1}
+              attemptCount={attempt.attempts}
               onSelect={onSubmitQCM}
             />
           )}
@@ -478,6 +480,7 @@ function QCMAnswers({
   submitting,
   isMulti,
   correctCount,
+  attemptCount,
   onSelect,
 }: {
   answers: { id: number; text: string }[];
@@ -485,6 +488,7 @@ function QCMAnswers({
   submitting: boolean;
   isMulti: boolean;
   correctCount: number;
+  attemptCount: number;
   onSelect: (text: string, id: number) => void;
 }) {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
@@ -492,7 +496,7 @@ function QCMAnswers({
   // Reset selection after a wrong attempt
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [disabledIds.length]);
+  }, [attemptCount]);
 
   const colors = [
     "bg-ms-lavender-light border-ms-lavender/30 hover:border-ms-lavender",
@@ -536,8 +540,11 @@ function QCMAnswers({
   function toggleId(id: number) {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+      } else if (next.size < correctCount) {
+        next.add(id);
+      }
       return next;
     });
   }
@@ -585,7 +592,7 @@ function QCMAnswers({
         })}
       </div>
       <button
-        disabled={submitting || selectedIds.size === 0}
+        disabled={submitting || selectedIds.size !== correctCount}
         onClick={() => {
           const ids = Array.from(selectedIds);
           onSelect(ids.join(","), ids[0]);
