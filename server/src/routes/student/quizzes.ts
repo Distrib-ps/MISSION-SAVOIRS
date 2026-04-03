@@ -194,14 +194,14 @@ router.post(
         return;
       }
 
-      // Fetch the question with answers
+      // Fetch the question with answers (no quizId filter: question may be reinjected from another quiz)
       const question = await prisma.question.findFirst({
-        where: { id: questionId, quizId },
+        where: { id: questionId },
         include: { answers: true },
       });
 
       if (!question) {
-        res.status(404).json({ error: "Question introuvable dans ce quiz" });
+        res.status(404).json({ error: "Question introuvable" });
         return;
       }
 
