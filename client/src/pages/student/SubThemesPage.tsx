@@ -1,49 +1,72 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
-import StudentLayout from "../components/student/StudentLayout";
-import type { StudentTheme } from "../types";
+import { useNavigate, useParams } from "react-router-dom";
+import StudentLayout from "../../components/student/StudentLayout";
+import type { StudentSubTheme } from "../../types";
 
 const CARD_COLORS = [
-  { bg: "bg-ms-blue-light", border: "border-ms-blue/30", icon: "bg-ms-blue" },
-  { bg: "bg-ms-pink-light", border: "border-ms-pink/30", icon: "bg-ms-pink" },
   { bg: "bg-ms-green-light", border: "border-ms-green/30", icon: "bg-ms-green" },
+  { bg: "bg-ms-blue-light", border: "border-ms-blue/30", icon: "bg-ms-blue" },
   { bg: "bg-ms-yellow-light", border: "border-ms-yellow/30", icon: "bg-ms-yellow" },
+  { bg: "bg-ms-pink-light", border: "border-ms-pink/30", icon: "bg-ms-pink" },
   { bg: "bg-ms-peach-light", border: "border-ms-peach/30", icon: "bg-ms-peach" },
 ];
 
-const DEFAULT_EMOJIS = ["📚", "🔢", "🌍", "🎨", "🔬", "🎵", "🏃", "💡"];
+const SUB_EMOJIS = ["🎯", "🧩", "🚀", "🌟", "🎪", "🗺️", "🔑", "🌈"];
 
-export default function StudentDashboard() {
-  const { user } = useAuth();
+export default function SubThemesPage() {
+  const { themeId } = useParams<{ themeId: string }>();
   const navigate = useNavigate();
-  const [themes, setThemes] = useState<StudentTheme[]>([]);
+  const [themeName, setThemeName] = useState("");
+  const [subThemes, setSubThemes] = useState<StudentSubTheme[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    fetch("/api/student/themes", {
+    fetch(`/api/student/themes/${themeId}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(async (res) => {
-        if (!res.ok) throw new Error("Impossible de charger les themes");
+        if (!res.ok) throw new Error("Impossible de charger les parcours");
         return res.json();
       })
-      .then((data: StudentTheme[]) => setThemes(data))
+      .then((data: { name: string; subThemes: StudentSubTheme[] }) => {
+        setThemeName(data.name);
+        setSubThemes(data.subThemes);
+      })
       .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [themeId]);
 
   return (
     <StudentLayout>
-      {/* Welcome */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-extrabold text-ms-dark mb-1">
-          Salut {user?.firstName} !
+      {/* Back button */}
+      <button
+        onClick={() => navigate("/dashboard")}
+        className="flex items-center gap-2 text-ms-gray hover:text-ms-dark font-semibold mb-6 transition-colors"
+      >
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2.5}
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M15 19l-7-7 7-7"
+          />
+        </svg>
+        Retour aux themes
+      </button>
+
+      {/* Title */}
+      {themeName && (
+        <h1 className="text-3xl font-extrabold text-ms-dark mb-6">
+          {themeName}
         </h1>
-        <p className="text-lg text-ms-gray">Choisis un theme</p>
-      </div>
+      )}
 
       {/* Loading */}
       {loading && (
@@ -63,25 +86,27 @@ export default function StudentDashboard() {
       )}
 
       {/* Empty */}
-      {!loading && !error && themes.length === 0 && (
+      {!loading && !error && subThemes.length === 0 && (
         <div className="bg-white rounded-3xl border border-ms-light-gray/50 p-12 text-center">
           <p className="text-5xl mb-4">📭</p>
           <p className="text-lg text-ms-gray font-medium">
-            Aucun theme disponible pour le moment
+            Aucun parcours disponible pour le moment
           </p>
         </div>
       )}
 
-      {/* Themes grid */}
-      {!loading && !error && themes.length > 0 && (
+      {/* Sub-themes grid */}
+      {!loading && !error && subThemes.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          {themes.map((theme, index) => {
+          {subThemes.map((sub, index) => {
             const color = CARD_COLORS[index % CARD_COLORS.length];
-            const emoji = theme.emoji || DEFAULT_EMOJIS[index % DEFAULT_EMOJIS.length];
+            const emoji = SUB_EMOJIS[index % SUB_EMOJIS.length];
             return (
               <button
-                key={theme.id}
-                onClick={() => navigate(`/themes/${theme.id}`)}
+                key={sub.id}
+                onClick={() =>
+                  navigate(`/themes/${themeId}/sub-themes/${sub.id}`)
+                }
                 className={`${color.bg} border ${color.border} rounded-3xl p-7 min-h-[120px] flex items-center gap-5 text-left hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer w-full`}
               >
                 <div
@@ -91,10 +116,10 @@ export default function StudentDashboard() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-extrabold text-ms-dark text-xl truncate">
-                    {theme.name}
+                    {sub.name}
                   </h3>
                   <p className="text-ms-gray text-base mt-1">
-                    {theme._count.subThemes} parcours
+                    {sub._count.quizzes} quiz
                   </p>
                 </div>
                 <svg

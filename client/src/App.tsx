@@ -4,6 +4,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import StudentDashboard from "./pages/StudentDashboard";
+import SubThemesPage from "./pages/student/SubThemesPage";
+import QuizzesPage from "./pages/student/QuizzesPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import UsersPage from "./pages/admin/UsersPage";
 import ContentPage from "./pages/admin/ContentPage";
@@ -15,6 +17,7 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
 
+        {/* Student routes */}
         <Route
           path="/dashboard"
           element={
@@ -23,7 +26,24 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/themes/:themeId"
+          element={
+            <ProtectedRoute requiredRole="STUDENT">
+              <SubThemesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/themes/:themeId/sub-themes/:subThemeId"
+          element={
+            <ProtectedRoute requiredRole="STUDENT">
+              <QuizzesPage />
+            </ProtectedRoute>
+          }
+        />
 
+        {/* Admin routes */}
         <Route
           path="/admin"
           element={

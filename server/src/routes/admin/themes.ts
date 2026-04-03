@@ -27,7 +27,7 @@ router.get("/", async (_req: Request, res: Response): Promise<void> => {
 // ---------- POST / - Create a theme ----------
 router.post("/", async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, description } = req.body;
+    const { name, description, emoji } = req.body;
 
     if (!name) {
       res.status(400).json({ error: "Le champ name est requis" });
@@ -42,6 +42,7 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
       data: {
         name,
         description: description ?? null,
+        emoji: emoji ?? "📚",
         order: nextOrder,
       },
       include: {
@@ -108,11 +109,12 @@ router.put("/:id", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const { name, description, order } = req.body;
+    const { name, description, emoji, order } = req.body;
     const data: Record<string, unknown> = {};
 
     if (name !== undefined) data.name = name;
     if (description !== undefined) data.description = description;
+    if (emoji !== undefined) data.emoji = emoji;
     if (order !== undefined) data.order = order;
 
     const theme = await prisma.theme.update({

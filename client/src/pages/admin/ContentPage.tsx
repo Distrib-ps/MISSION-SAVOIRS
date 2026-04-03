@@ -133,6 +133,7 @@ export default function ContentPage() {
   /* ---- Form state ---- */
   const [formName, setFormName] = useState("");
   const [formDescription, setFormDescription] = useState("");
+  const [formEmoji, setFormEmoji] = useState("📚");
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState("");
 
@@ -303,6 +304,7 @@ export default function ContentPage() {
     setEditingTheme(null);
     setFormName("");
     setFormDescription("");
+    setFormEmoji("📚");
     setFormError("");
     setShowThemeModal(true);
   }
@@ -311,6 +313,7 @@ export default function ContentPage() {
     setEditingTheme(t);
     setFormName(t.name);
     setFormDescription(t.description ?? "");
+    setFormEmoji(t.emoji ?? "📚");
     setFormError("");
     setShowThemeModal(true);
   }
@@ -324,7 +327,7 @@ export default function ContentPage() {
         const res = await fetch(`${API_THEMES}/${editingTheme.id}`, {
           method: "PUT",
           headers: authHeaders(),
-          body: JSON.stringify({ name: formName, description: formDescription || null }),
+          body: JSON.stringify({ name: formName, description: formDescription || null, emoji: formEmoji }),
         });
         if (!res.ok) {
           const d = await res.json().catch(() => null);
@@ -334,7 +337,7 @@ export default function ContentPage() {
         const res = await fetch(API_THEMES, {
           method: "POST",
           headers: authHeaders(),
-          body: JSON.stringify({ name: formName, description: formDescription || null }),
+          body: JSON.stringify({ name: formName, description: formDescription || null, emoji: formEmoji }),
         });
         if (!res.ok) {
           const d = await res.json().catch(() => null);
@@ -1385,12 +1388,86 @@ export default function ContentPage() {
         {!loading && level === 4 && renderQuestions()}
 
         {/* Modals */}
-        {renderSimpleModal(
-          showThemeModal,
-          () => setShowThemeModal(false),
-          editingTheme ? "Modifier le theme" : "Nouveau theme",
-          handleThemeSubmit,
-          "Nom du theme",
+        {showThemeModal && (
+          <div
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowThemeModal(false)}
+          >
+            <div
+              className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-lg font-extrabold text-ms-dark mb-4">
+                {editingTheme ? "Modifier le thème" : "Nouveau thème"}
+              </h3>
+
+              {formError && (
+                <div className="mb-4 px-4 py-3 bg-ms-pink-light text-ms-dark text-sm rounded-xl font-medium">
+                  {formError}
+                </div>
+              )}
+
+              <form onSubmit={handleThemeSubmit} className="space-y-4">
+                {/* Emoji picker */}
+                <div>
+                  <label className="block text-sm font-semibold text-ms-dark mb-2">Icône</label>
+                  <div className="flex flex-wrap gap-2">
+                    {["📚", "🔢", "🌍", "🎨", "🔬", "🎵", "🏃", "💡", "📖", "🧩", "🌟", "🎯", "🏆", "💻", "🌿"].map((e) => (
+                      <button
+                        key={e}
+                        type="button"
+                        onClick={() => setFormEmoji(e)}
+                        className={`w-10 h-10 text-xl rounded-xl flex items-center justify-center transition ${
+                          formEmoji === e
+                            ? "bg-ms-lavender-light border-2 border-ms-lavender scale-110"
+                            : "bg-ms-cream border border-ms-light-gray hover:border-ms-lavender"
+                        }`}
+                      >
+                        {e}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-ms-dark mb-1">Nom du thème *</label>
+                  <input
+                    type="text"
+                    value={formName}
+                    onChange={(e) => setFormName(e.target.value)}
+                    required
+                    className="w-full px-4 py-2.5 border border-ms-light-gray rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ms-lavender/50 focus:border-ms-lavender transition"
+                    placeholder="Nom du thème"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-ms-dark mb-1">Description</label>
+                  <textarea
+                    value={formDescription}
+                    onChange={(e) => setFormDescription(e.target.value)}
+                    rows={3}
+                    className="w-full px-4 py-2.5 border border-ms-light-gray rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ms-lavender/50 focus:border-ms-lavender transition resize-none"
+                    placeholder="Description (optionnel)"
+                  />
+                </div>
+                <div className="flex items-center justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowThemeModal(false)}
+                    className="px-5 py-2.5 text-sm font-semibold bg-white border border-ms-light-gray text-ms-dark hover:bg-ms-cream rounded-xl transition"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={formLoading}
+                    className="px-5 py-2.5 text-sm font-semibold bg-ms-lavender text-white hover:opacity-90 rounded-xl transition disabled:opacity-50"
+                  >
+                    {formLoading ? "Enregistrement..." : "Enregistrer"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
         )}
 
         {renderSimpleModal(

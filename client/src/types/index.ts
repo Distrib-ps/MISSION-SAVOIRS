@@ -48,6 +48,7 @@ export interface Theme {
   id: number;
   name: string;
   description: string | null;
+  emoji: string;
   order: number;
   _count?: { subThemes: number };
 }
@@ -85,4 +86,36 @@ export interface Question {
   order: number;
   quizId: number;
   answers: Answer[];
+}
+
+/* ── Student-facing types ── */
+
+export interface StudentTheme {
+  id: number;
+  name: string;
+  description: string | null;
+  emoji: string;
+  order: number;
+  _count: { subThemes: number };
+}
+
+export interface StudentSubTheme {
+  id: number;
+  name: string;
+  description: string | null;
+  order: number;
+  themeId: number;
+  _count: { quizzes: number };
+}
+
+export interface StudentQuiz {
+  id: number;
+  title: string;
+  description: string | null;
+  order: number;
+  subThemeId: number;
+  _count: { questions: number };
+  bestScore: number | null;
+  totalQuestions: number;
+  status: "completed" | "available" | "locked";
 }
