@@ -136,7 +136,7 @@ export default function QuizzesPage() {
               key={quiz.id}
               quiz={quiz}
               onClick={
-                quiz.status === "available"
+                quiz.status !== "locked"
                   ? () => navigate(`/quiz/${quiz.id}`)
                   : undefined
               }
@@ -159,7 +159,7 @@ function QuizCard({
 }) {
   if (quiz.status === "completed") {
     return (
-      <div className="bg-ms-green-light border-2 border-ms-green/40 rounded-3xl p-6 flex items-center gap-5 min-h-[80px]">
+      <button onClick={onClick} className="bg-ms-green-light border-2 border-ms-green/40 rounded-3xl p-6 flex items-center gap-5 min-h-[80px] w-full text-left hover:shadow-md hover:scale-[1.01] transition-all duration-200 cursor-pointer">
         {/* Checkmark icon */}
         <div className="w-14 h-14 bg-ms-green rounded-2xl flex items-center justify-center shrink-0 shadow-sm">
           <svg
@@ -185,9 +185,9 @@ function QuizCard({
           </p>
         </div>
         <span className="text-ms-green font-bold text-sm shrink-0">
-          Termine !
+          Recommencer
         </span>
-      </div>
+      </button>
     );
   }
 

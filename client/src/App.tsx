@@ -9,6 +9,7 @@ import QuizzesPage from "./pages/student/QuizzesPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import UsersPage from "./pages/admin/UsersPage";
 import ContentPage from "./pages/admin/ContentPage";
+import QuizPlayPage from "./pages/student/QuizPlayPage";
 
 function App() {
   return (
@@ -39,6 +40,15 @@ function App() {
           element={
             <ProtectedRoute requiredRole="STUDENT">
               <QuizzesPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/quiz/:quizId"
+          element={
+            <ProtectedRoute requiredRole="STUDENT">
+              <QuizPlayPage />
             </ProtectedRoute>
           }
         />

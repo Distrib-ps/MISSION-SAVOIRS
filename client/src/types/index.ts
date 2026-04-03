@@ -119,3 +119,45 @@ export interface StudentQuiz {
   totalQuestions: number;
   status: "completed" | "available" | "locked";
 }
+
+/* ── Quiz play types ── */
+
+export interface QuizQuestion {
+  id: number;
+  text: string;
+  type: "QCM" | "TEXT";
+  hint: string | null;
+  solution: string | null;
+  order: number;
+  answers?: { id: number; text: string }[]; // QCM only, no isCorrect
+  correctCount?: number; // how many correct answers (for multi-select QCM)
+}
+
+export interface QuizSession {
+  attemptId: number;
+  quiz: { id: number; title: string };
+  questions: QuizQuestion[];
+}
+
+export interface AnswerResult {
+  correct: boolean;
+  correctAnswer?: string;
+  hint?: string | null;
+  solution?: string | null;
+}
+
+export interface QuizResults {
+  quiz: { id: number; title: string };
+  score: number;
+  totalQuestions: number;
+  questions: {
+    id: number;
+    text: string;
+    type: "QCM" | "TEXT";
+    givenAnswer: string;
+    isCorrect: boolean;
+    usedHint: boolean;
+    attempts: number;
+    correctAnswer: string;
+  }[];
+}
