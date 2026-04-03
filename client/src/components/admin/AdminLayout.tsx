@@ -28,7 +28,7 @@ const navItems = [
     end: false,
   },
   {
-    to: "#",
+    to: "/admin/content",
     label: "Contenus",
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -36,7 +36,6 @@ const navItems = [
       </svg>
     ),
     end: false,
-    disabled: true,
   },
 ];
 
@@ -67,36 +66,23 @@ export default function AdminLayout({ children }: Props) {
 
         {/* Navigation */}
         <nav className="flex-1 px-4 py-6 space-y-1">
-          {navItems.map((item) =>
-            item.disabled ? (
-              <div
-                key={item.label}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl text-ms-light-gray cursor-not-allowed select-none"
-              >
-                {item.icon}
-                <span className="font-semibold text-sm">{item.label}</span>
-                <span className="ml-auto text-[10px] bg-ms-light-gray text-ms-gray px-2 py-0.5 rounded-full font-bold">
-                  Bientot
-                </span>
-              </div>
-            ) : (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.end}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-colors ${
-                    isActive
-                      ? "bg-ms-lavender text-white shadow-sm"
-                      : "text-ms-gray hover:bg-ms-lavender-light hover:text-ms-dark"
-                  }`
-                }
-              >
-                {item.icon}
-                <span>{item.label}</span>
-              </NavLink>
-            )
-          )}
+          {navItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-colors ${
+                  isActive
+                    ? "bg-ms-lavender text-white shadow-sm"
+                    : "text-ms-gray hover:bg-ms-lavender-light hover:text-ms-dark"
+                }`
+              }
+            >
+              {item.icon}
+              <span>{item.label}</span>
+            </NavLink>
+          ))}
         </nav>
 
         {/* User info at bottom */}
@@ -160,6 +146,18 @@ export default function AdminLayout({ children }: Props) {
                 }
               >
                 Eleves
+              </NavLink>
+              <NavLink
+                to="/admin/content"
+                className={({ isActive }) =>
+                  `px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
+                    isActive
+                      ? "bg-ms-lavender text-white"
+                      : "text-ms-gray hover:bg-ms-lavender-light"
+                  }`
+                }
+              >
+                Contenus
               </NavLink>
               <button
                 onClick={handleLogout}

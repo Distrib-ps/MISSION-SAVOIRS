@@ -6,6 +6,7 @@ import LoginPage from "./pages/LoginPage";
 import StudentDashboard from "./pages/StudentDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import UsersPage from "./pages/admin/UsersPage";
+import ContentPage from "./pages/admin/ContentPage";
 
 function App() {
   return (
@@ -37,6 +38,15 @@ function App() {
           element={
             <ProtectedRoute requiredRole="ADMIN">
               <UsersPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/content"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <ContentPage />
             </ProtectedRoute>
           }
         />

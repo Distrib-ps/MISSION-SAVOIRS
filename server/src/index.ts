@@ -3,6 +3,10 @@ import cors from "cors";
 import dotenv from "dotenv";
 import authRouter from "./routes/auth";
 import adminUsersRouter from "./routes/admin/users";
+import adminThemesRouter from "./routes/admin/themes";
+import adminSubThemesRouter from "./routes/admin/subthemes";
+import adminQuizzesRouter from "./routes/admin/quizzes";
+import adminQuestionsRouter from "./routes/admin/questions";
 
 dotenv.config();
 
@@ -21,6 +25,10 @@ app.get("/api/health", (_req, res) => {
 // Routes
 app.use("/api/auth", authRouter);
 app.use("/api/admin/users", adminUsersRouter);
+app.use("/api/admin/themes", adminThemesRouter);
+app.use("/api/admin/sub-themes", adminSubThemesRouter);
+app.use("/api/admin/quizzes", adminQuizzesRouter);
+app.use("/api/admin/questions", adminQuestionsRouter);
 
 // Error handler
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
