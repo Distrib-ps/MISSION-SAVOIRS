@@ -69,18 +69,55 @@ router.post(
         return;
       }
 
+      // ── Réinjection: find failed questions from previous quizzes in the same sub-theme ──
+      const failedQuestionAttempts = await prisma.questionAttempt.findMany({
+        where: {
+          quizAttempt: { userId },
+          isCorrect: false,
+          question: {
+            quiz: { subThemeId: quiz.subThemeId },
+            quizId: { not: id }, // not from this quiz
+          },
+        },
+        include: {
+          question: {
+            include: { answers: true },
+          },
+        },
+        distinct: ["questionId"],
+      });
+
+      // Filter out questions that were eventually answered correctly in a later attempt
+      const reinjectedQuestions = [];
+      for (const fa of failedQuestionAttempts) {
+        const laterCorrect = await prisma.questionAttempt.findFirst({
+          where: {
+            quizAttempt: { userId },
+            questionId: fa.questionId,
+            isCorrect: true,
+          },
+        });
+        if (!laterCorrect) {
+          reinjectedQuestions.push(fa.question);
+        }
+      }
+
+      const totalQuestions = quiz.questions.length + reinjectedQuestions.length;
+
       // Create a new QuizAttempt
       const attempt = await prisma.quizAttempt.create({
         data: {
           userId,
           quizId: id,
           score: 0,
-          totalQuestions: quiz.questions.length,
+          totalQuestions,
         },
       });
 
       // Build sanitized questions for the student
-      const questions = quiz.questions.map((q) => {
+      const reinjectedIds = new Set(reinjectedQuestions.map((q) => q.id));
+      const allQuestions = [...quiz.questions, ...reinjectedQuestions];
+      const questions = allQuestions.map((q) => {
         const base: Record<string, unknown> = {
           id: q.id,
           text: q.text,
@@ -88,6 +125,7 @@ router.post(
           order: q.order,
           hint: null,
           solution: null,
+          isReinjected: reinjectedIds.has(q.id),
         };
 
         if (q.type === "QCM") {

@@ -131,6 +131,7 @@ export interface QuizQuestion {
   order: number;
   answers?: { id: number; text: string }[]; // QCM only, no isCorrect
   correctCount?: number; // how many correct answers (for multi-select QCM)
+  isReinjected?: boolean; // question from a previous quiz (revision)
 }
 
 export interface QuizSession {
