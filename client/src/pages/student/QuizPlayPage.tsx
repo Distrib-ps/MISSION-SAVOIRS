@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import confetti from "canvas-confetti";
 import StudentLayout from "../../components/student/StudentLayout";
+import DragDropAnswers from "../../components/student/DragDropAnswers";
 import type { QuizQuestion, QuizSession, AnswerResult, QuizResults } from "../../types";
 
 /* ── Confetti helpers ── */
@@ -329,6 +330,9 @@ export default function QuizPlayPage() {
           onSubmitText={() => {
             if (textAnswer.trim()) submitAnswer(textAnswer.trim());
           }}
+          onSubmitDnd={(mapping) => {
+            submitAnswer(JSON.stringify(mapping));
+          }}
           onAdvance={advanceToNext}
         />
       )}
@@ -412,6 +416,7 @@ function PlayingScreen({
   onTextChange,
   onSubmitQCM,
   onSubmitText,
+  onSubmitDnd,
   onAdvance,
 }: {
   question: QuizQuestion;
@@ -426,6 +431,7 @@ function PlayingScreen({
   onTextChange: (v: string) => void;
   onSubmitQCM: (text: string, id: number) => void;
   onSubmitText: () => void;
+  onSubmitDnd: (mapping: Record<number, string>) => void;
   onAdvance: () => void;
 }) {
   const progressPct = ((index + 1) / total) * 100;
@@ -584,6 +590,16 @@ function PlayingScreen({
               submitting={submitting}
               onChange={onTextChange}
               onSubmit={onSubmitText}
+            />
+          )}
+
+          {question.type === "DRAG_DROP" && question.answers && question.zones && (
+            <DragDropAnswers
+              items={question.answers}
+              zones={question.zones}
+              submitting={submitting}
+              resetKey={attempt.attempts}
+              onSubmit={onSubmitDnd}
             />
           )}
         </>

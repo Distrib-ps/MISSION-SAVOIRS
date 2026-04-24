@@ -23,11 +23,18 @@ const API_QUESTIONS = "/api/admin/questions";
 /*  Type badge                                                         */
 /* ------------------------------------------------------------------ */
 
-function TypeBadge({ type }: { type: "QCM" | "TEXT" }) {
+function TypeBadge({ type }: { type: "QCM" | "TEXT" | "DRAG_DROP" }) {
   if (type === "QCM") {
     return (
       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-ms-blue-light text-ms-dark">
         QCM
+      </span>
+    );
+  }
+  if (type === "DRAG_DROP") {
+    return (
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-ms-peach-light text-ms-dark">
+        DRAG & DROP
       </span>
     );
   }
@@ -139,7 +146,7 @@ export default function ContentPage() {
   const [formError, setFormError] = useState("");
 
   /* ---- Question form state ---- */
-  const [qType, setQType] = useState<"QCM" | "TEXT">("QCM");
+  const [qType, setQType] = useState<"QCM" | "TEXT" | "DRAG_DROP">("QCM");
   const [qText, setQText] = useState("");
   const [qHint, setQHint] = useState("");
   const [qSolution, setQSolution] = useState("");
@@ -148,6 +155,11 @@ export default function ContentPage() {
     { text: "", isCorrect: false },
   ]);
   const [qTextAnswer, setQTextAnswer] = useState("");
+  /* Drag & Drop: list of items, each with its target zone */
+  const [qDndItems, setQDndItems] = useState<{ text: string; zone: string }[]>([
+    { text: "", zone: "" },
+    { text: "", zone: "" },
+  ]);
 
   /* ================================================================ */
   /*  Data fetching                                                    */
@@ -487,6 +499,10 @@ export default function ContentPage() {
       { text: "", isCorrect: false },
     ]);
     setQTextAnswer("");
+    setQDndItems([
+      { text: "", zone: "" },
+      { text: "", zone: "" },
+    ]);
     setFormError("");
     setShowQuestionModal(true);
   }
@@ -504,13 +520,35 @@ export default function ContentPage() {
           : [{ text: "", isCorrect: true }, { text: "", isCorrect: false }]
       );
       setQTextAnswer("");
+      setQDndItems([{ text: "", zone: "" }, { text: "", zone: "" }]);
+    } else if (q.type === "DRAG_DROP") {
+      setQAnswers([]);
+      setQTextAnswer("");
+      setQDndItems(
+        q.answers.length > 0
+          ? q.answers.map((a) => ({ text: a.text, zone: a.zone ?? "" }))
+          : [{ text: "", zone: "" }, { text: "", zone: "" }]
+      );
     } else {
       setQAnswers([]);
       const correctAnswer = q.answers.find((a) => a.isCorrect);
       setQTextAnswer(correctAnswer?.text ?? "");
+      setQDndItems([{ text: "", zone: "" }, { text: "", zone: "" }]);
     }
     setFormError("");
     setShowQuestionModal(true);
+  }
+
+  function addDndItem() {
+    setQDndItems((prev) => [...prev, { text: "", zone: "" }]);
+  }
+
+  function removeDndItem(index: number) {
+    setQDndItems((prev) => (prev.length <= 2 ? prev : prev.filter((_, i) => i !== index)));
+  }
+
+  function updateDndItem(index: number, patch: Partial<{ text: string; zone: string }>) {
+    setQDndItems((prev) => prev.map((it, i) => (i === index ? { ...it, ...patch } : it)));
   }
 
   function addAnswer() {
@@ -565,6 +603,19 @@ export default function ContentPage() {
         return;
       }
       answers = qAnswers.map((a) => ({ text: a.text, isCorrect: a.isCorrect }));
+    } else if (qType === "DRAG_DROP") {
+      if (qDndItems.some((it) => !it.text.trim() || !it.zone.trim())) {
+        setFormError("Chaque element doit avoir un texte et une zone cible");
+        setFormLoading(false);
+        return;
+      }
+      const zones = new Set(qDndItems.map((it) => it.zone.trim()));
+      if (zones.size < 2) {
+        setFormError("Au moins 2 zones distinctes sont requises");
+        setFormLoading(false);
+        return;
+      }
+      answers = qDndItems.map((it) => ({ text: it.text.trim(), isCorrect: true, zone: it.zone.trim() }));
     } else {
       if (!qTextAnswer.trim()) {
         setFormError("La reponse correcte est requise");
@@ -1138,11 +1189,11 @@ export default function ContentPage() {
             {/* Type selector */}
             <div>
               <label className="block text-sm font-semibold text-ms-dark mb-2">Type de question</label>
-              <div className="flex gap-3">
+              <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={() => setQType("QCM")}
-                  className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold transition border ${
+                  className={`flex-1 px-3 py-2.5 rounded-xl text-sm font-semibold transition border ${
                     qType === "QCM"
                       ? "bg-ms-blue-light border-ms-blue text-ms-dark"
                       : "bg-white border-ms-light-gray text-ms-gray hover:bg-ms-cream"
@@ -1153,13 +1204,24 @@ export default function ContentPage() {
                 <button
                   type="button"
                   onClick={() => setQType("TEXT")}
-                  className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold transition border ${
+                  className={`flex-1 px-3 py-2.5 rounded-xl text-sm font-semibold transition border ${
                     qType === "TEXT"
                       ? "bg-ms-yellow-light border-ms-yellow text-ms-dark"
                       : "bg-white border-ms-light-gray text-ms-gray hover:bg-ms-cream"
                   }`}
                 >
                   Texte
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQType("DRAG_DROP")}
+                  className={`flex-1 px-3 py-2.5 rounded-xl text-sm font-semibold transition border ${
+                    qType === "DRAG_DROP"
+                      ? "bg-ms-peach-light border-ms-peach text-ms-dark"
+                      : "bg-white border-ms-light-gray text-ms-gray hover:bg-ms-cream"
+                  }`}
+                >
+                  Drag & Drop
                 </button>
               </div>
             </div>
@@ -1252,6 +1314,65 @@ export default function ContentPage() {
                   className="w-full px-4 py-2.5 border border-ms-light-gray rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ms-lavender/50 focus:border-ms-lavender transition"
                   placeholder="Saisissez la reponse correcte"
                 />
+              </div>
+            )}
+
+            {/* Answer - DRAG_DROP */}
+            {qType === "DRAG_DROP" && (
+              <div>
+                <label className="block text-sm font-semibold text-ms-dark mb-2">
+                  Elements et zones cibles
+                  <span className="text-ms-gray font-normal ml-1">(chaque element doit etre place dans la bonne zone)</span>
+                </label>
+                <div className="space-y-2">
+                  {qDndItems.map((item, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={item.text}
+                        onChange={(e) => updateDndItem(index, { text: e.target.value })}
+                        className="flex-1 px-3 py-2 border border-ms-light-gray rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ms-lavender/50 focus:border-ms-lavender transition"
+                        placeholder={`Element ${index + 1}`}
+                      />
+                      <span className="text-ms-gray text-sm">→</span>
+                      <input
+                        type="text"
+                        value={item.zone}
+                        onChange={(e) => updateDndItem(index, { zone: e.target.value })}
+                        className="flex-1 px-3 py-2 border border-ms-light-gray rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ms-lavender/50 focus:border-ms-lavender transition"
+                        placeholder="Zone cible"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeDndItem(index)}
+                        disabled={qDndItems.length <= 2}
+                        className={`p-1.5 rounded-lg transition ${
+                          qDndItems.length <= 2
+                            ? "text-ms-light-gray cursor-not-allowed"
+                            : "text-ms-gray hover:text-ms-pink hover:bg-ms-pink-light"
+                        }`}
+                        title="Supprimer cet element"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={addDndItem}
+                  className="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-ms-cream hover:bg-ms-light-gray text-ms-dark rounded-xl text-sm font-semibold transition"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                  </svg>
+                  Ajouter un element
+                </button>
+                <p className="text-xs text-ms-gray mt-2">
+                  Les zones sont derivees automatiquement des valeurs saisies. Au moins 2 zones distinctes sont requises.
+                </p>
               </div>
             )}
 

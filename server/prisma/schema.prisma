@@ -92,6 +92,7 @@ model Quiz {
 enum QuestionType {
   QCM        // Choix multiples
   TEXT       // Réponse textuelle
+  DRAG_DROP  // Glisser-déposer (items à placer dans des zones)
 }
 
 model Question {
@@ -115,6 +116,7 @@ model Answer {
   id         Int     @id @default(autoincrement())
   text       String
   isCorrect  Boolean @default(false)
+  zone       String? // Pour DRAG_DROP : nom de la zone cible correcte
   questionId Int
 
   question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)

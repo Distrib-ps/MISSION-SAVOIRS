@@ -8,7 +8,7 @@ const router = Router();
 // All routes require authentication + admin role
 router.use(authenticate, requireAdmin);
 
-const VALID_QUESTION_TYPES: string[] = ["QCM", "TEXT"];
+const VALID_QUESTION_TYPES: string[] = ["QCM", "TEXT", "DRAG_DROP"];
 
 // ---------- GET / - List questions for a given quiz with answers ----------
 router.get("/", async (req: Request, res: Response): Promise<void> => {
@@ -60,7 +60,7 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
     if (!VALID_QUESTION_TYPES.includes(type)) {
       res
         .status(400)
-        .json({ error: "Type invalide. Utilisez QCM ou TEXT" });
+        .json({ error: "Type invalide. Utilisez QCM, TEXT ou DRAG_DROP" });
       return;
     }
 
@@ -100,9 +100,10 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
         order: nextOrder,
         answers: {
           create: answers.map(
-            (a: { text: string; isCorrect: boolean }) => ({
+            (a: { text: string; isCorrect?: boolean; zone?: string | null }) => ({
               text: a.text,
               isCorrect: a.isCorrect ?? false,
+              zone: a.zone ?? null,
             })
           ),
         },
@@ -171,7 +172,7 @@ router.put("/:id", async (req: Request, res: Response): Promise<void> => {
     if (type !== undefined && !VALID_QUESTION_TYPES.includes(type)) {
       res
         .status(400)
-        .json({ error: "Type invalide. Utilisez QCM ou TEXT" });
+        .json({ error: "Type invalide. Utilisez QCM, TEXT ou DRAG_DROP" });
       return;
     }
 
@@ -201,9 +202,10 @@ router.put("/:id", async (req: Request, res: Response): Promise<void> => {
             ...data,
             answers: {
               create: answers.map(
-                (a: { text: string; isCorrect: boolean }) => ({
+                (a: { text: string; isCorrect?: boolean; zone?: string | null }) => ({
                   text: a.text,
                   isCorrect: a.isCorrect ?? false,
+                  zone: a.zone ?? null,
                 })
               ),
             },

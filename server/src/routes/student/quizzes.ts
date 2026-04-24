@@ -138,6 +138,19 @@ router.post(
           );
           // Tell frontend how many correct answers there are (without revealing which)
           base.correctCount = q.answers.filter((a) => a.isCorrect).length;
+        } else if (q.type === "DRAG_DROP") {
+          // Include items shuffled (without revealing their correct zone)
+          base.answers = shuffle(
+            q.answers.map((a) => ({
+              id: a.id,
+              text: a.text,
+            }))
+          );
+          // List of unique zones (in a stable order)
+          const zones = Array.from(
+            new Set(q.answers.map((a) => a.zone).filter((z): z is string => !!z))
+          );
+          base.zones = zones;
         }
         // For TEXT questions: don't include answers at all
 
@@ -236,6 +249,32 @@ router.post(
           [...selectedSet].every((id) => correctIds.has(id));
 
         correctAnswerText = correctAnswers.map((a) => a.text).join(", ");
+      } else if (question.type === "DRAG_DROP") {
+        // answer is a JSON string: { "<answerId>": "<zoneLabel>", ... }
+        let mapping: Record<string, string> = {};
+        try {
+          mapping = JSON.parse(answer);
+        } catch {
+          res.status(400).json({ error: "Format de réponse invalide pour une question Drag & Drop" });
+          return;
+        }
+
+        // All items must be placed and placed in the correct zone
+        const allCorrect = question.answers.every((a) => {
+          const chosen = mapping[String(a.id)];
+          return chosen !== undefined && chosen === a.zone;
+        });
+        isCorrect = allCorrect;
+
+        // Build human-readable given answer and correct answer
+        const givenLines = question.answers.map((a) => {
+          const chosen = mapping[String(a.id)] ?? "—";
+          return `${a.text} → ${chosen}`;
+        });
+        givenAnswerText = givenLines.join(" ; ");
+
+        const correctLines = question.answers.map((a) => `${a.text} → ${a.zone ?? ""}`);
+        correctAnswerText = correctLines.join(" ; ");
       } else {
         // TEXT: forgiving comparison
         const correct = question.answers.find((a) => a.isCorrect);
