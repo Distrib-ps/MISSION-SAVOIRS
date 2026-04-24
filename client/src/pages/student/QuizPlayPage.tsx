@@ -1,7 +1,46 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import confetti from "canvas-confetti";
 import StudentLayout from "../../components/student/StudentLayout";
 import type { QuizQuestion, QuizSession, AnswerResult, QuizResults } from "../../types";
+
+/* ── Confetti helpers ── */
+
+const MS_COLORS = ["#C4ACF4", "#98E2FD", "#FFB3BA", "#FFDE55", "#B5EAD7", "#F8C291"];
+
+function smallConfettiBurst() {
+  confetti({
+    particleCount: 50,
+    spread: 60,
+    origin: { y: 0.55 },
+    colors: MS_COLORS,
+    ticks: 120,
+    gravity: 1.2,
+    scalar: 0.9,
+  });
+}
+
+function bigConfettiBurst() {
+  const duration = 2500;
+  const end = Date.now() + duration;
+  (function frame() {
+    confetti({
+      particleCount: 3,
+      angle: 60,
+      spread: 75,
+      origin: { x: 0, y: 0.7 },
+      colors: MS_COLORS,
+    });
+    confetti({
+      particleCount: 3,
+      angle: 120,
+      spread: 75,
+      origin: { x: 1, y: 0.7 },
+      colors: MS_COLORS,
+    });
+    if (Date.now() < end) requestAnimationFrame(frame);
+  })();
+}
 
 /* ── Helpers ── */
 
@@ -55,6 +94,10 @@ export default function QuizPlayPage() {
   const [attempt, setAttempt] = useState<AttemptState>(INITIAL_ATTEMPT);
   const [submitting, setSubmitting] = useState(false);
   const [textAnswer, setTextAnswer] = useState("");
+
+  /* gamification */
+  const [streak, setStreak] = useState(0);
+  const [showStreakBadge, setShowStreakBadge] = useState(false);
 
   /* results */
   const [results, setResults] = useState<QuizResults | null>(null);
@@ -116,16 +159,29 @@ export default function QuizPlayPage() {
 
         if (result.correct) {
           /* ✅ Correct */
+          smallConfettiBurst();
           setAttempt((prev) => ({
             ...prev,
             attempts: newAttempts,
             feedback: "correct",
             usedHint,
           }));
+          /* Streak: first-try correct only */
+          if (newAttempts === 1) {
+            setStreak((s) => {
+              const next = s + 1;
+              if (next >= 2) setShowStreakBadge(true);
+              return next;
+            });
+          } else {
+            setStreak(0);
+          }
           /* Auto-advance after 1.5s */
           setTimeout(() => advanceToNext(), 1500);
         } else if (newAttempts >= 2) {
           /* ❌ 2nd wrong – show solution */
+          setStreak(0);
+          setShowStreakBadge(false);
           setAttempt((prev) => ({
             ...prev,
             attempts: newAttempts,
@@ -140,6 +196,8 @@ export default function QuizPlayPage() {
           }));
         } else {
           /* ❌ 1st wrong – show hint */
+          setStreak(0);
+          setShowStreakBadge(false);
           setAttempt((prev) => ({
             ...prev,
             attempts: newAttempts,
@@ -237,6 +295,8 @@ export default function QuizPlayPage() {
           attempt={attempt}
           submitting={submitting}
           textAnswer={textAnswer}
+          streak={streak}
+          showStreakBadge={showStreakBadge}
           onTextChange={setTextAnswer}
           onSubmitQCM={(answerStr, id) => {
             // answerStr can be "5" for single or "5,8" for multi
@@ -321,6 +381,8 @@ function PlayingScreen({
   attempt,
   submitting,
   textAnswer,
+  streak,
+  showStreakBadge,
   onTextChange,
   onSubmitQCM,
   onSubmitText,
@@ -332,6 +394,8 @@ function PlayingScreen({
   attempt: AttemptState;
   submitting: boolean;
   textAnswer: string;
+  streak: number;
+  showStreakBadge: boolean;
   onTextChange: (v: string) => void;
   onSubmitQCM: (text: string, id: number) => void;
   onSubmitText: () => void;
@@ -339,9 +403,22 @@ function PlayingScreen({
 }) {
   const progressPct = ((index + 1) / total) * 100;
   const isCorrect = attempt.feedback === "correct";
+  const isWrong = attempt.feedback === "wrong";
 
   return (
     <div className="max-w-2xl mx-auto">
+      {/* Streak badge */}
+      {showStreakBadge && streak >= 2 && (
+        <div className="mb-4 flex justify-center animate-[bounce_0.6s_ease-out]">
+          <div className="bg-ms-yellow border-2 border-ms-yellow/70 rounded-full px-4 py-1.5 flex items-center gap-2 shadow-md">
+            <span className="text-lg">&#128293;</span>
+            <span className="font-extrabold text-ms-dark text-sm">
+              {streak} bonnes reponses d'affilee !
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Progress bar */}
       <div className="mb-8">
         <div className="flex justify-between items-center mb-2">
@@ -361,7 +438,10 @@ function PlayingScreen({
       </div>
 
       {/* Question text */}
-      <div className="bg-white rounded-3xl border border-ms-light-gray/50 p-8 mb-6 shadow-sm">
+      <div
+        key={`q-${question.id}-${attempt.attempts}-${isWrong ? "w" : "n"}`}
+        className={`bg-white rounded-3xl border border-ms-light-gray/50 p-8 mb-6 shadow-sm ${isWrong ? "shake" : ""} ${isCorrect ? "pop" : ""}`}
+      >
         {question.isReinjected && (
           <span className="inline-flex items-center gap-1 px-3 py-1 mb-3 rounded-full text-xs font-bold bg-ms-yellow-light text-ms-dark">
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -677,6 +757,18 @@ function ResultsScreen({
     );
   }
 
+  return <ResultsContent results={results} onBack={onBack} onRestart={onRestart} />;
+}
+
+function ResultsContent({
+  results,
+  onBack,
+  onRestart,
+}: {
+  results: QuizResults;
+  onBack: () => void;
+  onRestart: () => void;
+}) {
   const pct = results.totalQuestions > 0 ? (results.score / results.totalQuestions) * 100 : 0;
 
   let emoji: string;
@@ -695,13 +787,45 @@ function ResultsScreen({
     message = "Continue tes efforts !";
   }
 
+  /* ── Animated score counter ── */
+  const [displayedScore, setDisplayedScore] = useState(0);
+  const hasTriggeredConfettiRef = useRef(false);
+
+  useEffect(() => {
+    const target = results.score;
+    if (target === 0) {
+      setDisplayedScore(0);
+      return;
+    }
+    const durationMs = 1200;
+    const steps = Math.max(target, 10);
+    const stepDuration = durationMs / steps;
+    let current = 0;
+    const id = setInterval(() => {
+      current += 1;
+      setDisplayedScore(current);
+      if (current >= target) clearInterval(id);
+    }, stepDuration);
+    return () => clearInterval(id);
+  }, [results.score]);
+
+  /* ── Big confetti burst for success ── */
+  useEffect(() => {
+    if (hasTriggeredConfettiRef.current) return;
+    if (pct >= 70) {
+      hasTriggeredConfettiRef.current = true;
+      /* Slight delay so the user sees the emoji first */
+      setTimeout(() => bigConfettiBurst(), 300);
+    }
+  }, [pct]);
+
   return (
     <div className="max-w-2xl mx-auto">
       {/* Score display */}
-      <div className="bg-white rounded-3xl border border-ms-light-gray/50 p-8 text-center mb-8 shadow-sm">
+      <div className="bg-white rounded-3xl border border-ms-light-gray/50 p-8 text-center mb-8 shadow-sm pop">
         <p className="text-6xl mb-4">{emoji}</p>
         <p className="text-3xl font-extrabold text-ms-dark mb-2">
-          Tu as obtenu {results.score}/{results.totalQuestions} !
+          Tu as obtenu {displayedScore}/{results.totalQuestions} !
         </p>
         <p className="text-xl font-bold text-ms-lavender">{message}</p>
       </div>

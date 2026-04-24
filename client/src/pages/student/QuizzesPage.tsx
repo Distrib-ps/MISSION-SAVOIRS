@@ -131,17 +131,21 @@ export default function QuizzesPage() {
       {/* Quiz list (vertical path) */}
       {!loading && !error && quizzes.length > 0 && (
         <div className="flex flex-col gap-4">
-          {quizzes.map((quiz) => (
-            <QuizCard
-              key={quiz.id}
-              quiz={quiz}
-              onClick={
-                quiz.status !== "locked"
-                  ? () => navigate(`/quiz/${quiz.id}`)
-                  : undefined
-              }
-            />
-          ))}
+          {(() => {
+            const firstAvailableIdx = quizzes.findIndex((q) => q.status === "available");
+            return quizzes.map((quiz, i) => (
+              <QuizCard
+                key={quiz.id}
+                quiz={quiz}
+                highlight={i === firstAvailableIdx}
+                onClick={
+                  quiz.status !== "locked"
+                    ? () => navigate(`/quiz/${quiz.id}`)
+                    : undefined
+                }
+              />
+            ));
+          })()}
         </div>
       )}
     </StudentLayout>
@@ -152,9 +156,11 @@ export default function QuizzesPage() {
 
 function QuizCard({
   quiz,
+  highlight = false,
   onClick,
 }: {
   quiz: StudentQuiz;
+  highlight?: boolean;
   onClick?: () => void;
 }) {
   if (quiz.status === "completed") {
@@ -233,7 +239,7 @@ function QuizCard({
   return (
     <button
       onClick={onClick}
-      className="bg-ms-lavender-light border-2 border-ms-lavender/30 rounded-3xl p-6 flex items-center gap-5 min-h-[80px] hover:shadow-lg hover:scale-[1.01] transition-all duration-200 cursor-pointer w-full text-left"
+      className={`bg-ms-lavender-light border-2 border-ms-lavender/30 rounded-3xl p-6 flex items-center gap-5 min-h-[80px] hover:shadow-lg hover:scale-[1.01] transition-all duration-200 cursor-pointer w-full text-left ${highlight ? "glow-pulse" : ""}`}
     >
       {/* Play icon */}
       <div className="w-14 h-14 bg-ms-lavender rounded-2xl flex items-center justify-center shrink-0 shadow-sm">
