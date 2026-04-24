@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
+import { AccessibilityProvider } from "./contexts/AccessibilityContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
@@ -13,8 +14,9 @@ import QuizPlayPage from "./pages/student/QuizPlayPage";
 
 function App() {
   return (
-    <AuthProvider>
-      <Routes>
+    <AccessibilityProvider>
+      <AuthProvider>
+        <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
 
@@ -81,9 +83,10 @@ function App() {
           }
         />
 
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </AuthProvider>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AuthProvider>
+    </AccessibilityProvider>
   );
 }
 

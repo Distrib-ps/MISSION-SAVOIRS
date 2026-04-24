@@ -99,6 +99,10 @@ export default function QuizPlayPage() {
   const [streak, setStreak] = useState(0);
   const [showStreakBadge, setShowStreakBadge] = useState(false);
 
+  /* timer (seconds remaining, null = disabled) */
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [timedOut, setTimedOut] = useState(false);
+
   /* results */
   const [results, setResults] = useState<QuizResults | null>(null);
 
@@ -123,6 +127,10 @@ export default function QuizPlayPage() {
       setCurrentIdx(0);
       setAttempt(INITIAL_ATTEMPT);
       setTextAnswer("");
+      setTimeLeft(data.quiz.timeLimit ?? null);
+      setTimedOut(false);
+      setStreak(0);
+      setShowStreakBadge(false);
       setPhase("playing");
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Erreur inconnue");
@@ -267,8 +275,23 @@ export default function QuizPlayPage() {
     setCurrentIdx(0);
     setAttempt(INITIAL_ATTEMPT);
     setTextAnswer("");
+    setTimeLeft(null);
+    setTimedOut(false);
     setError(null);
   }, []);
+
+  /* ── Timer tick ── */
+  useEffect(() => {
+    if (phase !== "playing" || timeLeft === null) return;
+    if (timeLeft <= 0) {
+      /* Time's up: jump to results */
+      setTimedOut(true);
+      fetchResults();
+      return;
+    }
+    const id = setTimeout(() => setTimeLeft((t) => (t === null ? null : t - 1)), 1000);
+    return () => clearTimeout(id);
+  }, [phase, timeLeft, fetchResults]);
 
   /* ══════════════════════════════════════════════════ */
   /* Render                                            */
@@ -297,6 +320,7 @@ export default function QuizPlayPage() {
           textAnswer={textAnswer}
           streak={streak}
           showStreakBadge={showStreakBadge}
+          timeLeft={timeLeft}
           onTextChange={setTextAnswer}
           onSubmitQCM={(answerStr, id) => {
             // answerStr can be "5" for single or "5,8" for multi
@@ -314,6 +338,7 @@ export default function QuizPlayPage() {
         <ResultsScreen
           results={results}
           loading={loading}
+          timedOut={timedOut}
           onBack={() => navigate(-1)}
           onRestart={restart}
         />
@@ -383,6 +408,7 @@ function PlayingScreen({
   textAnswer,
   streak,
   showStreakBadge,
+  timeLeft,
   onTextChange,
   onSubmitQCM,
   onSubmitText,
@@ -396,6 +422,7 @@ function PlayingScreen({
   textAnswer: string;
   streak: number;
   showStreakBadge: boolean;
+  timeLeft: number | null;
   onTextChange: (v: string) => void;
   onSubmitQCM: (text: string, id: number) => void;
   onSubmitText: () => void;
@@ -405,8 +432,33 @@ function PlayingScreen({
   const isCorrect = attempt.feedback === "correct";
   const isWrong = attempt.feedback === "wrong";
 
+  const timerLow = timeLeft !== null && timeLeft <= 10;
+  const mins = timeLeft !== null ? Math.floor(timeLeft / 60) : 0;
+  const secs = timeLeft !== null ? timeLeft % 60 : 0;
+
   return (
     <div className="max-w-2xl mx-auto">
+      {/* Timer */}
+      {timeLeft !== null && (
+        <div className="mb-4 flex justify-center">
+          <div
+            className={`rounded-full px-5 py-2 flex items-center gap-2 shadow-sm border-2 font-mono font-extrabold text-lg ${
+              timerLow
+                ? "bg-ms-pink-light border-ms-pink text-ms-dark animate-pulse"
+                : "bg-white border-ms-lavender/30 text-ms-dark"
+            }`}
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 7v5l3 3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span>
+              {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Streak badge */}
       {showStreakBadge && streak >= 2 && (
         <div className="mb-4 flex justify-center animate-[bounce_0.6s_ease-out]">
@@ -736,11 +788,13 @@ function TextAnswer({
 function ResultsScreen({
   results,
   loading,
+  timedOut,
   onBack,
   onRestart,
 }: {
   results: QuizResults | null;
   loading: boolean;
+  timedOut: boolean;
   onBack: () => void;
   onRestart: () => void;
 }) {
@@ -757,15 +811,17 @@ function ResultsScreen({
     );
   }
 
-  return <ResultsContent results={results} onBack={onBack} onRestart={onRestart} />;
+  return <ResultsContent results={results} timedOut={timedOut} onBack={onBack} onRestart={onRestart} />;
 }
 
 function ResultsContent({
   results,
+  timedOut,
   onBack,
   onRestart,
 }: {
   results: QuizResults;
+  timedOut: boolean;
   onBack: () => void;
   onRestart: () => void;
 }) {
@@ -812,22 +868,38 @@ function ResultsContent({
   /* ── Big confetti burst for success ── */
   useEffect(() => {
     if (hasTriggeredConfettiRef.current) return;
-    if (pct >= 70) {
+    if (!timedOut && pct >= 70) {
       hasTriggeredConfettiRef.current = true;
       /* Slight delay so the user sees the emoji first */
       setTimeout(() => bigConfettiBurst(), 300);
     }
-  }, [pct]);
+  }, [pct, timedOut]);
 
   return (
     <div className="max-w-2xl mx-auto">
+      {/* Timeout banner */}
+      {timedOut && (
+        <div className="bg-ms-pink-light border-2 border-ms-pink/60 rounded-2xl p-4 mb-4 flex items-start gap-3">
+          <svg className="w-6 h-6 text-ms-pink shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7v5l3 3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <div>
+            <p className="font-extrabold text-ms-dark">Temps écoulé !</p>
+            <p className="text-sm text-ms-dark/80 mt-0.5">
+              Tu n'as pas terminé à temps. Tu peux recommencer pour faire mieux !
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Score display */}
       <div className="bg-white rounded-3xl border border-ms-light-gray/50 p-8 text-center mb-8 shadow-sm pop">
-        <p className="text-6xl mb-4">{emoji}</p>
+        <p className="text-6xl mb-4">{timedOut ? "\u23F0" : emoji}</p>
         <p className="text-3xl font-extrabold text-ms-dark mb-2">
           Tu as obtenu {displayedScore}/{results.totalQuestions} !
         </p>
-        <p className="text-xl font-bold text-ms-lavender">{message}</p>
+        <p className="text-xl font-bold text-ms-lavender">{timedOut ? "Essaie encore !" : message}</p>
       </div>
 
       {/* Recap list */}

@@ -146,7 +146,7 @@ router.post(
 
       res.json({
         attemptId: attempt.id,
-        quiz: { id: quiz.id, title: quiz.title },
+        quiz: { id: quiz.id, title: quiz.title, timeLimit: quiz.timeLimit },
         questions,
       });
     } catch (error) {

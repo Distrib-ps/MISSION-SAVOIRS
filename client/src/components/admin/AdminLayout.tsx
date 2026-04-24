@@ -1,6 +1,7 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
+import AccessibilitySettings from "../AccessibilitySettings";
 
 interface Props {
   children: ReactNode;
@@ -42,6 +43,7 @@ const navItems = [
 export default function AdminLayout({ children }: Props) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [showSettings, setShowSettings] = useState(false);
 
   function handleLogout() {
     logout();
@@ -99,12 +101,25 @@ export default function AdminLayout({ children }: Props) {
               <p className="text-xs text-ms-gray">Administrateur</p>
             </div>
           </div>
-          <button
-            onClick={handleLogout}
-            className="mt-3 w-full px-4 py-2 text-sm font-semibold text-ms-gray bg-ms-cream hover:bg-ms-light-gray rounded-xl transition"
-          >
-            Se deconnecter
-          </button>
+          <div className="mt-3 flex gap-2">
+            <button
+              onClick={() => setShowSettings(true)}
+              className="w-10 h-10 rounded-xl bg-ms-cream hover:bg-ms-light-gray flex items-center justify-center transition shrink-0"
+              title="Réglages d'accessibilité"
+              aria-label="Réglages d'accessibilité"
+            >
+              <svg className="w-5 h-5 text-ms-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
+            <button
+              onClick={handleLogout}
+              className="flex-1 px-4 py-2 text-sm font-semibold text-ms-gray bg-ms-cream hover:bg-ms-light-gray rounded-xl transition"
+            >
+              Se deconnecter
+            </button>
+          </div>
         </div>
       </aside>
 
@@ -172,6 +187,11 @@ export default function AdminLayout({ children }: Props) {
         {/* Page content */}
         <main className="flex-1 overflow-auto p-6 lg:p-8">{children}</main>
       </div>
+
+      {/* Settings modal */}
+      {showSettings && (
+        <AccessibilitySettings onClose={() => setShowSettings(false)} />
+      )}
     </div>
   );
 }

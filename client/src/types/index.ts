@@ -66,6 +66,7 @@ export interface Quiz {
   id: number;
   title: string;
   description: string | null;
+  timeLimit: number | null;
   order: number;
   subThemeId: number;
   _count?: { questions: number };
@@ -136,7 +137,7 @@ export interface QuizQuestion {
 
 export interface QuizSession {
   attemptId: number;
-  quiz: { id: number; title: string };
+  quiz: { id: number; title: string; timeLimit: number | null };
   questions: QuizQuestion[];
 }
 

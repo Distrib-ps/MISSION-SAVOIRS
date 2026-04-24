@@ -22,6 +22,16 @@
   --font-family-rounded: "Nunito", "Quicksand", system-ui, -apple-system, sans-serif;
 }
 
+html {
+  /* Default font scale (accessibility) */
+  font-size: 16px;
+}
+
+html.font-size-sm  { font-size: 14px; }
+html.font-size-md  { font-size: 16px; }
+html.font-size-lg  { font-size: 18px; }
+html.font-size-xl  { font-size: 21px; }
+
 body {
   margin: 0;
   font-family: var(--font-family-rounded);
@@ -29,6 +39,35 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--color-ms-cream);
   color: var(--color-ms-dark);
+}
+
+/* ── High contrast accessibility mode ── */
+html.high-contrast {
+  --color-ms-cream: #ffffff;
+  --color-ms-pink: #ff6b85;
+  --color-ms-pink-light: #ffd6dc;
+  --color-ms-lavender: #6a3fc7;
+  --color-ms-lavender-light: #d9c9ff;
+  --color-ms-blue: #0a86d9;
+  --color-ms-blue-light: #c5e8fb;
+  --color-ms-yellow: #d4a300;
+  --color-ms-yellow-light: #fff1b0;
+  --color-ms-green: #2ea77b;
+  --color-ms-green-light: #c6f2df;
+  --color-ms-peach: #d87b2a;
+  --color-ms-peach-light: #ffdcbd;
+  --color-ms-dark: #000000;
+  --color-ms-gray: #2a2a2a;
+  --color-ms-light-gray: #a8a8b0;
+}
+
+html.high-contrast body {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+html.high-contrast .blob {
+  display: none;
 }
 
 #root {

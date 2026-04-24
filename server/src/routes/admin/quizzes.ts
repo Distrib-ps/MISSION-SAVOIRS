@@ -42,7 +42,7 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
 // ---------- POST / - Create a quiz ----------
 router.post("/", async (req: Request, res: Response): Promise<void> => {
   try {
-    const { title, description, subThemeId } = req.body;
+    const { title, description, timeLimit, subThemeId } = req.body;
 
     if (!title) {
       res.status(400).json({ error: "Le champ title est requis" });
@@ -74,6 +74,7 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
       data: {
         title,
         description: description ?? null,
+        timeLimit: timeLimit ?? null,
         subThemeId,
         order: nextOrder,
       },
@@ -133,11 +134,12 @@ router.put("/:id", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const { title, description, order } = req.body;
+    const { title, description, timeLimit, order } = req.body;
     const data: Record<string, unknown> = {};
 
     if (title !== undefined) data.title = title;
     if (description !== undefined) data.description = description;
+    if (timeLimit !== undefined) data.timeLimit = timeLimit;
     if (order !== undefined) data.order = order;
 
     const quiz = await prisma.quiz.update({

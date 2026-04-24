@@ -134,6 +134,7 @@ export default function ContentPage() {
   const [formName, setFormName] = useState("");
   const [formDescription, setFormDescription] = useState("");
   const [formEmoji, setFormEmoji] = useState("📚");
+  const [formTimeLimit, setFormTimeLimit] = useState<string>(""); // minutes, empty = no timer
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState("");
 
@@ -417,6 +418,7 @@ export default function ContentPage() {
     setEditingQuiz(null);
     setFormName("");
     setFormDescription("");
+    setFormTimeLimit("");
     setFormError("");
     setShowQuizModal(true);
   }
@@ -425,6 +427,7 @@ export default function ContentPage() {
     setEditingQuiz(q);
     setFormName(q.title);
     setFormDescription(q.description ?? "");
+    setFormTimeLimit(q.timeLimit ? String(Math.round(q.timeLimit / 60)) : "");
     setFormError("");
     setShowQuizModal(true);
   }
@@ -434,12 +437,16 @@ export default function ContentPage() {
     if (!selectedSubTheme) return;
     setFormLoading(true);
     setFormError("");
+
+    const minutes = formTimeLimit.trim() ? parseInt(formTimeLimit, 10) : NaN;
+    const timeLimitSeconds = !isNaN(minutes) && minutes > 0 ? minutes * 60 : null;
+
     try {
       if (editingQuiz) {
         const res = await fetch(`${API_QUIZZES}/${editingQuiz.id}`, {
           method: "PUT",
           headers: authHeaders(),
-          body: JSON.stringify({ title: formName, description: formDescription || null }),
+          body: JSON.stringify({ title: formName, description: formDescription || null, timeLimit: timeLimitSeconds }),
         });
         if (!res.ok) {
           const d = await res.json().catch(() => null);
@@ -449,7 +456,7 @@ export default function ContentPage() {
         const res = await fetch(API_QUIZZES, {
           method: "POST",
           headers: authHeaders(),
-          body: JSON.stringify({ title: formName, description: formDescription || null, subThemeId: selectedSubTheme.id }),
+          body: JSON.stringify({ title: formName, description: formDescription || null, timeLimit: timeLimitSeconds, subThemeId: selectedSubTheme.id }),
         });
         if (!res.ok) {
           const d = await res.json().catch(() => null);
@@ -1478,12 +1485,83 @@ export default function ContentPage() {
           "Nom du sous-theme",
         )}
 
-        {renderSimpleModal(
-          showQuizModal,
-          () => setShowQuizModal(false),
-          editingQuiz ? "Modifier le quiz" : "Nouveau quiz",
-          handleQuizSubmit,
-          "Titre du quiz",
+        {showQuizModal && (
+          <div
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowQuizModal(false)}
+          >
+            <div
+              className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-lg font-extrabold text-ms-dark mb-4">
+                {editingQuiz ? "Modifier le quiz" : "Nouveau quiz"}
+              </h3>
+
+              {formError && (
+                <div className="mb-4 px-4 py-3 bg-ms-pink-light text-ms-dark text-sm rounded-xl font-medium">
+                  {formError}
+                </div>
+              )}
+
+              <form onSubmit={handleQuizSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-ms-dark mb-1">Titre du quiz *</label>
+                  <input
+                    type="text"
+                    value={formName}
+                    onChange={(e) => setFormName(e.target.value)}
+                    required
+                    className="w-full px-4 py-2.5 border border-ms-light-gray rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ms-lavender/50 focus:border-ms-lavender transition"
+                    placeholder="Titre du quiz"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-ms-dark mb-1">Description</label>
+                  <textarea
+                    value={formDescription}
+                    onChange={(e) => setFormDescription(e.target.value)}
+                    rows={3}
+                    className="w-full px-4 py-2.5 border border-ms-light-gray rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ms-lavender/50 focus:border-ms-lavender transition resize-none"
+                    placeholder="Description (optionnel)"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-ms-dark mb-1">
+                    Durée limite (minutes)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={formTimeLimit}
+                    onChange={(e) => setFormTimeLimit(e.target.value)}
+                    placeholder="Laisser vide = pas de timer"
+                    className="w-full px-4 py-2.5 border border-ms-light-gray rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ms-lavender/50 focus:border-ms-lavender transition"
+                  />
+                  <p className="text-xs text-ms-gray mt-1">
+                    Si renseigné, l'élève doit terminer avant la fin du temps.
+                  </p>
+                </div>
+                <div className="flex items-center justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowQuizModal(false)}
+                    className="px-5 py-2.5 text-sm font-semibold bg-white border border-ms-light-gray text-ms-dark hover:bg-ms-cream rounded-xl transition"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={formLoading}
+                    className="px-5 py-2.5 text-sm font-semibold bg-ms-lavender text-white hover:opacity-90 rounded-xl transition disabled:opacity-50"
+                  >
+                    {formLoading ? "Enregistrement..." : "Enregistrer"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
         )}
 
         {renderQuestionModal()}
