@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import type { FormEvent } from "react";
 import AdminLayout from "../../components/admin/AdminLayout";
+import ContentTreeSidebar, { type Selection, type TreeTheme } from "../../components/admin/ContentTreeSidebar";
 import type { Theme, SubTheme, Quiz, Question, Answer } from "../../types";
 
 /* ------------------------------------------------------------------ */
@@ -111,6 +112,10 @@ export default function ContentPage() {
   const [selectedTheme, setSelectedTheme] = useState<Theme | null>(null);
   const [selectedSubTheme, setSelectedSubTheme] = useState<SubTheme | null>(null);
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
+  /* Full content tree (source of truth for sidebar + navigation) */
+  const [tree, setTree] = useState<TreeTheme[]>([]);
+  const [treeLoading, setTreeLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   /* ---- Data state ---- */
   const [themes, setThemes] = useState<Theme[]>([]);
@@ -179,6 +184,20 @@ export default function ContentPage() {
   /*  Data fetching                                                    */
   /* ================================================================ */
 
+  const fetchTree = useCallback(async () => {
+    setTreeLoading(true);
+    try {
+      const res = await fetch("/api/admin/tree", { headers: authHeaders() });
+      if (!res.ok) throw new Error("Erreur lors du chargement de l'arborescence");
+      const data = await res.json();
+      setTree(data.themes ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur inconnue");
+    } finally {
+      setTreeLoading(false);
+    }
+  }, []);
+
   const fetchThemes = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -242,7 +261,118 @@ export default function ContentPage() {
   /* ---- Initial load ---- */
   useEffect(() => {
     fetchThemes();
-  }, [fetchThemes]);
+    fetchTree();
+  }, [fetchThemes, fetchTree]);
+
+  /* ---- Handle sidebar selection ---- */
+  /* Uses the in-memory tree to set selected entities synchronously (no extra fetch).
+   * Only fetches questions (level 4) on demand, since they're not cached in the tree. */
+  const handleSidebarSelect = useCallback((sel: Selection) => {
+    setError("");
+    setSidebarOpen(false);
+
+    /* Root: clear everything */
+    if (sel.themeId === null) {
+      setSelectedTheme(null);
+      setSelectedSubTheme(null);
+      setSelectedQuiz(null);
+      /* Keep themes[] in sync with tree for edit/delete operations */
+      setThemes(tree.map((t) => ({
+        id: t.id, name: t.name, description: t.description, emoji: t.emoji, order: t.order,
+        _count: { subThemes: t._count.subThemes },
+      })));
+      return;
+    }
+
+    const treeTheme = tree.find((t) => t.id === sel.themeId);
+    if (!treeTheme) return;
+
+    const theme: Theme = {
+      id: treeTheme.id,
+      name: treeTheme.name,
+      description: treeTheme.description,
+      emoji: treeTheme.emoji,
+      order: treeTheme.order,
+      _count: { subThemes: treeTheme._count.subThemes },
+    };
+    setSelectedTheme(theme);
+    /* Populate subThemes list for the main area */
+    setSubThemes(treeTheme.subThemes.map((st) => ({
+      id: st.id, name: st.name, description: st.description, order: st.order, themeId: st.themeId,
+      _count: { quizzes: st._count.quizzes },
+    })));
+
+    if (sel.subThemeId === null) {
+      setSelectedSubTheme(null);
+      setSelectedQuiz(null);
+      return;
+    }
+
+    const treeSubTheme = treeTheme.subThemes.find((st) => st.id === sel.subThemeId);
+    if (!treeSubTheme) return;
+
+    const subTheme: SubTheme = {
+      id: treeSubTheme.id,
+      name: treeSubTheme.name,
+      description: treeSubTheme.description,
+      order: treeSubTheme.order,
+      themeId: treeSubTheme.themeId,
+      _count: { quizzes: treeSubTheme._count.quizzes },
+    };
+    setSelectedSubTheme(subTheme);
+    setQuizzes(treeSubTheme.quizzes.map((qz) => ({
+      id: qz.id, title: qz.title, description: qz.description, timeLimit: qz.timeLimit,
+      order: qz.order, subThemeId: qz.subThemeId,
+      _count: { questions: qz._count.questions },
+    })));
+
+    if (sel.quizId === null) {
+      setSelectedQuiz(null);
+      return;
+    }
+
+    const treeQuiz = treeSubTheme.quizzes.find((qz) => qz.id === sel.quizId);
+    if (!treeQuiz) return;
+
+    const quiz: Quiz = {
+      id: treeQuiz.id,
+      title: treeQuiz.title,
+      description: treeQuiz.description,
+      timeLimit: treeQuiz.timeLimit,
+      order: treeQuiz.order,
+      subThemeId: treeQuiz.subThemeId,
+      _count: { questions: treeQuiz._count.questions },
+    };
+    setSelectedQuiz(quiz);
+    /* Questions aren't in the tree, fetch them */
+    fetchQuestions(quiz.id);
+  }, [tree, fetchQuestions]);
+
+  /* Reorder handlers driven from the sidebar drag-and-drop */
+  const reorderFromSidebar = useCallback(async (apiBase: string, ids: number[]) => {
+    try {
+      const res = await fetch(`${apiBase}/reorder`, {
+        method: "PUT",
+        headers: authHeaders(),
+        body: JSON.stringify({ ids }),
+      });
+      if (!res.ok) throw new Error("Erreur lors du réordonnancement");
+      await fetchTree();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Erreur inconnue");
+    }
+  }, [fetchTree]);
+
+  const handleReorderThemes = useCallback((ids: number[]) => reorderFromSidebar(API_THEMES, ids), [reorderFromSidebar]);
+  const handleReorderSubThemes = useCallback((_themeId: number, ids: number[]) => reorderFromSidebar(API_SUB_THEMES, ids), [reorderFromSidebar]);
+  const handleReorderQuizzes = useCallback((_subThemeId: number, ids: number[]) => reorderFromSidebar(API_QUIZZES, ids), [reorderFromSidebar]);
+
+  /* Current selection as IDs for sidebar */
+  const currentSelection: Selection = {
+    themeId: selectedTheme?.id ?? null,
+    subThemeId: selectedSubTheme?.id ?? null,
+    quizId: selectedQuiz?.id ?? null,
+  };
 
   /* ================================================================ */
   /*  Navigation                                                       */
@@ -318,6 +448,7 @@ export default function ContentPage() {
         body: JSON.stringify({ ids: newOrder }),
       });
       refreshFn();
+      fetchTree();
     } catch {
       setError("Erreur lors du reordonnancement");
     }
@@ -373,6 +504,7 @@ export default function ContentPage() {
       }
       setShowThemeModal(false);
       await fetchThemes();
+      fetchTree();
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
@@ -429,6 +561,7 @@ export default function ContentPage() {
       }
       setShowSubThemeModal(false);
       await fetchSubThemes(selectedTheme.id);
+      fetchTree();
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
@@ -491,6 +624,7 @@ export default function ContentPage() {
       }
       setShowQuizModal(false);
       await fetchQuizzes(selectedSubTheme.id);
+      fetchTree();
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
@@ -773,6 +907,7 @@ export default function ContentPage() {
       }
       setShowQuestionModal(false);
       await fetchQuestions(selectedQuiz.id);
+      fetchTree();
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
@@ -806,6 +941,7 @@ export default function ContentPage() {
       else if (type === "subTheme" && selectedTheme) await fetchSubThemes(selectedTheme.id);
       else if (type === "quiz" && selectedSubTheme) await fetchQuizzes(selectedSubTheme.id);
       else if (type === "question" && selectedQuiz) await fetchQuestions(selectedQuiz.id);
+      fetchTree();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
       setShowDeleteConfirm(null);
@@ -1793,34 +1929,60 @@ export default function ContentPage() {
 
   return (
     <AdminLayout>
-      <div className="max-w-4xl mx-auto">
-        {renderBreadcrumb()}
+      <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+        {/* Mobile toggle */}
+        <button
+          onClick={() => setSidebarOpen((v) => !v)}
+          className="lg:hidden inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-white border border-ms-light-gray rounded-xl hover:bg-ms-cream transition self-start"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+          {sidebarOpen ? "Masquer l'arborescence" : "Afficher l'arborescence"}
+        </button>
 
-        {/* Error */}
-        {error && (
-          <div className="mb-4 px-4 py-3 bg-ms-pink-light text-ms-dark text-sm rounded-xl font-medium">
-            {error}
-            <button
-              onClick={() => setError("")}
-              className="ml-3 text-ms-gray hover:text-ms-dark font-bold"
-            >
-              x
-            </button>
-          </div>
-        )}
+        {/* Sidebar */}
+        <div className={`${sidebarOpen ? "block" : "hidden"} lg:block`}>
+          <ContentTreeSidebar
+            themes={tree}
+            loading={treeLoading}
+            selection={currentSelection}
+            onSelect={handleSidebarSelect}
+            onReorderThemes={handleReorderThemes}
+            onReorderSubThemes={handleReorderSubThemes}
+            onReorderQuizzes={handleReorderQuizzes}
+          />
+        </div>
 
-        {/* Loading */}
-        {loading && (
-          <div className="flex items-center justify-center py-16">
-            <div className="w-8 h-8 border-4 border-ms-lavender border-t-transparent rounded-full animate-spin" />
-          </div>
-        )}
+        {/* Main content area */}
+        <div className="flex-1 min-w-0 max-w-4xl">
+          {renderBreadcrumb()}
 
-        {/* Content by level */}
-        {!loading && level === 1 && renderThemes()}
-        {!loading && level === 2 && renderSubThemes()}
-        {!loading && level === 3 && renderQuizzes()}
-        {!loading && level === 4 && renderQuestions()}
+          {/* Error */}
+          {error && (
+            <div className="mb-4 px-4 py-3 bg-ms-pink-light text-ms-dark text-sm rounded-xl font-medium">
+              {error}
+              <button
+                onClick={() => setError("")}
+                className="ml-3 text-ms-gray hover:text-ms-dark font-bold"
+              >
+                x
+              </button>
+            </div>
+          )}
+
+          {/* Loading */}
+          {loading && (
+            <div className="flex items-center justify-center py-16">
+              <div className="w-8 h-8 border-4 border-ms-lavender border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
+
+          {/* Content by level */}
+          {!loading && level === 1 && renderThemes()}
+          {!loading && level === 2 && renderSubThemes()}
+          {!loading && level === 3 && renderQuizzes()}
+          {!loading && level === 4 && renderQuestions()}
 
         {/* Modals */}
         {showThemeModal && (
@@ -2057,6 +2219,7 @@ export default function ContentPage() {
             </div>
           </div>
         )}
+        </div>
       </div>
     </AdminLayout>
   );

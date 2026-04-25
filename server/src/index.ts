@@ -7,6 +7,7 @@ import adminThemesRouter from "./routes/admin/themes";
 import adminSubThemesRouter from "./routes/admin/subthemes";
 import adminQuizzesRouter from "./routes/admin/quizzes";
 import adminQuestionsRouter from "./routes/admin/questions";
+import adminTreeRouter from "./routes/admin/tree";
 import studentThemesRouter from "./routes/student/themes";
 import studentQuizzesRouter from "./routes/student/quizzes";
 
@@ -31,6 +32,7 @@ app.use("/api/admin/themes", adminThemesRouter);
 app.use("/api/admin/sub-themes", adminSubThemesRouter);
 app.use("/api/admin/quizzes", adminQuizzesRouter);
 app.use("/api/admin/questions", adminQuestionsRouter);
+app.use("/api/admin/tree", adminTreeRouter);
 app.use("/api/student/themes", studentThemesRouter);
 app.use("/api/student/quizzes", studentQuizzesRouter);
 
