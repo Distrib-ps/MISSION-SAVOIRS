@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import type { ChangeEvent, FormEvent, DragEvent } from "react";
 import * as XLSX from "xlsx";
 import AdminLayout from "../../components/admin/AdminLayout";
+import UserPathsModal from "../../components/admin/UserPathsModal";
 import type { User, Level, Role, ImportResult, ImportedUser } from "../../types";
 
 /* ------------------------------------------------------------------ */
@@ -151,6 +152,7 @@ export default function UsersPage() {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [showImport, setShowImport] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<User | null>(null);
+  const [pathsModalStudent, setPathsModalStudent] = useState<User | null>(null);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
 
   // Form state
@@ -630,6 +632,17 @@ export default function UsersPage() {
                       </td>
                       <td className="px-3 py-3 text-right">
                         <div className="flex items-center justify-end gap-1">
+                          {u.role === "STUDENT" && (
+                            <button
+                              onClick={() => setPathsModalStudent(u)}
+                              className="p-2 text-ms-gray hover:text-ms-lavender hover:bg-ms-lavender-light rounded-xl transition"
+                              title="Gérer les parcours personnalisés"
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                              </svg>
+                            </button>
+                          )}
                           <button
                             onClick={() => openEdit(u)}
                             className="p-2 text-ms-gray hover:text-ms-lavender hover:bg-ms-lavender-light rounded-xl transition"
@@ -1213,6 +1226,19 @@ export default function UsersPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ---- User custom paths modal ---- */}
+      {pathsModalStudent && (
+        <UserPathsModal
+          student={{
+            id: pathsModalStudent.id,
+            firstName: pathsModalStudent.firstName,
+            lastName: pathsModalStudent.lastName,
+            username: pathsModalStudent.username,
+          }}
+          onClose={() => setPathsModalStudent(null)}
+        />
       )}
     </AdminLayout>
   );

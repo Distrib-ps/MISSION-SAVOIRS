@@ -139,6 +139,26 @@ export interface QuizQuestion {
   isReinjected?: boolean; // question from a previous quiz (revision)
 }
 
+/* ── Custom paths ── */
+
+export interface CustomPathQuiz {
+  id: number;
+  title: string;
+  description: string | null;
+  order: number;
+  totalQuestions: number;
+  bestScore: number | null;
+  completed: boolean;
+}
+
+export interface CustomPath {
+  id: number;
+  name: string;
+  description: string | null;
+  createdAt: string;
+  quizzes: CustomPathQuiz[];
+}
+
 export interface QuizSession {
   attemptId: number;
   quiz: { id: number; title: string; timeLimit: number | null };

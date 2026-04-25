@@ -8,8 +8,10 @@ import adminSubThemesRouter from "./routes/admin/subthemes";
 import adminQuizzesRouter from "./routes/admin/quizzes";
 import adminQuestionsRouter from "./routes/admin/questions";
 import adminTreeRouter from "./routes/admin/tree";
+import adminCustomPathsRouter from "./routes/admin/customPaths";
 import studentThemesRouter from "./routes/student/themes";
 import studentQuizzesRouter from "./routes/student/quizzes";
+import studentCustomPathsRouter from "./routes/student/customPaths";
 
 dotenv.config();
 
@@ -33,8 +35,10 @@ app.use("/api/admin/sub-themes", adminSubThemesRouter);
 app.use("/api/admin/quizzes", adminQuizzesRouter);
 app.use("/api/admin/questions", adminQuestionsRouter);
 app.use("/api/admin/tree", adminTreeRouter);
+app.use("/api/admin/custom-paths", adminCustomPathsRouter);
 app.use("/api/student/themes", studentThemesRouter);
 app.use("/api/student/quizzes", studentQuizzesRouter);
+app.use("/api/student/custom-paths", studentCustomPathsRouter);
 
 // Error handler
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
