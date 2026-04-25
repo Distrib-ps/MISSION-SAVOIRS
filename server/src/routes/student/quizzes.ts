@@ -151,6 +151,21 @@ router.post(
             new Set(q.answers.map((a) => a.zone).filter((z): z is string => !!z))
           );
           base.zones = zones;
+        } else if (q.type === "ASSOCIATION") {
+          // Left column: items with id+text, shuffled independently
+          base.answers = shuffle(
+            q.answers.map((a) => ({ id: a.id, text: a.text }))
+          );
+          // Right column: just the partner labels, shuffled independently
+          const rightColumn = shuffle(
+            q.answers.map((a) => a.zone).filter((z): z is string => !!z)
+          );
+          base.rightColumn = rightColumn;
+        } else if (q.type === "ORDERING") {
+          // Items shuffled (correct order is kept on server)
+          base.answers = shuffle(
+            q.answers.map((a) => ({ id: a.id, text: a.text }))
+          );
         }
         // For TEXT questions: don't include answers at all
 
@@ -275,6 +290,54 @@ router.post(
 
         const correctLines = question.answers.map((a) => `${a.text} → ${a.zone ?? ""}`);
         correctAnswerText = correctLines.join(" ; ");
+      } else if (question.type === "ASSOCIATION") {
+        // answer is a JSON string: { "<answerId>": "<rightValue>", ... }
+        let mapping: Record<string, string> = {};
+        try {
+          mapping = JSON.parse(answer);
+        } catch {
+          res.status(400).json({ error: "Format de réponse invalide pour une question Association" });
+          return;
+        }
+
+        const allCorrect = question.answers.every((a) => {
+          const chosen = mapping[String(a.id)];
+          return chosen !== undefined && chosen === a.zone;
+        });
+        isCorrect = allCorrect;
+
+        const givenLines = question.answers.map((a) => {
+          const chosen = mapping[String(a.id)] ?? "—";
+          return `${a.text} ↔ ${chosen}`;
+        });
+        givenAnswerText = givenLines.join(" ; ");
+
+        const correctLines = question.answers.map((a) => `${a.text} ↔ ${a.zone ?? ""}`);
+        correctAnswerText = correctLines.join(" ; ");
+      } else if (question.type === "ORDERING") {
+        // answer is a JSON string: array of answerIds in the user's chosen order
+        let orderedIds: number[] = [];
+        try {
+          const parsed = JSON.parse(answer);
+          if (!Array.isArray(parsed)) throw new Error();
+          orderedIds = parsed.map((n) => Number(n));
+        } catch {
+          res.status(400).json({ error: "Format de réponse invalide pour une question de classement" });
+          return;
+        }
+
+        const expected = [...question.answers]
+          .sort((a, b) => a.order - b.order)
+          .map((a) => a.id);
+
+        isCorrect =
+          orderedIds.length === expected.length &&
+          orderedIds.every((id, i) => id === expected[i]);
+
+        // Build human-readable forms
+        const answerById = new Map(question.answers.map((a) => [a.id, a.text]));
+        givenAnswerText = orderedIds.map((id, i) => `${i + 1}. ${answerById.get(id) ?? "?"}`).join(" ; ");
+        correctAnswerText = expected.map((id, i) => `${i + 1}. ${answerById.get(id) ?? "?"}`).join(" ; ");
       } else {
         // TEXT: forgiving comparison
         const correct = question.answers.find((a) => a.isCorrect);

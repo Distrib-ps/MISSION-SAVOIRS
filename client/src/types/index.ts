@@ -77,12 +77,13 @@ export interface Answer {
   text: string;
   isCorrect: boolean;
   zone?: string | null;
+  order?: number;
 }
 
 export interface Question {
   id: number;
   text: string;
-  type: "QCM" | "TEXT" | "DRAG_DROP";
+  type: "QCM" | "TEXT" | "DRAG_DROP" | "ASSOCIATION" | "ORDERING";
   hint: string | null;
   solution: string | null;
   order: number;
@@ -127,13 +128,14 @@ export interface StudentQuiz {
 export interface QuizQuestion {
   id: number;
   text: string;
-  type: "QCM" | "TEXT" | "DRAG_DROP";
+  type: "QCM" | "TEXT" | "DRAG_DROP" | "ASSOCIATION" | "ORDERING";
   hint: string | null;
   solution: string | null;
   order: number;
-  answers?: { id: number; text: string }[]; // QCM or DRAG_DROP, no isCorrect / zone
+  answers?: { id: number; text: string }[]; // QCM / DRAG_DROP / ASSOCIATION / ORDERING
   correctCount?: number; // how many correct answers (for multi-select QCM)
   zones?: string[]; // DRAG_DROP only: list of target zones
+  rightColumn?: string[]; // ASSOCIATION only: shuffled right column labels
   isReinjected?: boolean; // question from a previous quiz (revision)
 }
 
@@ -157,7 +159,7 @@ export interface QuizResults {
   questions: {
     id: number;
     text: string;
-    type: "QCM" | "TEXT" | "DRAG_DROP";
+    type: "QCM" | "TEXT" | "DRAG_DROP" | "ASSOCIATION" | "ORDERING";
     givenAnswer: string;
     isCorrect: boolean;
     usedHint: boolean;

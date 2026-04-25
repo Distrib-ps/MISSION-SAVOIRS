@@ -3,6 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import confetti from "canvas-confetti";
 import StudentLayout from "../../components/student/StudentLayout";
 import DragDropAnswers from "../../components/student/DragDropAnswers";
+import AssociationAnswers from "../../components/student/AssociationAnswers";
+import OrderingAnswers from "../../components/student/OrderingAnswers";
 import type { QuizQuestion, QuizSession, AnswerResult, QuizResults } from "../../types";
 
 /* ── Confetti helpers ── */
@@ -333,6 +335,12 @@ export default function QuizPlayPage() {
           onSubmitDnd={(mapping) => {
             submitAnswer(JSON.stringify(mapping));
           }}
+          onSubmitAssoc={(mapping) => {
+            submitAnswer(JSON.stringify(mapping));
+          }}
+          onSubmitOrder={(orderedIds) => {
+            submitAnswer(JSON.stringify(orderedIds));
+          }}
           onAdvance={advanceToNext}
         />
       )}
@@ -417,6 +425,8 @@ function PlayingScreen({
   onSubmitQCM,
   onSubmitText,
   onSubmitDnd,
+  onSubmitAssoc,
+  onSubmitOrder,
   onAdvance,
 }: {
   question: QuizQuestion;
@@ -432,6 +442,8 @@ function PlayingScreen({
   onSubmitQCM: (text: string, id: number) => void;
   onSubmitText: () => void;
   onSubmitDnd: (mapping: Record<number, string>) => void;
+  onSubmitAssoc: (mapping: Record<number, string>) => void;
+  onSubmitOrder: (orderedIds: number[]) => void;
   onAdvance: () => void;
 }) {
   const progressPct = ((index + 1) / total) * 100;
@@ -600,6 +612,25 @@ function PlayingScreen({
               submitting={submitting}
               resetKey={attempt.attempts}
               onSubmit={onSubmitDnd}
+            />
+          )}
+
+          {question.type === "ASSOCIATION" && question.answers && question.rightColumn && (
+            <AssociationAnswers
+              items={question.answers}
+              rightColumn={question.rightColumn}
+              submitting={submitting}
+              resetKey={attempt.attempts}
+              onSubmit={onSubmitAssoc}
+            />
+          )}
+
+          {question.type === "ORDERING" && question.answers && (
+            <OrderingAnswers
+              items={question.answers}
+              submitting={submitting}
+              resetKey={attempt.attempts}
+              onSubmit={onSubmitOrder}
             />
           )}
         </>

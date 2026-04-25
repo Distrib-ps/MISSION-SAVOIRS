@@ -23,24 +23,18 @@ const API_QUESTIONS = "/api/admin/questions";
 /*  Type badge                                                         */
 /* ------------------------------------------------------------------ */
 
-function TypeBadge({ type }: { type: "QCM" | "TEXT" | "DRAG_DROP" }) {
-  if (type === "QCM") {
-    return (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-ms-blue-light text-ms-dark">
-        QCM
-      </span>
-    );
-  }
-  if (type === "DRAG_DROP") {
-    return (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-ms-peach-light text-ms-dark">
-        DRAG & DROP
-      </span>
-    );
-  }
+function TypeBadge({ type }: { type: "QCM" | "TEXT" | "DRAG_DROP" | "ASSOCIATION" | "ORDERING" }) {
+  const map: Record<string, { label: string; bg: string }> = {
+    QCM: { label: "QCM", bg: "bg-ms-blue-light" },
+    TEXT: { label: "TEXTE", bg: "bg-ms-yellow-light" },
+    DRAG_DROP: { label: "DRAG & DROP", bg: "bg-ms-peach-light" },
+    ASSOCIATION: { label: "ASSOCIATION", bg: "bg-ms-green-light" },
+    ORDERING: { label: "CLASSEMENT", bg: "bg-ms-pink-light" },
+  };
+  const { label, bg } = map[type];
   return (
-    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-ms-yellow-light text-ms-dark">
-      TEXTE
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${bg} text-ms-dark`}>
+      {label}
     </span>
   );
 }
@@ -146,7 +140,7 @@ export default function ContentPage() {
   const [formError, setFormError] = useState("");
 
   /* ---- Question form state ---- */
-  const [qType, setQType] = useState<"QCM" | "TEXT" | "DRAG_DROP">("QCM");
+  const [qType, setQType] = useState<"QCM" | "TEXT" | "DRAG_DROP" | "ASSOCIATION" | "ORDERING">("QCM");
   const [qText, setQText] = useState("");
   const [qHint, setQHint] = useState("");
   const [qSolution, setQSolution] = useState("");
@@ -159,6 +153,16 @@ export default function ContentPage() {
   const [qDndItems, setQDndItems] = useState<{ text: string; zone: string }[]>([
     { text: "", zone: "" },
     { text: "", zone: "" },
+  ]);
+  /* Association: pairs of left↔right */
+  const [qAssocPairs, setQAssocPairs] = useState<{ left: string; right: string }[]>([
+    { left: "", right: "" },
+    { left: "", right: "" },
+  ]);
+  /* Ordering: ordered list of items */
+  const [qOrderItems, setQOrderItems] = useState<{ text: string }[]>([
+    { text: "" },
+    { text: "" },
   ]);
 
   /* ================================================================ */
@@ -503,6 +507,14 @@ export default function ContentPage() {
       { text: "", zone: "" },
       { text: "", zone: "" },
     ]);
+    setQAssocPairs([
+      { left: "", right: "" },
+      { left: "", right: "" },
+    ]);
+    setQOrderItems([
+      { text: "" },
+      { text: "" },
+    ]);
     setFormError("");
     setShowQuestionModal(true);
   }
@@ -529,11 +541,35 @@ export default function ContentPage() {
           ? q.answers.map((a) => ({ text: a.text, zone: a.zone ?? "" }))
           : [{ text: "", zone: "" }, { text: "", zone: "" }]
       );
+      setQAssocPairs([{ left: "", right: "" }, { left: "", right: "" }]);
+      setQOrderItems([{ text: "" }, { text: "" }]);
+    } else if (q.type === "ASSOCIATION") {
+      setQAnswers([]);
+      setQTextAnswer("");
+      setQDndItems([{ text: "", zone: "" }, { text: "", zone: "" }]);
+      setQAssocPairs(
+        q.answers.length > 0
+          ? q.answers.map((a) => ({ left: a.text, right: a.zone ?? "" }))
+          : [{ left: "", right: "" }, { left: "", right: "" }]
+      );
+      setQOrderItems([{ text: "" }, { text: "" }]);
+    } else if (q.type === "ORDERING") {
+      setQAnswers([]);
+      setQTextAnswer("");
+      setQDndItems([{ text: "", zone: "" }, { text: "", zone: "" }]);
+      setQAssocPairs([{ left: "", right: "" }, { left: "", right: "" }]);
+      setQOrderItems(
+        q.answers.length > 0
+          ? [...q.answers].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map((a) => ({ text: a.text }))
+          : [{ text: "" }, { text: "" }]
+      );
     } else {
       setQAnswers([]);
       const correctAnswer = q.answers.find((a) => a.isCorrect);
       setQTextAnswer(correctAnswer?.text ?? "");
       setQDndItems([{ text: "", zone: "" }, { text: "", zone: "" }]);
+      setQAssocPairs([{ left: "", right: "" }, { left: "", right: "" }]);
+      setQOrderItems([{ text: "" }, { text: "" }]);
     }
     setFormError("");
     setShowQuestionModal(true);
@@ -549,6 +585,37 @@ export default function ContentPage() {
 
   function updateDndItem(index: number, patch: Partial<{ text: string; zone: string }>) {
     setQDndItems((prev) => prev.map((it, i) => (i === index ? { ...it, ...patch } : it)));
+  }
+
+  /* ── Association helpers ── */
+  function addAssocPair() {
+    setQAssocPairs((prev) => [...prev, { left: "", right: "" }]);
+  }
+  function removeAssocPair(index: number) {
+    setQAssocPairs((prev) => (prev.length <= 2 ? prev : prev.filter((_, i) => i !== index)));
+  }
+  function updateAssocPair(index: number, patch: Partial<{ left: string; right: string }>) {
+    setQAssocPairs((prev) => prev.map((p, i) => (i === index ? { ...p, ...patch } : p)));
+  }
+
+  /* ── Ordering helpers ── */
+  function addOrderItem() {
+    setQOrderItems((prev) => [...prev, { text: "" }]);
+  }
+  function removeOrderItem(index: number) {
+    setQOrderItems((prev) => (prev.length <= 2 ? prev : prev.filter((_, i) => i !== index)));
+  }
+  function updateOrderItem(index: number, text: string) {
+    setQOrderItems((prev) => prev.map((it, i) => (i === index ? { text } : it)));
+  }
+  function moveOrderItem(index: number, dir: -1 | 1) {
+    setQOrderItems((prev) => {
+      const next = [...prev];
+      const target = index + dir;
+      if (target < 0 || target >= next.length) return prev;
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
   }
 
   function addAnswer() {
@@ -616,6 +683,25 @@ export default function ContentPage() {
         return;
       }
       answers = qDndItems.map((it) => ({ text: it.text.trim(), isCorrect: true, zone: it.zone.trim() }));
+    } else if (qType === "ASSOCIATION") {
+      if (qAssocPairs.some((p) => !p.left.trim() || !p.right.trim())) {
+        setFormError("Chaque paire doit avoir un terme gauche et un terme droit");
+        setFormLoading(false);
+        return;
+      }
+      answers = qAssocPairs.map((p) => ({ text: p.left.trim(), isCorrect: true, zone: p.right.trim() }));
+    } else if (qType === "ORDERING") {
+      if (qOrderItems.some((it) => !it.text.trim())) {
+        setFormError("Chaque element doit avoir un texte");
+        setFormLoading(false);
+        return;
+      }
+      if (qOrderItems.length < 2) {
+        setFormError("Au moins 2 elements sont requis");
+        setFormLoading(false);
+        return;
+      }
+      answers = qOrderItems.map((it, i) => ({ text: it.text.trim(), isCorrect: true, order: i }));
     } else {
       if (!qTextAnswer.trim()) {
         setFormError("La reponse correcte est requise");
@@ -1189,11 +1275,11 @@ export default function ContentPage() {
             {/* Type selector */}
             <div>
               <label className="block text-sm font-semibold text-ms-dark mb-2">Type de question</label>
-              <div className="flex gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 <button
                   type="button"
                   onClick={() => setQType("QCM")}
-                  className={`flex-1 px-3 py-2.5 rounded-xl text-sm font-semibold transition border ${
+                  className={`px-3 py-2.5 rounded-xl text-sm font-semibold transition border ${
                     qType === "QCM"
                       ? "bg-ms-blue-light border-ms-blue text-ms-dark"
                       : "bg-white border-ms-light-gray text-ms-gray hover:bg-ms-cream"
@@ -1204,7 +1290,7 @@ export default function ContentPage() {
                 <button
                   type="button"
                   onClick={() => setQType("TEXT")}
-                  className={`flex-1 px-3 py-2.5 rounded-xl text-sm font-semibold transition border ${
+                  className={`px-3 py-2.5 rounded-xl text-sm font-semibold transition border ${
                     qType === "TEXT"
                       ? "bg-ms-yellow-light border-ms-yellow text-ms-dark"
                       : "bg-white border-ms-light-gray text-ms-gray hover:bg-ms-cream"
@@ -1215,13 +1301,35 @@ export default function ContentPage() {
                 <button
                   type="button"
                   onClick={() => setQType("DRAG_DROP")}
-                  className={`flex-1 px-3 py-2.5 rounded-xl text-sm font-semibold transition border ${
+                  className={`px-3 py-2.5 rounded-xl text-sm font-semibold transition border ${
                     qType === "DRAG_DROP"
                       ? "bg-ms-peach-light border-ms-peach text-ms-dark"
                       : "bg-white border-ms-light-gray text-ms-gray hover:bg-ms-cream"
                   }`}
                 >
                   Drag & Drop
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQType("ASSOCIATION")}
+                  className={`px-3 py-2.5 rounded-xl text-sm font-semibold transition border ${
+                    qType === "ASSOCIATION"
+                      ? "bg-ms-green-light border-ms-green text-ms-dark"
+                      : "bg-white border-ms-light-gray text-ms-gray hover:bg-ms-cream"
+                  }`}
+                >
+                  Association
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQType("ORDERING")}
+                  className={`px-3 py-2.5 rounded-xl text-sm font-semibold transition border ${
+                    qType === "ORDERING"
+                      ? "bg-ms-pink-light border-ms-pink text-ms-dark"
+                      : "bg-white border-ms-light-gray text-ms-gray hover:bg-ms-cream"
+                  }`}
+                >
+                  Classement
                 </button>
               </div>
             </div>
@@ -1373,6 +1481,143 @@ export default function ContentPage() {
                 <p className="text-xs text-ms-gray mt-2">
                   Les zones sont derivees automatiquement des valeurs saisies. Au moins 2 zones distinctes sont requises.
                 </p>
+              </div>
+            )}
+
+            {/* Answer - ASSOCIATION */}
+            {qType === "ASSOCIATION" && (
+              <div>
+                <label className="block text-sm font-semibold text-ms-dark mb-2">
+                  Paires à associer
+                  <span className="text-ms-gray font-normal ml-1">(l'élève relie chaque terme de gauche à celui de droite)</span>
+                </label>
+                <div className="space-y-2">
+                  {qAssocPairs.map((pair, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={pair.left}
+                        onChange={(e) => updateAssocPair(index, { left: e.target.value })}
+                        className="flex-1 px-3 py-2 border border-ms-light-gray rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ms-lavender/50 focus:border-ms-lavender transition"
+                        placeholder="Terme de gauche"
+                      />
+                      <span className="text-ms-gray text-sm">↔</span>
+                      <input
+                        type="text"
+                        value={pair.right}
+                        onChange={(e) => updateAssocPair(index, { right: e.target.value })}
+                        className="flex-1 px-3 py-2 border border-ms-light-gray rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ms-lavender/50 focus:border-ms-lavender transition"
+                        placeholder="Terme de droite"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeAssocPair(index)}
+                        disabled={qAssocPairs.length <= 2}
+                        className={`p-1.5 rounded-lg transition ${
+                          qAssocPairs.length <= 2
+                            ? "text-ms-light-gray cursor-not-allowed"
+                            : "text-ms-gray hover:text-ms-pink hover:bg-ms-pink-light"
+                        }`}
+                        title="Supprimer cette paire"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={addAssocPair}
+                  className="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-ms-cream hover:bg-ms-light-gray text-ms-dark rounded-xl text-sm font-semibold transition"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                  </svg>
+                  Ajouter une paire
+                </button>
+              </div>
+            )}
+
+            {/* Answer - ORDERING */}
+            {qType === "ORDERING" && (
+              <div>
+                <label className="block text-sm font-semibold text-ms-dark mb-2">
+                  Éléments dans l'ordre correct
+                  <span className="text-ms-gray font-normal ml-1">(ils seront mélangés pour l'élève)</span>
+                </label>
+                <div className="space-y-2">
+                  {qOrderItems.map((item, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <span className="w-7 h-7 flex items-center justify-center bg-ms-lavender-light text-ms-lavender text-sm font-extrabold rounded-lg shrink-0">
+                        {index + 1}
+                      </span>
+                      <input
+                        type="text"
+                        value={item.text}
+                        onChange={(e) => updateOrderItem(index, e.target.value)}
+                        className="flex-1 px-3 py-2 border border-ms-light-gray rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ms-lavender/50 focus:border-ms-lavender transition"
+                        placeholder={`Élément ${index + 1}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => moveOrderItem(index, -1)}
+                        disabled={index === 0}
+                        className={`p-1.5 rounded-lg transition ${
+                          index === 0
+                            ? "text-ms-light-gray cursor-not-allowed"
+                            : "text-ms-gray hover:text-ms-lavender hover:bg-ms-lavender-light"
+                        }`}
+                        title="Monter"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveOrderItem(index, 1)}
+                        disabled={index === qOrderItems.length - 1}
+                        className={`p-1.5 rounded-lg transition ${
+                          index === qOrderItems.length - 1
+                            ? "text-ms-light-gray cursor-not-allowed"
+                            : "text-ms-gray hover:text-ms-lavender hover:bg-ms-lavender-light"
+                        }`}
+                        title="Descendre"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeOrderItem(index)}
+                        disabled={qOrderItems.length <= 2}
+                        className={`p-1.5 rounded-lg transition ${
+                          qOrderItems.length <= 2
+                            ? "text-ms-light-gray cursor-not-allowed"
+                            : "text-ms-gray hover:text-ms-pink hover:bg-ms-pink-light"
+                        }`}
+                        title="Supprimer"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={addOrderItem}
+                  className="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-ms-cream hover:bg-ms-light-gray text-ms-dark rounded-xl text-sm font-semibold transition"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                  </svg>
+                  Ajouter un élément
+                </button>
               </div>
             )}
 
