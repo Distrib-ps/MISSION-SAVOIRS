@@ -17,7 +17,7 @@ const PORT = process.env.PORT || 3001;
 
 // Middlewares
 app.use(cors({ origin: process.env.CLIENT_URL || "http://localhost:5173" }));
-app.use(express.json());
+app.use(express.json({ limit: "10mb" })); // 10mb pour supporter les dessins base64
 
 // Health check
 app.get("/api/health", (_req, res) => {

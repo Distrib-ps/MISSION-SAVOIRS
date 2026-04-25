@@ -8,7 +8,7 @@ const router = Router();
 // All routes require authentication + admin role
 router.use(authenticate, requireAdmin);
 
-const VALID_QUESTION_TYPES: string[] = ["QCM", "TEXT", "DRAG_DROP", "ASSOCIATION", "ORDERING"];
+const VALID_QUESTION_TYPES: string[] = ["QCM", "TEXT", "DRAG_DROP", "ASSOCIATION", "ORDERING", "DRAWING"];
 
 // ---------- GET / - List questions for a given quiz with answers ----------
 router.get("/", async (req: Request, res: Response): Promise<void> => {
@@ -60,7 +60,7 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
     if (!VALID_QUESTION_TYPES.includes(type)) {
       res
         .status(400)
-        .json({ error: "Type invalide. Utilisez QCM, TEXT, DRAG_DROP, ASSOCIATION ou ORDERING" });
+        .json({ error: "Type invalide. Utilisez QCM, TEXT, DRAG_DROP, ASSOCIATION, ORDERING ou DRAWING" });
       return;
     }
 
@@ -69,11 +69,14 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    if (!answers || !Array.isArray(answers) || answers.length === 0) {
-      res
-        .status(400)
-        .json({ error: "Au moins une réponse est requise" });
-      return;
+    // DRAWING questions don't need predefined answers (free-form drawing)
+    if (type !== "DRAWING") {
+      if (!answers || !Array.isArray(answers) || answers.length === 0) {
+        res
+          .status(400)
+          .json({ error: "Au moins une réponse est requise" });
+        return;
+      }
     }
 
     // Verify quiz exists
@@ -90,6 +93,8 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
     });
     const nextOrder = (maxOrder._max.order ?? -1) + 1;
 
+    const answerList = Array.isArray(answers) ? answers : [];
+
     const question = await prisma.question.create({
       data: {
         text,
@@ -99,7 +104,7 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
         quizId,
         order: nextOrder,
         answers: {
-          create: answers.map(
+          create: answerList.map(
             (a: { text: string; isCorrect?: boolean; zone?: string | null; order?: number }, idx: number) => ({
               text: a.text,
               isCorrect: a.isCorrect ?? false,
@@ -173,13 +178,18 @@ router.put("/:id", async (req: Request, res: Response): Promise<void> => {
     if (type !== undefined && !VALID_QUESTION_TYPES.includes(type)) {
       res
         .status(400)
-        .json({ error: "Type invalide. Utilisez QCM, TEXT, DRAG_DROP, ASSOCIATION ou ORDERING" });
+        .json({ error: "Type invalide. Utilisez QCM, TEXT, DRAG_DROP, ASSOCIATION, ORDERING ou DRAWING" });
       return;
     }
 
     // If answers are provided, delete existing and create new ones in a transaction
+    const effectiveType = (type ?? existing.type) as string;
     if (answers !== undefined) {
-      if (!Array.isArray(answers) || answers.length === 0) {
+      if (!Array.isArray(answers)) {
+        res.status(400).json({ error: "Format des réponses invalide" });
+        return;
+      }
+      if (effectiveType !== "DRAWING" && answers.length === 0) {
         res
           .status(400)
           .json({ error: "Au moins une réponse est requise" });
@@ -238,6 +248,61 @@ router.put("/:id", async (req: Request, res: Response): Promise<void> => {
     }
   } catch (error) {
     console.error("Erreur lors de la mise à jour de la question:", error);
+    res.status(500).json({ error: "Erreur interne du serveur" });
+  }
+});
+
+// ---------- GET /:id/drawings - List all submitted drawings for a DRAWING question ----------
+router.get("/:id/drawings", async (req: Request, res: Response): Promise<void> => {
+  try {
+    const rawId = req.params.id;
+    const id = parseInt(Array.isArray(rawId) ? rawId[0] : rawId, 10);
+
+    if (isNaN(id)) {
+      res.status(400).json({ error: "ID invalide" });
+      return;
+    }
+
+    const question = await prisma.question.findUnique({ where: { id } });
+    if (!question) {
+      res.status(404).json({ error: "Question introuvable" });
+      return;
+    }
+    if (question.type !== "DRAWING") {
+      res.status(400).json({ error: "Cette question n'est pas de type DRAWING" });
+      return;
+    }
+
+    const attempts = await prisma.questionAttempt.findMany({
+      where: { questionId: id },
+      orderBy: { id: "desc" },
+      include: {
+        quizAttempt: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                firstName: true,
+                lastName: true,
+                level: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const drawings = attempts.map((a) => ({
+      id: a.id,
+      user: a.quizAttempt.user,
+      givenAnswer: a.givenAnswer, // base64 data URL
+      submittedAt: a.quizAttempt.completedAt,
+    }));
+
+    res.json({ drawings });
+  } catch (error) {
+    console.error("Erreur lors de la récupération des dessins:", error);
     res.status(500).json({ error: "Erreur interne du serveur" });
   }
 });

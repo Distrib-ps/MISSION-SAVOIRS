@@ -167,6 +167,7 @@ router.post(
             q.answers.map((a) => ({ id: a.id, text: a.text }))
           );
         }
+        // DRAWING: no answers payload needed, the student draws freely
         // For TEXT questions: don't include answers at all
 
         return base;
@@ -314,6 +315,12 @@ router.post(
 
         const correctLines = question.answers.map((a) => `${a.text} ↔ ${a.zone ?? ""}`);
         correctAnswerText = correctLines.join(" ; ");
+      } else if (question.type === "DRAWING") {
+        // Drawing questions are always "correct" (manual evaluation by teacher)
+        // Store the base64 image data in givenAnswer
+        isCorrect = true;
+        givenAnswerText = answer; // base64 data URL
+        correctAnswerText = "";   // no auto-correction
       } else if (question.type === "ORDERING") {
         // answer is a JSON string: array of answerIds in the user's chosen order
         let orderedIds: number[] = [];

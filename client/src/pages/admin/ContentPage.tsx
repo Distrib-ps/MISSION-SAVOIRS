@@ -23,13 +23,14 @@ const API_QUESTIONS = "/api/admin/questions";
 /*  Type badge                                                         */
 /* ------------------------------------------------------------------ */
 
-function TypeBadge({ type }: { type: "QCM" | "TEXT" | "DRAG_DROP" | "ASSOCIATION" | "ORDERING" }) {
+function TypeBadge({ type }: { type: "QCM" | "TEXT" | "DRAG_DROP" | "ASSOCIATION" | "ORDERING" | "DRAWING" }) {
   const map: Record<string, { label: string; bg: string }> = {
     QCM: { label: "QCM", bg: "bg-ms-blue-light" },
     TEXT: { label: "TEXTE", bg: "bg-ms-yellow-light" },
     DRAG_DROP: { label: "DRAG & DROP", bg: "bg-ms-peach-light" },
     ASSOCIATION: { label: "ASSOCIATION", bg: "bg-ms-green-light" },
     ORDERING: { label: "CLASSEMENT", bg: "bg-ms-pink-light" },
+    DRAWING: { label: "DESSIN", bg: "bg-ms-lavender-light" },
   };
   const { label, bg } = map[type];
   return (
@@ -130,6 +131,15 @@ export default function ContentPage() {
   const [showQuestionModal, setShowQuestionModal] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<{ type: string; id: number; label: string } | null>(null);
+  /* Drawings viewer for DRAWING questions */
+  const [drawingsModal, setDrawingsModal] = useState<{ questionId: number; questionText: string } | null>(null);
+  const [drawingsList, setDrawingsList] = useState<Array<{
+    id: number;
+    givenAnswer: string;
+    submittedAt: string;
+    user: { id: number; username: string; firstName: string; lastName: string; level: string | null };
+  }>>([]);
+  const [drawingsLoading, setDrawingsLoading] = useState(false);
 
   /* ---- Form state ---- */
   const [formName, setFormName] = useState("");
@@ -140,7 +150,7 @@ export default function ContentPage() {
   const [formError, setFormError] = useState("");
 
   /* ---- Question form state ---- */
-  const [qType, setQType] = useState<"QCM" | "TEXT" | "DRAG_DROP" | "ASSOCIATION" | "ORDERING">("QCM");
+  const [qType, setQType] = useState<"QCM" | "TEXT" | "DRAG_DROP" | "ASSOCIATION" | "ORDERING" | "DRAWING">("QCM");
   const [qText, setQText] = useState("");
   const [qHint, setQHint] = useState("");
   const [qSolution, setQSolution] = useState("");
@@ -608,6 +618,22 @@ export default function ContentPage() {
   function updateOrderItem(index: number, text: string) {
     setQOrderItems((prev) => prev.map((it, i) => (i === index ? { text } : it)));
   }
+  async function openDrawingsModal(q: Question) {
+    setDrawingsModal({ questionId: q.id, questionText: q.text });
+    setDrawingsList([]);
+    setDrawingsLoading(true);
+    try {
+      const res = await fetch(`${API_QUESTIONS}/${q.id}/drawings`, { headers: authHeaders() });
+      if (!res.ok) throw new Error("Impossible de charger les dessins");
+      const data = await res.json();
+      setDrawingsList(data.drawings ?? []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setDrawingsLoading(false);
+    }
+  }
+
   function moveOrderItem(index: number, dir: -1 | 1) {
     setQOrderItems((prev) => {
       const next = [...prev];
@@ -702,6 +728,9 @@ export default function ContentPage() {
         return;
       }
       answers = qOrderItems.map((it, i) => ({ text: it.text.trim(), isCorrect: true, order: i }));
+    } else if (qType === "DRAWING") {
+      // No predefined answers: free-form drawing
+      answers = [];
     } else {
       if (!qTextAnswer.trim()) {
         setFormError("La reponse correcte est requise");
@@ -1148,6 +1177,18 @@ export default function ContentPage() {
                 )}
 
                 <div className="flex items-center gap-1">
+                  {q.type === "DRAWING" && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); openDrawingsModal(q); }}
+                      className="p-2 text-ms-gray hover:text-ms-lavender hover:bg-ms-lavender-light rounded-xl transition"
+                      title="Voir les dessins soumis"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    </button>
+                  )}
                   <button
                     onClick={(e) => { e.stopPropagation(); openQuestionEdit(q); }}
                     className="p-2 text-ms-gray hover:text-ms-lavender hover:bg-ms-lavender-light rounded-xl transition"
@@ -1330,6 +1371,17 @@ export default function ContentPage() {
                   }`}
                 >
                   Classement
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQType("DRAWING")}
+                  className={`px-3 py-2.5 rounded-xl text-sm font-semibold transition border ${
+                    qType === "DRAWING"
+                      ? "bg-ms-lavender-light border-ms-lavender text-ms-dark"
+                      : "bg-white border-ms-light-gray text-ms-gray hover:bg-ms-cream"
+                  }`}
+                >
+                  Dessin
                 </button>
               </div>
             </div>
@@ -1537,6 +1589,16 @@ export default function ContentPage() {
                   </svg>
                   Ajouter une paire
                 </button>
+              </div>
+            )}
+
+            {/* Answer - DRAWING (info only) */}
+            {qType === "DRAWING" && (
+              <div className="bg-ms-lavender-light/50 border border-ms-lavender/40 rounded-2xl p-4 text-sm text-ms-dark">
+                <p className="font-bold mb-1">Question à réponse libre (dessin)</p>
+                <p className="text-ms-gray">
+                  L'élève disposera d'une zone de dessin pour répondre à la consigne. Ces réponses demandent une évaluation manuelle ; elles sont marquées comme complétées automatiquement.
+                </p>
               </div>
             )}
 
@@ -1932,6 +1994,69 @@ export default function ContentPage() {
 
         {renderQuestionModal()}
         {renderDeleteConfirm()}
+
+        {/* ---- Drawings viewer modal ---- */}
+        {drawingsModal && (
+          <div
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setDrawingsModal(null)}
+          >
+            <div
+              className="bg-white rounded-2xl shadow-xl w-full max-w-4xl p-6 max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-extrabold text-ms-dark">Dessins soumis</h3>
+                  <p className="text-sm text-ms-gray mt-1">{drawingsModal.questionText}</p>
+                </div>
+                <button
+                  onClick={() => setDrawingsModal(null)}
+                  className="w-9 h-9 rounded-full bg-ms-cream hover:bg-ms-light-gray flex items-center justify-center transition shrink-0"
+                  aria-label="Fermer"
+                >
+                  <svg className="w-5 h-5 text-ms-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {drawingsLoading ? (
+                <div className="flex justify-center py-12">
+                  <div className="w-10 h-10 border-4 border-ms-lavender border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : drawingsList.length === 0 ? (
+                <div className="text-center py-12 text-ms-gray">
+                  <p className="font-semibold">Aucun dessin soumis pour le moment</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {drawingsList.map((d) => (
+                    <div key={d.id} className="border border-ms-light-gray rounded-2xl overflow-hidden bg-ms-cream/50">
+                      <img
+                        src={d.givenAnswer}
+                        alt={`Dessin de ${d.user.firstName}`}
+                        className="w-full h-48 object-contain bg-white"
+                        loading="lazy"
+                      />
+                      <div className="p-3">
+                        <p className="font-bold text-ms-dark text-sm">
+                          {d.user.firstName} {d.user.lastName}
+                        </p>
+                        <p className="text-xs text-ms-gray mt-0.5">
+                          {d.user.username}{d.user.level ? ` · ${d.user.level}` : ""}
+                        </p>
+                        <p className="text-xs text-ms-gray/80 mt-1">
+                          {new Date(d.submittedAt).toLocaleString("fr-FR")}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </AdminLayout>
   );

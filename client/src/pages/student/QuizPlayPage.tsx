@@ -5,6 +5,7 @@ import StudentLayout from "../../components/student/StudentLayout";
 import DragDropAnswers from "../../components/student/DragDropAnswers";
 import AssociationAnswers from "../../components/student/AssociationAnswers";
 import OrderingAnswers from "../../components/student/OrderingAnswers";
+import DrawingCanvas from "../../components/student/DrawingCanvas";
 import type { QuizQuestion, QuizSession, AnswerResult, QuizResults } from "../../types";
 
 /* ── Confetti helpers ── */
@@ -341,6 +342,9 @@ export default function QuizPlayPage() {
           onSubmitOrder={(orderedIds) => {
             submitAnswer(JSON.stringify(orderedIds));
           }}
+          onSubmitDrawing={(base64) => {
+            submitAnswer(base64);
+          }}
           onAdvance={advanceToNext}
         />
       )}
@@ -427,6 +431,7 @@ function PlayingScreen({
   onSubmitDnd,
   onSubmitAssoc,
   onSubmitOrder,
+  onSubmitDrawing,
   onAdvance,
 }: {
   question: QuizQuestion;
@@ -444,6 +449,7 @@ function PlayingScreen({
   onSubmitDnd: (mapping: Record<number, string>) => void;
   onSubmitAssoc: (mapping: Record<number, string>) => void;
   onSubmitOrder: (orderedIds: number[]) => void;
+  onSubmitDrawing: (base64: string) => void;
   onAdvance: () => void;
 }) {
   const progressPct = ((index + 1) / total) * 100;
@@ -631,6 +637,14 @@ function PlayingScreen({
               submitting={submitting}
               resetKey={attempt.attempts}
               onSubmit={onSubmitOrder}
+            />
+          )}
+
+          {question.type === "DRAWING" && (
+            <DrawingCanvas
+              submitting={submitting}
+              resetKey={attempt.attempts}
+              onSubmit={onSubmitDrawing}
             />
           )}
         </>

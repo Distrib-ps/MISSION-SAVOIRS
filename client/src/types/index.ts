@@ -83,7 +83,7 @@ export interface Answer {
 export interface Question {
   id: number;
   text: string;
-  type: "QCM" | "TEXT" | "DRAG_DROP" | "ASSOCIATION" | "ORDERING";
+  type: "QCM" | "TEXT" | "DRAG_DROP" | "ASSOCIATION" | "ORDERING" | "DRAWING";
   hint: string | null;
   solution: string | null;
   order: number;
@@ -128,7 +128,7 @@ export interface StudentQuiz {
 export interface QuizQuestion {
   id: number;
   text: string;
-  type: "QCM" | "TEXT" | "DRAG_DROP" | "ASSOCIATION" | "ORDERING";
+  type: "QCM" | "TEXT" | "DRAG_DROP" | "ASSOCIATION" | "ORDERING" | "DRAWING";
   hint: string | null;
   solution: string | null;
   order: number;
@@ -159,7 +159,7 @@ export interface QuizResults {
   questions: {
     id: number;
     text: string;
-    type: "QCM" | "TEXT" | "DRAG_DROP" | "ASSOCIATION" | "ORDERING";
+    type: "QCM" | "TEXT" | "DRAG_DROP" | "ASSOCIATION" | "ORDERING" | "DRAWING";
     givenAnswer: string;
     isCorrect: boolean;
     usedHint: boolean;

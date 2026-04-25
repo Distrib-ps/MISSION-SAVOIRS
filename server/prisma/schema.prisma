@@ -95,6 +95,7 @@ enum QuestionType {
   DRAG_DROP    // Glisser-déposer (items à placer dans des zones)
   ASSOCIATION  // Relier des paires (colonne gauche ↔ colonne droite)
   ORDERING     // Remettre des éléments dans le bon ordre
+  DRAWING      // Zone de dessin libre (évaluation manuelle)
 }
 
 model Question {
