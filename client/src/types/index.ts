@@ -258,8 +258,28 @@ export interface StudentStatRow {
 export interface StudentStatDetail {
   student: { id: number; name: string; level: SchoolLevel | null };
   summary: { attempts: number; completed: number; avgSuccessRate: number };
+  perQuiz: {
+    quizId: number;
+    title: string;
+    theme: string;
+    attempts: number;
+    bestRate: number;
+    lastRate: number;
+    lastScore: number;
+    total: number;
+    hintCount: number;
+    completed: boolean;
+  }[];
   perTheme: { themeId: number; name: string; emoji: string; attempts: number; successRate: number }[];
   progression: { date: string; quizTitle: string; score: number; total: number; rate: number }[];
+  weakPoints: {
+    questionId: number;
+    text: string;
+    quiz: string;
+    emoji: string;
+    wrongCount: number;
+    recovered: boolean;
+  }[];
   hintUsageRate: number;
   reinjection: { failed: number; recovered: number; recoveryRate: number };
 }

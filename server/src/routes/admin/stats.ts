@@ -236,11 +236,13 @@ router.get("/students/:id", async (req: Request, res: Response): Promise<void> =
       where: { userId: id, quizId: { not: null } },
       orderBy: { completedAt: "asc" },
       select: {
+        quizId: true,
         score: true,
         totalQuestions: true,
         completedAt: true,
         quiz: {
           select: {
+            id: true,
             title: true,
             subTheme: { select: { theme: { select: { id: true, name: true, emoji: true } } } },
           },
@@ -274,14 +276,94 @@ router.get("/students/:id", async (req: Request, res: Response): Promise<void> =
       rate: a.totalQuestions > 0 ? Math.round((a.score / a.totalQuestions) * 100) : 0,
     }));
 
-    // Indices + réinjection (cet élève)
+    // Indices + réinjection + points faibles (avec détail question)
     const qAttempts = await prisma.questionAttempt.findMany({
       where: { quizAttempt: { userId: id, quizId: { not: null } } },
-      select: { questionId: true, isCorrect: true, usedHint: true, quizAttempt: { select: { userId: true } } },
+      select: {
+        questionId: true,
+        isCorrect: true,
+        usedHint: true,
+        quizAttempt: { select: { userId: true, quizId: true } },
+        question: {
+          select: {
+            text: true,
+            quiz: {
+              select: { title: true, subTheme: { select: { theme: { select: { name: true, emoji: true } } } } },
+            },
+          },
+        },
+      },
     });
     const hintUsed = qAttempts.filter((q) => q.usedHint).length;
     const hintUsageRate = qAttempts.length > 0 ? Math.round((hintUsed / qAttempts.length) * 100) : 0;
     const reinjection = computeReinjection(qAttempts);
+
+    // Par quiz : agrège les tentatives de l'élève par quiz
+    const hintByQuiz = new Map<number, number>();
+    for (const q of qAttempts) {
+      const qid = q.quizAttempt.quizId;
+      if (qid != null && q.usedHint) hintByQuiz.set(qid, (hintByQuiz.get(qid) ?? 0) + 1);
+    }
+    const byQuiz = new Map<number, { title: string; theme: string; items: typeof attempts }>();
+    for (const a of attempts) {
+      if (!a.quiz) continue;
+      const cur = byQuiz.get(a.quiz.id) ?? {
+        title: a.quiz.title,
+        theme: a.quiz.subTheme?.theme?.name ?? "—",
+        items: [] as typeof attempts,
+      };
+      cur.items.push(a);
+      byQuiz.set(a.quiz.id, cur);
+    }
+    const perQuiz = [...byQuiz.entries()].map(([quizId, v]) => {
+      const rate = (x: { score: number; totalQuestions: number }) =>
+        x.totalQuestions > 0 ? Math.round((x.score / x.totalQuestions) * 100) : 0;
+      const bestRate = Math.max(...v.items.map(rate));
+      const last = v.items[v.items.length - 1]; // items triés par completedAt asc
+      return {
+        quizId,
+        title: v.title,
+        theme: v.theme,
+        attempts: v.items.length,
+        bestRate,
+        lastRate: rate(last),
+        lastScore: last.score,
+        total: last.totalQuestions,
+        hintCount: hintByQuiz.get(quizId) ?? 0,
+        completed: v.items.some(isCompleted),
+      };
+    });
+
+    // Points faibles : questions les plus ratées par l'élève
+    const byQuestion = new Map<
+      number,
+      { text: string; quiz: string; emoji: string; wrong: number; correct: boolean }
+    >();
+    for (const q of qAttempts) {
+      const cur =
+        byQuestion.get(q.questionId) ?? {
+          text: q.question?.text ?? "—",
+          quiz: q.question?.quiz?.title ?? "—",
+          emoji: q.question?.quiz?.subTheme?.theme?.emoji ?? "",
+          wrong: 0,
+          correct: false,
+        };
+      if (q.isCorrect) cur.correct = true;
+      else cur.wrong += 1;
+      byQuestion.set(q.questionId, cur);
+    }
+    const weakPoints = [...byQuestion.entries()]
+      .filter(([, v]) => v.wrong > 0)
+      .map(([questionId, v]) => ({
+        questionId,
+        text: v.text,
+        quiz: v.quiz,
+        emoji: v.emoji,
+        wrongCount: v.wrong,
+        recovered: v.correct,
+      }))
+      .sort((a, b) => b.wrongCount - a.wrongCount)
+      .slice(0, 10);
 
     res.json({
       student: {
@@ -294,8 +376,10 @@ router.get("/students/:id", async (req: Request, res: Response): Promise<void> =
         completed: attempts.filter(isCompleted).length,
         avgSuccessRate: successRate(attempts),
       },
+      perQuiz,
       perTheme,
       progression,
+      weakPoints,
       hintUsageRate,
       reinjection,
     });
