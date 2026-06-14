@@ -22,19 +22,44 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    const now = new Date();
     const revisions = await prisma.revision.findMany({
-      where: { targetLevel: user.level },
+      where: {
+        targetLevel: user.level,
+        // exclut les révisions dont la date de fin est passée
+        OR: [{ endDate: null }, { endDate: { gte: now } }],
+      },
       orderBy: { createdAt: "desc" },
       include: { _count: { select: { questions: true } } },
     });
 
+    // Meilleur score par révision (tentatives stampées revisionQuizId)
+    const attempts = await prisma.quizAttempt.findMany({
+      where: { userId, revisionQuizId: { in: revisions.map((r) => r.id) } },
+      select: { revisionQuizId: true, score: true, totalQuestions: true },
+    });
+    const bestByRev = new Map<number, { score: number; totalQuestions: number }>();
+    for (const a of attempts) {
+      if (a.revisionQuizId == null) continue;
+      const prev = bestByRev.get(a.revisionQuizId);
+      if (!prev || a.score > prev.score) {
+        bestByRev.set(a.revisionQuizId, { score: a.score, totalQuestions: a.totalQuestions });
+      }
+    }
+
     res.json({
-      revisions: revisions.map((r) => ({
-        id: r.id,
-        name: r.name,
-        description: r.description,
-        totalQuestions: r._count.questions,
-      })),
+      revisions: revisions.map((r) => {
+        const best = bestByRev.get(r.id);
+        return {
+          id: r.id,
+          name: r.name,
+          description: r.description,
+          totalQuestions: r._count.questions,
+          endDate: r.endDate,
+          bestScore: best?.score ?? null,
+          completed: best ? best.score >= Math.ceil(best.totalQuestions * 0.7) : false,
+        };
+      }),
     });
   } catch (error) {
     console.error("Erreur student revisions GET:", error);

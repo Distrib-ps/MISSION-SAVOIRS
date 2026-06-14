@@ -63,10 +63,11 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
 /* ── POST / - Créer une révision ── */
 router.post("/", async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, description, targetLevel, questionIds } = req.body as {
+    const { name, description, targetLevel, endDate, questionIds } = req.body as {
       name: string;
       description?: string | null;
       targetLevel: SchoolLevel;
+      endDate?: string | null;
       questionIds: number[];
     };
 
@@ -88,6 +89,7 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
         name,
         description: description ?? null,
         targetLevel,
+        endDate: endDate ? new Date(endDate) : null,
         questions: {
           create: questionIds.map((questionId, index) => ({
             questionId,
@@ -121,10 +123,11 @@ router.put("/:id", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const { name, description, targetLevel, questionIds } = req.body as {
+    const { name, description, targetLevel, endDate, questionIds } = req.body as {
       name?: string;
       description?: string | null;
       targetLevel?: SchoolLevel;
+      endDate?: string | null;
       questionIds?: number[];
     };
 
@@ -138,6 +141,7 @@ router.put("/:id", async (req: Request, res: Response): Promise<void> => {
       if (name !== undefined) data.name = name;
       if (description !== undefined) data.description = description;
       if (targetLevel !== undefined) data.targetLevel = targetLevel;
+      if (endDate !== undefined) data.endDate = endDate ? new Date(endDate) : null;
 
       if (questionIds !== undefined) {
         if (!Array.isArray(questionIds) || questionIds.length === 0) {

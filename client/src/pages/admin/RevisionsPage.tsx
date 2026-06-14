@@ -22,6 +22,7 @@ export default function RevisionsPage() {
   const [formName, setFormName] = useState("");
   const [formDescription, setFormDescription] = useState("");
   const [formLevel, setFormLevel] = useState<SchoolLevel>("CP");
+  const [formEndDate, setFormEndDate] = useState(""); // "YYYY-MM-DD" ou "" (pas de date de fin)
   const [formQuestionIds, setFormQuestionIds] = useState<number[]>([]);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -41,6 +42,7 @@ export default function RevisionsPage() {
     setFormName("");
     setFormDescription("");
     setFormLevel("CP");
+    setFormEndDate("");
     setFormQuestionIds([]);
     setFormError(null);
     setEditing("new");
@@ -50,6 +52,7 @@ export default function RevisionsPage() {
     setFormName(r.name);
     setFormDescription(r.description ?? "");
     setFormLevel(r.targetLevel);
+    setFormEndDate(r.endDate ? r.endDate.slice(0, 10) : "");
     setFormQuestionIds(r.questions.map((q) => q.question.id));
     setFormError(null);
     setEditing(r);
@@ -71,6 +74,7 @@ export default function RevisionsPage() {
         name: formName.trim(),
         description: formDescription.trim() || null,
         targetLevel: formLevel,
+        endDate: formEndDate || null,
         questionIds: formQuestionIds,
       };
       const isNew = editing === "new";
@@ -154,14 +158,27 @@ export default function RevisionsPage() {
             </div>
           </div>
 
-          <div className="mb-4">
-            <label className="block text-xs font-bold uppercase text-ms-gray mb-1">Description (optionnelle)</label>
-            <input
-              value={formDescription}
-              onChange={(e) => setFormDescription(e.target.value)}
-              placeholder="Un peu de maths, un peu de français..."
-              className="w-full px-3 py-2 border border-ms-light-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-ms-lavender/40"
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-bold uppercase text-ms-gray mb-1">Description (optionnelle)</label>
+              <input
+                value={formDescription}
+                onChange={(e) => setFormDescription(e.target.value)}
+                placeholder="Un peu de maths, un peu de français..."
+                className="w-full px-3 py-2 border border-ms-light-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-ms-lavender/40"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase text-ms-gray mb-1">
+                Date de fin (optionnelle)
+              </label>
+              <input
+                type="date"
+                value={formEndDate}
+                onChange={(e) => setFormEndDate(e.target.value)}
+                className="w-full px-3 py-2 border border-ms-light-gray rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-ms-lavender/40"
+              />
+            </div>
           </div>
 
           <label className="block text-xs font-bold uppercase text-ms-gray mb-2">Questions</label>
@@ -220,6 +237,11 @@ export default function RevisionsPage() {
                   <p className="text-sm text-ms-gray truncate">
                     {r.questions.length} question{r.questions.length > 1 ? "s" : ""}
                     {r.description ? ` · ${r.description}` : ""}
+                    {r.endDate
+                      ? ` · ${new Date(r.endDate) < new Date() ? "expirée le" : "jusqu'au"} ${new Date(
+                          r.endDate,
+                        ).toLocaleDateString("fr-FR")}`
+                      : ""}
                   </p>
                 </div>
                 <button

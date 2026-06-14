@@ -203,6 +203,7 @@ model Revision {
   name        String
   description String?
   targetLevel SchoolLevel // niveau scolaire ciblé (CP → CM2)
+  endDate     DateTime?   // date de fin optionnelle : au-delà, la révision n'est plus proposée aux élèves
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 

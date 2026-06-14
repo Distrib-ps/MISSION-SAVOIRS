@@ -169,6 +169,9 @@ export interface StudentRevision {
   name: string;
   description: string | null;
   totalQuestions: number;
+  endDate: string | null;
+  bestScore: number | null;
+  completed: boolean;
 }
 
 // Vue admin (CRUD)
@@ -191,6 +194,7 @@ export interface AdminRevision {
   name: string;
   description: string | null;
   targetLevel: SchoolLevel;
+  endDate: string | null;
   questions: AdminRevisionQuestion[];
 }
 

@@ -86,19 +86,39 @@ export default function StudentDashboard() {
               <button
                 key={rev.id}
                 onClick={() => navigate(`/revisions/${rev.id}`)}
-                className="bg-gradient-to-br from-ms-yellow-light to-ms-peach-light border-2 border-ms-yellow/50 rounded-3xl p-6 text-left hover:shadow-lg hover:scale-[1.01] transition-all duration-200 cursor-pointer"
+                className={`rounded-3xl p-6 text-left hover:shadow-lg hover:scale-[1.01] transition-all duration-200 cursor-pointer border-2 ${
+                  rev.completed
+                    ? "bg-ms-green-light border-ms-green/50"
+                    : "bg-gradient-to-br from-ms-yellow-light to-ms-peach-light border-ms-yellow/50"
+                }`}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-ms-yellow rounded-2xl flex items-center justify-center text-white text-xl shadow-sm shrink-0 animate-pulse">
-                    &#11088;
+                  <div
+                    className={`w-12 h-12 rounded-2xl flex items-center justify-center text-white text-xl shadow-sm shrink-0 ${
+                      rev.completed ? "bg-ms-green" : "bg-ms-yellow animate-pulse"
+                    }`}
+                  >
+                    {rev.completed ? (
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      <span>&#11088;</span>
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <span className="inline-block bg-ms-yellow text-white text-xs font-bold px-2 py-0.5 rounded-full mb-1">
-                      Révision
+                    <span
+                      className={`inline-block text-white text-xs font-bold px-2 py-0.5 rounded-full mb-1 ${
+                        rev.completed ? "bg-ms-green" : "bg-ms-yellow"
+                      }`}
+                    >
+                      {rev.completed ? "Terminé" : "Révision"}
                     </span>
                     <h3 className="font-extrabold text-ms-dark text-lg truncate">{rev.name}</h3>
                     <p className="text-sm text-ms-gray truncate">
-                      {rev.description || `${rev.totalQuestions} questions à réviser`}
+                      {rev.completed
+                        ? `Réussie : ${rev.bestScore}/${rev.totalQuestions} — rejouer ?`
+                        : rev.description || `${rev.totalQuestions} questions à réviser`}
                     </p>
                   </div>
                 </div>
