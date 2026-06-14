@@ -1,11 +1,12 @@
 import { Router, Request, Response } from "express";
 import { SchoolLevel } from "@prisma/client";
 import prisma from "../../lib/prisma";
-import { authenticate, requireAdmin } from "../../middleware/auth";
+import { authenticate, requireStaff } from "../../middleware/auth";
+import { contentOwnerWhere, currentUserId, isOwner } from "../../lib/ownership";
 
 const router = Router();
 
-router.use(authenticate, requireAdmin);
+router.use(authenticate, requireStaff);
 
 const LEVELS: SchoolLevel[] = ["CP", "CE1", "CE2", "CM1", "CM2"];
 
@@ -42,7 +43,9 @@ const questionInclude = {
 router.get("/", async (req: Request, res: Response): Promise<void> => {
   try {
     const { level } = req.query;
-    const where: { targetLevel?: SchoolLevel } = {};
+    const where: { targetLevel?: SchoolLevel; createdById?: number } = {
+      ...contentOwnerWhere(req),
+    };
     if (typeof level === "string" && LEVELS.includes(level as SchoolLevel)) {
       where.targetLevel = level as SchoolLevel;
     }
@@ -90,6 +93,7 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
         description: description ?? null,
         targetLevel,
         endDate: endDate ? new Date(endDate) : null,
+        createdById: currentUserId(req),
         questions: {
           create: questionIds.map((questionId, index) => ({
             questionId,
@@ -120,6 +124,11 @@ router.put("/:id", async (req: Request, res: Response): Promise<void> => {
     const existing = await prisma.revision.findUnique({ where: { id } });
     if (!existing) {
       res.status(404).json({ error: "Révision introuvable" });
+      return;
+    }
+
+    if (!isOwner(req) && existing.createdById !== currentUserId(req)) {
+      res.status(403).json({ error: "Accès refusé : contenu d'un autre professeur" });
       return;
     }
 
@@ -180,6 +189,11 @@ router.delete("/:id", async (req: Request, res: Response): Promise<void> => {
     const existing = await prisma.revision.findUnique({ where: { id } });
     if (!existing) {
       res.status(404).json({ error: "Révision introuvable" });
+      return;
+    }
+
+    if (!isOwner(req) && existing.createdById !== currentUserId(req)) {
+      res.status(403).json({ error: "Accès refusé : contenu d'un autre professeur" });
       return;
     }
 

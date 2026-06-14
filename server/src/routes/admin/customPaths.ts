@@ -1,10 +1,21 @@
 import { Router, Request, Response } from "express";
 import prisma from "../../lib/prisma";
-import { authenticate, requireAdmin } from "../../middleware/auth";
+import { authenticate, requireStaff } from "../../middleware/auth";
+import { isOwner, currentUserId } from "../../lib/ownership";
 
 const router = Router();
 
-router.use(authenticate, requireAdmin);
+router.use(authenticate, requireStaff);
+
+/** Un prof ne gère que les parcours des élèves de ses classes (Owner = tout). */
+async function studentInScope(req: Request, studentId: number): Promise<boolean> {
+  if (isOwner(req)) return true;
+  const s = await prisma.user.findFirst({
+    where: { id: studentId, class: { teacherId: currentUserId(req) } },
+    select: { id: true },
+  });
+  return !!s;
+}
 
 /* ── GET /?userId=X - List custom paths for a user ── */
 router.get("/", async (req: Request, res: Response): Promise<void> => {
@@ -17,6 +28,10 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
     const parsedUserId = parseInt(userId, 10);
     if (isNaN(parsedUserId)) {
       res.status(400).json({ error: "userId invalide" });
+      return;
+    }
+    if (!(await studentInScope(req, parsedUserId))) {
+      res.status(403).json({ error: "Cet élève n'est pas dans vos classes" });
       return;
     }
 
@@ -77,6 +92,10 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
       res.status(404).json({ error: "Utilisateur introuvable" });
       return;
     }
+    if (!(await studentInScope(req, userId))) {
+      res.status(403).json({ error: "Cet élève n'est pas dans vos classes" });
+      return;
+    }
 
     const path = await prisma.customPath.create({
       data: {
@@ -115,6 +134,10 @@ router.put("/:id", async (req: Request, res: Response): Promise<void> => {
     const existing = await prisma.customPath.findUnique({ where: { id } });
     if (!existing) {
       res.status(404).json({ error: "Parcours introuvable" });
+      return;
+    }
+    if (!(await studentInScope(req, existing.userId))) {
+      res.status(403).json({ error: "Cet élève n'est pas dans vos classes" });
       return;
     }
 
@@ -173,6 +196,10 @@ router.delete("/:id", async (req: Request, res: Response): Promise<void> => {
     const existing = await prisma.customPath.findUnique({ where: { id } });
     if (!existing) {
       res.status(404).json({ error: "Parcours introuvable" });
+      return;
+    }
+    if (!(await studentInScope(req, existing.userId))) {
+      res.status(403).json({ error: "Cet élève n'est pas dans vos classes" });
       return;
     }
 
