@@ -169,7 +169,7 @@ export default function UsersPage() {
 
   // Import state
   const [importFile, setImportFile] = useState<File | null>(null);
-  const [importPreview, setImportPreview] = useState<{ prenom: string; nom: string; niveau: string; valid: boolean }[]>([]);
+  const [importPreview, setImportPreview] = useState<{ prenom: string; nom: string; niveau: string; classe: string; valid: boolean }[]>([]);
   const [importLoading, setImportLoading] = useState(false);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [importError, setImportError] = useState("");
@@ -416,18 +416,32 @@ export default function UsersPage() {
         if (rows.length === 0) { setImportError("Le fichier est vide"); return; }
 
         const validLevels = ["CP", "CE1", "CE2", "CM1", "CM2"];
+        // Résolution des classes par nom (insensible à la casse) → niveau
+        const classByName = new Map(classesList.map((c) => [c.name.toLowerCase().trim(), c]));
         const parsed = rows.map((row) => {
           const keys = Object.keys(row);
           const prenomKey = keys.find((k) => ["prenom", "prénom"].includes(k.toLowerCase().trim()));
           const nomKey = keys.find((k) => k.toLowerCase().trim() === "nom");
           const niveauKey = keys.find((k) => k.toLowerCase().trim() === "niveau");
+          const classeKey = keys.find((k) => k.toLowerCase().trim() === "classe");
 
           const prenom = prenomKey ? String(row[prenomKey]).trim() : "";
           const nom = nomKey ? String(row[nomKey]).trim() : "";
-          const niveau = niveauKey ? String(row[niveauKey]).trim().toUpperCase() : "";
-          const valid = !!prenom && !!nom && validLevels.includes(niveau);
+          const classe = classeKey ? String(row[classeKey]).trim() : "";
 
-          return { prenom, nom, niveau, valid };
+          // Une classe valide impose son niveau ; sinon on retombe sur la colonne NIVEAU
+          const matchedClass = classe ? classByName.get(classe.toLowerCase()) : undefined;
+          const niveau = matchedClass
+            ? matchedClass.level
+            : niveauKey
+              ? String(row[niveauKey]).trim().toUpperCase()
+              : "";
+
+          // classe renseignée mais inconnue → invalide
+          const classeOk = !classe || !!matchedClass;
+          const valid = !!prenom && !!nom && classeOk && validLevels.includes(niveau);
+
+          return { prenom, nom, niveau, classe, valid };
         });
 
         setImportPreview(parsed);
@@ -943,13 +957,14 @@ export default function UsersPage() {
                 <p className="text-sm text-ms-gray mb-5">
                   Format attendu du fichier (colonnes) :
                 </p>
-                <div className="bg-ms-cream rounded-xl p-3 mb-5 overflow-x-auto">
+                <div className="bg-ms-cream rounded-xl p-3 mb-3 overflow-x-auto">
                   <table className="text-xs font-mono">
                     <thead>
                       <tr className="text-ms-gray">
                         <th className="px-3 py-1 text-left">PRENOM</th>
                         <th className="px-3 py-1 text-left">NOM</th>
                         <th className="px-3 py-1 text-left">NIVEAU</th>
+                        <th className="px-3 py-1 text-left">CLASSE</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -957,15 +972,23 @@ export default function UsersPage() {
                         <td className="px-3 py-1">Lina</td>
                         <td className="px-3 py-1">Dupont</td>
                         <td className="px-3 py-1">CE1</td>
+                        <td className="px-3 py-1 text-ms-gray">—</td>
                       </tr>
                       <tr className="text-ms-dark">
                         <td className="px-3 py-1">Adam</td>
                         <td className="px-3 py-1">Martin</td>
-                        <td className="px-3 py-1">CM2</td>
+                        <td className="px-3 py-1 text-ms-gray">—</td>
+                        <td className="px-3 py-1">cm2_2</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
+                <p className="text-xs text-ms-gray mb-5">
+                  La colonne <span className="font-mono font-semibold">CLASSE</span> est{" "}
+                  <span className="font-semibold">optionnelle</span> : si renseignée (nom d'une classe
+                  existante), elle rattache l'élève à cette classe et <span className="font-semibold">impose
+                  son niveau</span> (la colonne NIVEAU peut alors être laissée vide). Sinon, NIVEAU est requis.
+                </p>
               </>
             )}
 
@@ -1047,6 +1070,7 @@ export default function UsersPage() {
                         <th className="px-3 py-2 text-left font-bold text-ms-gray">Prénom</th>
                         <th className="px-3 py-2 text-left font-bold text-ms-gray">Nom</th>
                         <th className="px-3 py-2 text-left font-bold text-ms-gray">Niveau</th>
+                        <th className="px-3 py-2 text-left font-bold text-ms-gray">Classe</th>
                         <th className="px-3 py-2 text-left font-bold text-ms-gray">Identifiant</th>
                         <th className="px-3 py-2 text-center font-bold text-ms-gray">Statut</th>
                       </tr>
@@ -1075,6 +1099,15 @@ export default function UsersPage() {
                               <span className="text-ms-pink italic">
                                 {row.niveau || "manquant"}
                               </span>
+                            )}
+                          </td>
+                          <td className="px-3 py-1.5">
+                            {row.classe ? (
+                              <span className="inline-block px-2 py-0.5 rounded-full bg-ms-cream text-ms-dark">
+                                {row.classe}
+                              </span>
+                            ) : (
+                              <span className="text-ms-gray">—</span>
                             )}
                           </td>
                           <td className="px-3 py-1.5 font-mono text-ms-gray">
