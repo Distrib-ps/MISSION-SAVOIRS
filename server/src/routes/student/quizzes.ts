@@ -1,35 +1,12 @@
 import { Router, Request, Response } from "express";
 import prisma from "../../lib/prisma";
 import { authenticate } from "../../middleware/auth";
+import { recordAnswer, sanitizeQuestion } from "../../lib/quizEngine";
 
 const router = Router();
 
 // All student quiz routes require authentication (no requireAdmin)
 router.use(authenticate);
-
-/**
- * Normalize a string for forgiving text comparison:
- * trim, lowercase, strip diacritics/accents.
- */
-function normalizeText(str: string): string {
-  return str
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-}
-
-/**
- * Shuffle an array in place (Fisher-Yates) and return it.
- */
-function shuffle<T>(arr: T[]): T[] {
-  const result = [...arr];
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
-}
 
 // ---------- POST /:id/start - Start a quiz attempt ----------
 router.post(
@@ -140,64 +117,12 @@ router.post(
         },
       });
 
-      // Build sanitized questions for the student
+      // Build sanitized questions for the student (shared engine)
       const reinjectedIds = new Set(reinjectedQuestions.map((q) => q.id));
       const allQuestions = [...quiz.questions, ...reinjectedQuestions];
-      const questions = allQuestions.map((q) => {
-        const base: Record<string, unknown> = {
-          id: q.id,
-          text: q.text,
-          type: q.type,
-          order: q.order,
-          hint: null,
-          solution: null,
-          isReinjected: reinjectedIds.has(q.id),
-        };
-
-        if (q.type === "QCM") {
-          // Include answers WITHOUT isCorrect, shuffled
-          base.answers = shuffle(
-            q.answers.map((a) => ({
-              id: a.id,
-              text: a.text,
-            }))
-          );
-          // Tell frontend how many correct answers there are (without revealing which)
-          base.correctCount = q.answers.filter((a) => a.isCorrect).length;
-        } else if (q.type === "DRAG_DROP") {
-          // Include items shuffled (without revealing their correct zone)
-          base.answers = shuffle(
-            q.answers.map((a) => ({
-              id: a.id,
-              text: a.text,
-            }))
-          );
-          // List of unique zones (in a stable order)
-          const zones = Array.from(
-            new Set(q.answers.map((a) => a.zone).filter((z): z is string => !!z))
-          );
-          base.zones = zones;
-        } else if (q.type === "ASSOCIATION") {
-          // Left column: items with id+text, shuffled independently
-          base.answers = shuffle(
-            q.answers.map((a) => ({ id: a.id, text: a.text }))
-          );
-          // Right column: just the partner labels, shuffled independently
-          const rightColumn = shuffle(
-            q.answers.map((a) => a.zone).filter((z): z is string => !!z)
-          );
-          base.rightColumn = rightColumn;
-        } else if (q.type === "ORDERING") {
-          // Items shuffled (correct order is kept on server)
-          base.answers = shuffle(
-            q.answers.map((a) => ({ id: a.id, text: a.text }))
-          );
-        }
-        // DRAWING: no answers payload needed, the student draws freely
-        // For TEXT questions: don't include answers at all
-
-        return base;
-      });
+      const questions = allQuestions.map((q) =>
+        sanitizeQuestion(q, { isReinjected: reinjectedIds.has(q.id) })
+      );
 
       res.json({
         attemptId: attempt.id,
@@ -260,190 +185,14 @@ router.post(
         return;
       }
 
-      // Check the answer
-      let isCorrect = false;
-      let correctAnswerText = "";
-      let givenAnswerText = answer; // will be resolved to text for QCM
-
-      if (question.type === "QCM") {
-        // answer can be a single ID "5" or comma-separated IDs "5,8,12" for multi-select
-        const selectedIds = String(answer)
-          .split(",")
-          .map((s) => parseInt(s.trim(), 10))
-          .filter((n) => !isNaN(n));
-
-        if (selectedIds.length === 0) {
-          res.status(400).json({ error: "ID de réponse invalide pour une question QCM" });
-          return;
-        }
-
-        // Resolve IDs to text for storage
-        const selectedAnswers = question.answers.filter((a) => selectedIds.includes(a.id));
-        givenAnswerText = selectedAnswers.map((a) => a.text).join(", ");
-
-        const correctAnswers = question.answers.filter((a) => a.isCorrect);
-        const correctIds = new Set(correctAnswers.map((a) => a.id));
-
-        // Correct if selected IDs match exactly the correct IDs
-        const selectedSet = new Set(selectedIds);
-        isCorrect =
-          selectedSet.size === correctIds.size &&
-          [...selectedSet].every((id) => correctIds.has(id));
-
-        correctAnswerText = correctAnswers.map((a) => a.text).join(", ");
-      } else if (question.type === "DRAG_DROP") {
-        // answer is a JSON string: { "<answerId>": "<zoneLabel>", ... }
-        let mapping: Record<string, string> = {};
-        try {
-          mapping = JSON.parse(answer);
-        } catch {
-          res.status(400).json({ error: "Format de réponse invalide pour une question Drag & Drop" });
-          return;
-        }
-
-        // All items must be placed and placed in the correct zone
-        const allCorrect = question.answers.every((a) => {
-          const chosen = mapping[String(a.id)];
-          return chosen !== undefined && chosen === a.zone;
-        });
-        isCorrect = allCorrect;
-
-        // Build human-readable given answer and correct answer
-        const givenLines = question.answers.map((a) => {
-          const chosen = mapping[String(a.id)] ?? "—";
-          return `${a.text} → ${chosen}`;
-        });
-        givenAnswerText = givenLines.join(" ; ");
-
-        const correctLines = question.answers.map((a) => `${a.text} → ${a.zone ?? ""}`);
-        correctAnswerText = correctLines.join(" ; ");
-      } else if (question.type === "ASSOCIATION") {
-        // answer is a JSON string: { "<answerId>": "<rightValue>", ... }
-        let mapping: Record<string, string> = {};
-        try {
-          mapping = JSON.parse(answer);
-        } catch {
-          res.status(400).json({ error: "Format de réponse invalide pour une question Association" });
-          return;
-        }
-
-        const allCorrect = question.answers.every((a) => {
-          const chosen = mapping[String(a.id)];
-          return chosen !== undefined && chosen === a.zone;
-        });
-        isCorrect = allCorrect;
-
-        const givenLines = question.answers.map((a) => {
-          const chosen = mapping[String(a.id)] ?? "—";
-          return `${a.text} ↔ ${chosen}`;
-        });
-        givenAnswerText = givenLines.join(" ; ");
-
-        const correctLines = question.answers.map((a) => `${a.text} ↔ ${a.zone ?? ""}`);
-        correctAnswerText = correctLines.join(" ; ");
-      } else if (question.type === "DRAWING") {
-        // Drawing questions are always "correct" (manual evaluation by teacher)
-        // Store the base64 image data in givenAnswer
-        isCorrect = true;
-        givenAnswerText = answer; // base64 data URL
-        correctAnswerText = "";   // no auto-correction
-      } else if (question.type === "ORDERING") {
-        // answer is a JSON string: array of answerIds in the user's chosen order
-        let orderedIds: number[] = [];
-        try {
-          const parsed = JSON.parse(answer);
-          if (!Array.isArray(parsed)) throw new Error();
-          orderedIds = parsed.map((n) => Number(n));
-        } catch {
-          res.status(400).json({ error: "Format de réponse invalide pour une question de classement" });
-          return;
-        }
-
-        const expected = [...question.answers]
-          .sort((a, b) => a.order - b.order)
-          .map((a) => a.id);
-
-        isCorrect =
-          orderedIds.length === expected.length &&
-          orderedIds.every((id, i) => id === expected[i]);
-
-        // Build human-readable forms
-        const answerById = new Map(question.answers.map((a) => [a.id, a.text]));
-        givenAnswerText = orderedIds.map((id, i) => `${i + 1}. ${answerById.get(id) ?? "?"}`).join(" ; ");
-        correctAnswerText = expected.map((id, i) => `${i + 1}. ${answerById.get(id) ?? "?"}`).join(" ; ");
-      } else {
-        // TEXT: forgiving comparison
-        const correct = question.answers.find((a) => a.isCorrect);
-        if (correct) {
-          correctAnswerText = correct.text;
-          isCorrect =
-            normalizeText(answer) === normalizeText(correct.text);
-        }
-      }
-
-      // Check if the question was already attempted in this quiz attempt
-      const existingAttempt = await prisma.questionAttempt.findFirst({
-        where: { quizAttemptId: attemptId, questionId },
+      // Correction + enregistrement + logique indice/solution (moteur partagé)
+      const { status, body } = await recordAnswer({
+        attemptId,
+        question,
+        answer,
+        usedHint,
       });
-
-      let questionAttemptCount: number;
-      let wasAlreadyCorrect = false;
-
-      if (existingAttempt) {
-        wasAlreadyCorrect = existingAttempt.isCorrect;
-        questionAttemptCount = existingAttempt.attempts + 1;
-
-        // Update the existing QuestionAttempt
-        await prisma.questionAttempt.update({
-          where: { id: existingAttempt.id },
-          data: {
-            givenAnswer: givenAnswerText,
-            isCorrect: existingAttempt.isCorrect || isCorrect,
-            usedHint: existingAttempt.usedHint || usedHint || false,
-            attempts: questionAttemptCount,
-          },
-        });
-      } else {
-        questionAttemptCount = 1;
-
-        // Create a new QuestionAttempt
-        await prisma.questionAttempt.create({
-          data: {
-            quizAttemptId: attemptId,
-            questionId,
-            givenAnswer: givenAnswerText,
-            isCorrect,
-            usedHint: usedHint || false,
-            attempts: 1,
-          },
-        });
-      }
-
-      // If correct on first correct answer (not a retry that was already correct), increment score
-      if (isCorrect && !wasAlreadyCorrect) {
-        await prisma.quizAttempt.update({
-          where: { id: attemptId },
-          data: { score: { increment: 1 } },
-        });
-      }
-
-      // Build the response based on hint/solution logic
-      const response: Record<string, unknown> = {
-        correct: isCorrect,
-      };
-
-      if (!isCorrect) {
-        if (questionAttemptCount === 1) {
-          // 1st wrong attempt: return hint (if exists)
-          response.hint = question.hint || null;
-        } else if (questionAttemptCount >= 2) {
-          // 2nd+ wrong attempt: return solution (if exists) + correctAnswer
-          response.solution = question.solution || null;
-          response.correctAnswer = correctAnswerText;
-        }
-      }
-
-      res.json(response);
+      res.status(status).json(body);
     } catch (error) {
       console.error("Erreur lors de la soumission de la réponse:", error);
       res.status(500).json({ error: "Erreur interne du serveur" });

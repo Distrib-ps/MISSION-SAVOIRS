@@ -37,6 +37,7 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
     // key = `${customPathId}:${quizId}` so the same quiz in two paths is tracked separately
     const bestByPathQuiz = new Map<string, { score: number; totalQuestions: number }>();
     for (const a of attempts) {
+      if (a.quizId == null) continue; // tentatives de révision ignorées ici
       const key = `${a.customPathId}:${a.quizId}`;
       const prev = bestByPathQuiz.get(key);
       if (!prev || a.score > prev.score) {
@@ -107,6 +108,7 @@ router.get("/:id", async (req: Request, res: Response): Promise<void> => {
     });
     const bestByQuiz = new Map<number, { score: number; totalQuestions: number }>();
     for (const a of attempts) {
+      if (a.quizId == null) continue; // tentatives de révision ignorées ici
       const prev = bestByQuiz.get(a.quizId);
       if (!prev || a.score > prev.score) {
         bestByQuiz.set(a.quizId, { score: a.score, totalQuestions: a.totalQuestions });
