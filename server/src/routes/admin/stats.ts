@@ -389,4 +389,88 @@ router.get("/students/:id", async (req: Request, res: Response): Promise<void> =
   }
 });
 
+/* ── GET /students/:id/quizzes/:quizId/questions ── Détail question par question ── */
+router.get(
+  "/students/:id/quizzes/:quizId/questions",
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+      const quizId = parseInt(
+        Array.isArray(req.params.quizId) ? req.params.quizId[0] : req.params.quizId,
+        10
+      );
+      if (isNaN(id) || isNaN(quizId)) {
+        res.status(400).json({ error: "ID invalide" });
+        return;
+      }
+
+      // Tentatives de questions de l'élève sur ce quiz (questions propres au quiz)
+      const qAttempts = await prisma.questionAttempt.findMany({
+        where: {
+          quizAttempt: { userId: id, quizId },
+          question: { quizId },
+        },
+        select: {
+          questionId: true,
+          isCorrect: true,
+          usedHint: true,
+          attempts: true,
+          givenAnswer: true,
+          question: { select: { text: true, type: true, order: true } },
+        },
+      });
+
+      // Agrège par question (un élève peut avoir plusieurs tentatives du quiz)
+      const byQ = new Map<
+        number,
+        {
+          text: string;
+          type: string;
+          order: number;
+          correct: boolean;
+          wrong: number;
+          usedHint: boolean;
+          lastAnswer: string;
+        }
+      >();
+      for (const a of qAttempts) {
+        const cur =
+          byQ.get(a.questionId) ?? {
+            text: a.question?.text ?? "—",
+            type: a.question?.type ?? "",
+            order: a.question?.order ?? 0,
+            correct: false,
+            wrong: 0,
+            usedHint: false,
+            lastAnswer: "",
+          };
+        if (a.isCorrect) cur.correct = true;
+        else cur.wrong += 1;
+        if (a.usedHint) cur.usedHint = true;
+        // réponse donnée lisible (les dessins sont en base64 → on masque)
+        const ans = a.question?.type === "DRAWING" ? "(dessin)" : a.givenAnswer ?? "";
+        cur.lastAnswer = ans.length > 140 ? `${ans.slice(0, 140)}…` : ans;
+        byQ.set(a.questionId, cur);
+      }
+
+      const questions = [...byQ.entries()]
+        .map(([questionId, v]) => ({
+          questionId,
+          text: v.text,
+          type: v.type,
+          correct: v.correct,
+          wrongCount: v.wrong,
+          usedHint: v.usedHint,
+          givenAnswer: v.lastAnswer,
+        }))
+        .sort((a, b) => a.questionId - b.questionId);
+
+      res.json({ questions });
+    } catch (error) {
+      console.error("Erreur stats détail questions:", error);
+      res.status(500).json({ error: "Erreur interne du serveur" });
+    }
+  }
+);
+
 export default router;

@@ -245,6 +245,16 @@ export interface StatsOverview {
   reinjection: { failed: number; recovered: number; recoveryRate: number };
 }
 
+export interface QuizQuestionDetail {
+  questionId: number;
+  text: string;
+  type: string;
+  correct: boolean;
+  wrongCount: number;
+  usedHint: boolean;
+  givenAnswer: string;
+}
+
 export interface StudentStatRow {
   id: number;
   name: string;

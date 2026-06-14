@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import * as XLSX from "xlsx";
 import {
   ResponsiveContainer,
@@ -13,7 +13,13 @@ import {
   Cell,
 } from "recharts";
 import AdminLayout from "../../components/admin/AdminLayout";
-import type { SchoolLevel, StatsOverview, StudentStatRow, StudentStatDetail } from "../../types";
+import type {
+  SchoolLevel,
+  StatsOverview,
+  StudentStatRow,
+  StudentStatDetail,
+  QuizQuestionDetail,
+} from "../../types";
 
 const LEVELS: SchoolLevel[] = ["CP", "CE1", "CE2", "CM1", "CM2"];
 
@@ -86,6 +92,23 @@ export default function StatsPage() {
   const [detail, setDetail] = useState<StudentStatDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Détail question-par-question d'un quiz (lazy, par quizId)
+  const [expandedQuiz, setExpandedQuiz] = useState<number | null>(null);
+  const [qDetails, setQDetails] = useState<Record<number, QuizQuestionDetail[]>>({});
+
+  function toggleQuiz(quizId: number) {
+    if (expandedQuiz === quizId) {
+      setExpandedQuiz(null);
+      return;
+    }
+    setExpandedQuiz(quizId);
+    if (!qDetails[quizId] && selectedId != null) {
+      fetch(`/api/admin/stats/students/${selectedId}/quizzes/${quizId}/questions`, { headers: authHeaders() })
+        .then((r) => (r.ok ? r.json() : Promise.reject(new Error("Détail indisponible"))))
+        .then((d) => setQDetails((prev) => ({ ...prev, [quizId]: d.questions ?? [] })))
+        .catch(() => setQDetails((prev) => ({ ...prev, [quizId]: [] })));
+    }
+  }
 
   useEffect(() => {
     if (tab !== "global") return;
@@ -110,6 +133,8 @@ export default function StatsPage() {
   }, [tab]);
 
   useEffect(() => {
+    setExpandedQuiz(null);
+    setQDetails({});
     if (selectedId == null) {
       setDetail(null);
       return;
@@ -362,33 +387,101 @@ export default function StatsPage() {
                           <th className="py-2 px-3 font-semibold text-center">Meilleur</th>
                           <th className="py-2 px-3 font-semibold text-center">Dernier</th>
                           <th className="py-2 px-3 font-semibold text-center">Indices</th>
-                          <th className="py-2 pl-3 font-semibold text-center">Statut</th>
+                          <th className="py-2 px-3 font-semibold text-center">Statut</th>
+                          <th className="py-2 pl-3 font-semibold text-center">Détail</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {detail.perQuiz.map((q) => (
-                          <tr key={q.quizId} className="border-b border-ms-light-gray/50">
-                            <td className="py-2 pr-3 font-medium text-ms-dark">{q.title}</td>
-                            <td className="py-2 px-3 text-ms-gray">{q.theme}</td>
-                            <td className="py-2 px-3 text-center">{q.attempts}</td>
-                            <td className="py-2 px-3 text-center font-bold" style={{ color: rateColor(q.bestRate) }}>
-                              {q.bestRate}%
-                            </td>
-                            <td className="py-2 px-3 text-center">{q.lastRate}%</td>
-                            <td className="py-2 px-3 text-center">{q.hintCount}</td>
-                            <td className="py-2 pl-3 text-center">
-                              {q.completed ? (
-                                <span className="inline-block bg-ms-green text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                                  Terminé
-                                </span>
-                              ) : (
-                                <span className="inline-block bg-ms-yellow text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                                  En cours
-                                </span>
+                        {detail.perQuiz.map((q) => {
+                          const open = expandedQuiz === q.quizId;
+                          const qd = qDetails[q.quizId];
+                          return (
+                            <Fragment key={q.quizId}>
+                              <tr className="border-b border-ms-light-gray/50">
+                                <td className="py-2 pr-3 font-medium text-ms-dark">{q.title}</td>
+                                <td className="py-2 px-3 text-ms-gray">{q.theme}</td>
+                                <td className="py-2 px-3 text-center">{q.attempts}</td>
+                                <td className="py-2 px-3 text-center font-bold" style={{ color: rateColor(q.bestRate) }}>
+                                  {q.bestRate}%
+                                </td>
+                                <td className="py-2 px-3 text-center">{q.lastRate}%</td>
+                                <td className="py-2 px-3 text-center">{q.hintCount}</td>
+                                <td className="py-2 px-3 text-center">
+                                  {q.completed ? (
+                                    <span className="inline-block bg-ms-green text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                      Terminé
+                                    </span>
+                                  ) : (
+                                    <span className="inline-block bg-ms-yellow text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                      En cours
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="py-2 pl-3 text-center">
+                                  <button
+                                    onClick={() => toggleQuiz(q.quizId)}
+                                    className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-ms-gray hover:bg-ms-lavender-light hover:text-ms-lavender transition"
+                                    title="Voir le détail des questions"
+                                  >
+                                    <svg
+                                      className={`w-4 h-4 transition-transform ${open ? "rotate-180" : ""}`}
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                      strokeWidth={2.5}
+                                    >
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                  </button>
+                                </td>
+                              </tr>
+                              {open && (
+                                <tr className="bg-ms-cream/40">
+                                  <td colSpan={8} className="p-3">
+                                    {!qd ? (
+                                      <p className="text-xs text-ms-gray py-2 text-center">Chargement...</p>
+                                    ) : qd.length === 0 ? (
+                                      <p className="text-xs text-ms-gray py-2 text-center">Aucune réponse enregistrée.</p>
+                                    ) : (
+                                      <ul className="space-y-1.5">
+                                        {qd.map((item) => (
+                                          <li
+                                            key={item.questionId}
+                                            className="flex items-center gap-3 bg-white border border-ms-light-gray rounded-lg px-3 py-2"
+                                          >
+                                            <span
+                                              className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold ${
+                                                item.correct ? "bg-ms-green" : "bg-ms-pink"
+                                              }`}
+                                            >
+                                              {item.correct ? "✓" : "✕"}
+                                            </span>
+                                            <div className="flex-1 min-w-0">
+                                              <p className="text-ms-dark truncate">{item.text}</p>
+                                              <p className="text-xs text-ms-gray truncate">
+                                                Réponse : {item.givenAnswer || "—"}
+                                              </p>
+                                            </div>
+                                            {item.wrongCount > 0 && (
+                                              <span className="shrink-0 text-xs text-ms-pink font-semibold">
+                                                {item.wrongCount} erreur{item.wrongCount > 1 ? "s" : ""}
+                                              </span>
+                                            )}
+                                            {item.usedHint && (
+                                              <span className="shrink-0 text-xs text-ms-gray" title="Indice utilisé">
+                                                💡
+                                              </span>
+                                            )}
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    )}
+                                  </td>
+                                </tr>
                               )}
-                            </td>
-                          </tr>
-                        ))}
+                            </Fragment>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
