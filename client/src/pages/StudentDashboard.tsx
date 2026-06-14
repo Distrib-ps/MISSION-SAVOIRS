@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import StudentLayout from "../components/student/StudentLayout";
-import type { StudentTheme, CustomPath } from "../types";
+import type { StudentTheme, CustomPath, StudentRevision } from "../types";
 
 const CARD_COLORS = [
   { bg: "bg-ms-blue-light", border: "border-ms-blue/30", icon: "bg-ms-blue" },
@@ -19,6 +19,7 @@ export default function StudentDashboard() {
   const navigate = useNavigate();
   const [themes, setThemes] = useState<StudentTheme[]>([]);
   const [paths, setPaths] = useState<CustomPath[]>([]);
+  const [revisions, setRevisions] = useState<StudentRevision[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,10 +34,14 @@ export default function StudentDashboard() {
       fetch("/api/student/custom-paths", { headers }).then((r) =>
         r.ok ? r.json() : { paths: [] },
       ),
+      fetch("/api/student/revisions", { headers }).then((r) =>
+        r.ok ? r.json() : { revisions: [] },
+      ),
     ])
-      .then(([themesData, pathsData]) => {
+      .then(([themesData, pathsData, revisionsData]) => {
         setThemes(themesData as StudentTheme[]);
         setPaths(pathsData.paths ?? []);
+        setRevisions(revisionsData.revisions ?? []);
       })
       .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false));
@@ -66,6 +71,40 @@ export default function StudentDashboard() {
       {error && (
         <div className="bg-ms-pink-light border border-ms-pink/30 rounded-2xl p-6 text-center">
           <p className="text-ms-dark font-semibold">{error}</p>
+        </div>
+      )}
+
+      {/* Révisions par niveau */}
+      {!loading && !error && revisions.length > 0 && (
+        <div className="mb-10">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-xl">&#127919;</span>
+            <h2 className="text-xl font-extrabold text-ms-dark">Révision</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {revisions.map((rev) => (
+              <button
+                key={rev.id}
+                onClick={() => navigate(`/revisions/${rev.id}`)}
+                className="bg-gradient-to-br from-ms-yellow-light to-ms-peach-light border-2 border-ms-yellow/50 rounded-3xl p-6 text-left hover:shadow-lg hover:scale-[1.01] transition-all duration-200 cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-ms-yellow rounded-2xl flex items-center justify-center text-white text-xl shadow-sm shrink-0 animate-pulse">
+                    &#11088;
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="inline-block bg-ms-yellow text-white text-xs font-bold px-2 py-0.5 rounded-full mb-1">
+                      Révision
+                    </span>
+                    <h3 className="font-extrabold text-ms-dark text-lg truncate">{rev.name}</h3>
+                    <p className="text-sm text-ms-gray truncate">
+                      {rev.description || `${rev.totalQuestions} questions à réviser`}
+                    </p>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
@@ -121,13 +160,13 @@ export default function StudentDashboard() {
         </div>
       )}
 
-      {/* Themes section title when paths exist */}
-      {!loading && !error && paths.length > 0 && themes.length > 0 && (
+      {/* Themes section title when paths or revisions exist */}
+      {!loading && !error && (paths.length > 0 || revisions.length > 0) && themes.length > 0 && (
         <h2 className="text-xl font-extrabold text-ms-dark mb-4">Tous les thèmes</h2>
       )}
 
       {/* Empty */}
-      {!loading && !error && themes.length === 0 && paths.length === 0 && (
+      {!loading && !error && themes.length === 0 && paths.length === 0 && revisions.length === 0 && (
         <div className="bg-white rounded-3xl border border-ms-light-gray/50 p-12 text-center">
           <p className="text-5xl mb-4">📭</p>
           <p className="text-lg text-ms-gray font-medium">

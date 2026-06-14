@@ -84,8 +84,14 @@ const INITIAL_ATTEMPT: AttemptState = {
 /* ══════════════════════════════════════════════════ */
 
 export default function QuizPlayPage() {
-  const { quizId } = useParams<{ quizId: string }>();
+  const { quizId, revisionId } = useParams<{ quizId?: string; revisionId?: string }>();
   const navigate = useNavigate();
+
+  /* Mode révision (jouée depuis une révision) ou quiz classique : même UI, base d'URL différente */
+  const isRevision = !!revisionId;
+  const basePath = isRevision
+    ? `/api/student/revisions/${revisionId}`
+    : `/api/student/quizzes/${quizId}`;
 
   /* high‑level state */
   const [phase, setPhase] = useState<Phase>("start");
@@ -121,7 +127,7 @@ export default function QuizPlayPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/student/quizzes/${quizId}/start`, {
+      const res = await fetch(`${basePath}/start`, {
         method: "POST",
         headers: authHeaders(),
       });
@@ -141,7 +147,7 @@ export default function QuizPlayPage() {
     } finally {
       setLoading(false);
     }
-  }, [quizId]);
+  }, [basePath]);
 
   /* ── Submit answer ── */
 
@@ -154,7 +160,7 @@ export default function QuizPlayPage() {
       const usedHint = attempt.usedHint || attempt.hint !== null;
 
       try {
-        const res = await fetch(`/api/student/quizzes/${quizId}/answer`, {
+        const res = await fetch(`${basePath}/answer`, {
           method: "POST",
           headers: authHeaders(),
           body: JSON.stringify({
@@ -231,7 +237,7 @@ export default function QuizPlayPage() {
         setSubmitting(false);
       }
     },
-    [session, currentQuestion, submitting, attempt, quizId],
+    [session, currentQuestion, submitting, attempt, basePath],
   );
 
   /* ── Advance to next question or finish ── */
@@ -257,7 +263,7 @@ export default function QuizPlayPage() {
     setLoading(true);
     try {
       const res = await fetch(
-        `/api/student/quizzes/${quizId}/results?attemptId=${session.attemptId}`,
+        `${basePath}/results?attemptId=${session.attemptId}`,
         { headers: authHeaders() },
       );
       if (!res.ok) throw new Error("Impossible de charger les resultats");
@@ -268,7 +274,7 @@ export default function QuizPlayPage() {
     } finally {
       setLoading(false);
     }
-  }, [quizId, session]);
+  }, [basePath, session]);
 
   /* ── Restart quiz ── */
 

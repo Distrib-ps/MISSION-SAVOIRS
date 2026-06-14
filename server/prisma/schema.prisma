@@ -113,6 +113,7 @@ model Question {
   quiz    Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
   answers Answer[]
   questionAttempts QuestionAttempt[]
+  revisions RevisionQuestion[]
 
   @@map("questions")
 }
@@ -135,13 +136,15 @@ model Answer {
 model QuizAttempt {
   id          Int      @id @default(autoincrement())
   userId      Int
-  quizId      Int
+  quizId      Int?     // tentative de quiz classique (null si tentative de révision)
+  revisionQuizId Int?  // tentative de révision (null si tentative de quiz classique) — exactement un des deux est renseigné
   score       Int      @default(0) // nombre de bonnes réponses
   totalQuestions Int   @default(0)
   completedAt DateTime @default(now())
 
   user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  quiz     Quiz              @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  quiz     Quiz?             @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  revision Revision?         @relation(fields: [revisionQuizId], references: [id], onDelete: SetNull)
   questionAttempts QuestionAttempt[]
 
   @@map("quiz_attempts")
@@ -188,4 +191,32 @@ model CustomPathQuiz {
 
   @@id([customPathId, quizId])
   @@map("custom_path_quizzes")
+}
+
+// ========== RÉVISIONS PAR NIVEAU ==========
+
+model Revision {
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String?
+  targetLevel SchoolLevel // niveau scolaire ciblé (CP → CM2)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  questions RevisionQuestion[]
+  attempts  QuizAttempt[]
+
+  @@map("revisions")
+}
+
+model RevisionQuestion {
+  revisionId Int
+  questionId Int
+  order      Int @default(0)
+
+  revision Revision @relation(fields: [revisionId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@id([revisionId, questionId])
+  @@map("revision_questions")
 }

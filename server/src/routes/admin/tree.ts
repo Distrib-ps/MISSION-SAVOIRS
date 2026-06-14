@@ -7,8 +7,11 @@ const router = Router();
 router.use(authenticate, requireAdmin);
 
 // ---------- GET / - Full content tree in one call ----------
-router.get("/", async (_req: Request, res: Response): Promise<void> => {
+// ?includeQuestions=true ajoute la liste des questions (id, text, type, order) sous chaque quiz.
+router.get("/", async (req: Request, res: Response): Promise<void> => {
   try {
+    const includeQuestions = req.query.includeQuestions === "true";
+
     const themes = await prisma.theme.findMany({
       orderBy: { order: "asc" },
       include: {
@@ -19,6 +22,14 @@ router.get("/", async (_req: Request, res: Response): Promise<void> => {
               orderBy: { order: "asc" },
               include: {
                 _count: { select: { questions: true } },
+                ...(includeQuestions
+                  ? {
+                      questions: {
+                        orderBy: { order: "asc" as const },
+                        select: { id: true, text: true, type: true, order: true },
+                      },
+                    }
+                  : {}),
               },
             },
             _count: { select: { quizzes: true } },

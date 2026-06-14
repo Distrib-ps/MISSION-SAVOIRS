@@ -133,7 +133,7 @@ router.get(
       // Build a map of quizId -> best score
       const bestScoreMap = new Map<number, number>();
       for (const attempt of bestAttempts) {
-        if (attempt._max.score !== null) {
+        if (attempt.quizId !== null && attempt._max.score !== null) {
           bestScoreMap.set(attempt.quizId, attempt._max.score);
         }
       }

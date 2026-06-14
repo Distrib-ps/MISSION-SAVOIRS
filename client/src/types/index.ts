@@ -159,6 +159,41 @@ export interface CustomPath {
   quizzes: CustomPathQuiz[];
 }
 
+/* ── Révisions par niveau ── */
+
+export type SchoolLevel = "CP" | "CE1" | "CE2" | "CM1" | "CM2";
+
+// Vue élève (dashboard)
+export interface StudentRevision {
+  id: number;
+  name: string;
+  description: string | null;
+  totalQuestions: number;
+}
+
+// Vue admin (CRUD)
+export interface AdminRevisionQuestion {
+  order: number;
+  question: {
+    id: number;
+    text: string;
+    type: string;
+    quiz: {
+      id: number;
+      title: string;
+      subTheme: { id: number; name: string; theme: { id: number; name: string; emoji: string } };
+    };
+  };
+}
+
+export interface AdminRevision {
+  id: number;
+  name: string;
+  description: string | null;
+  targetLevel: SchoolLevel;
+  questions: AdminRevisionQuestion[];
+}
+
 export interface QuizSession {
   attemptId: number;
   quiz: { id: number; title: string; timeLimit: number | null };

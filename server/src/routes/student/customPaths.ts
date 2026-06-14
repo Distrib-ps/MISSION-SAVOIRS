@@ -34,6 +34,7 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
     });
     const bestByQuiz = new Map<number, { score: number; totalQuestions: number }>();
     for (const a of attempts) {
+      if (a.quizId == null) continue; // tentatives de révision ignorées ici
       const prev = bestByQuiz.get(a.quizId);
       if (!prev || a.score > prev.score) {
         bestByQuiz.set(a.quizId, { score: a.score, totalQuestions: a.totalQuestions });
@@ -103,6 +104,7 @@ router.get("/:id", async (req: Request, res: Response): Promise<void> => {
     });
     const bestByQuiz = new Map<number, { score: number; totalQuestions: number }>();
     for (const a of attempts) {
+      if (a.quizId == null) continue; // tentatives de révision ignorées ici
       const prev = bestByQuiz.get(a.quizId);
       if (!prev || a.score > prev.score) {
         bestByQuiz.set(a.quizId, { score: a.score, totalQuestions: a.totalQuestions });
