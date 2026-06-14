@@ -26,18 +26,22 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
       },
     });
 
-    /* Compute per-quiz best score for this user */
-    const allQuizIds = paths.flatMap((p) => p.quizzes.map((q) => q.quizId));
+    /* Compute per-quiz best score, isolated per path (Option B) */
     const attempts = await prisma.quizAttempt.findMany({
-      where: { userId, quizId: { in: allQuizIds } },
-      select: { quizId: true, score: true, totalQuestions: true },
+      where: {
+        userId,
+        customPathId: { in: paths.map((p) => p.id) },
+      },
+      select: { quizId: true, customPathId: true, score: true, totalQuestions: true },
     });
-    const bestByQuiz = new Map<number, { score: number; totalQuestions: number }>();
+    // key = `${customPathId}:${quizId}` so the same quiz in two paths is tracked separately
+    const bestByPathQuiz = new Map<string, { score: number; totalQuestions: number }>();
     for (const a of attempts) {
       if (a.quizId == null) continue; // tentatives de révision ignorées ici
-      const prev = bestByQuiz.get(a.quizId);
+      const key = `${a.customPathId}:${a.quizId}`;
+      const prev = bestByPathQuiz.get(key);
       if (!prev || a.score > prev.score) {
-        bestByQuiz.set(a.quizId, { score: a.score, totalQuestions: a.totalQuestions });
+        bestByPathQuiz.set(key, { score: a.score, totalQuestions: a.totalQuestions });
       }
     }
 
@@ -47,7 +51,7 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
       description: p.description,
       createdAt: p.createdAt,
       quizzes: p.quizzes.map((cpq) => {
-        const best = bestByQuiz.get(cpq.quizId);
+        const best = bestByPathQuiz.get(`${p.id}:${cpq.quizId}`);
         return {
           id: cpq.quiz.id,
           title: cpq.quiz.title,
@@ -97,9 +101,9 @@ router.get("/:id", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const quizIds = path.quizzes.map((q) => q.quizId);
+    // Best score isolated to THIS path only (Option B)
     const attempts = await prisma.quizAttempt.findMany({
-      where: { userId, quizId: { in: quizIds } },
+      where: { userId, customPathId: path.id },
       select: { quizId: true, score: true, totalQuestions: true },
     });
     const bestByQuiz = new Map<number, { score: number; totalQuestions: number }>();

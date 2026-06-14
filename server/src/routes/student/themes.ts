@@ -126,6 +126,7 @@ router.get(
         where: {
           userId,
           quizId: { in: quizzes.map((q) => q.id) },
+          customPathId: null, // progression classique : ignore les tentatives jouées depuis un parcours
         },
         _max: { score: true },
       });
@@ -149,6 +150,7 @@ router.get(
               userId,
               quizId: quiz.id,
               score: bestScore,
+              customPathId: null,
             },
             orderBy: { completedAt: "desc" },
           });

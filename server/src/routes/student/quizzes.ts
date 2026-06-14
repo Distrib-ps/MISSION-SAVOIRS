@@ -23,6 +23,30 @@ router.post(
 
       const userId = req.user!.userId;
 
+      // Optional: the custom path this quiz is being played from (Option B: isolated progression)
+      const rawPathId = (req.body as { pathId?: unknown })?.pathId;
+      let customPathId: number | null = null;
+      if (rawPathId !== undefined && rawPathId !== null) {
+        const parsed = parseInt(String(rawPathId), 10);
+        if (isNaN(parsed)) {
+          res.status(400).json({ error: "pathId invalide" });
+          return;
+        }
+        // Verify the path belongs to the user and contains this quiz
+        const path = await prisma.customPath.findFirst({
+          where: {
+            id: parsed,
+            userId,
+            quizzes: { some: { quizId: id } },
+          },
+        });
+        if (!path) {
+          res.status(404).json({ error: "Parcours introuvable ou ne contient pas ce quiz" });
+          return;
+        }
+        customPathId = parsed;
+      }
+
       // Verify the quiz exists and has questions
       const quiz = await prisma.quiz.findUnique({
         where: { id },
@@ -49,7 +73,8 @@ router.post(
       // ── Réinjection: find failed questions from previous quizzes in the same sub-theme ──
       const failedQuestionAttempts = await prisma.questionAttempt.findMany({
         where: {
-          quizAttempt: { userId },
+          // Réinjection scopée au contexte : un parcours ne rejoue que ses propres ratés
+          quizAttempt: { userId, customPathId },
           isCorrect: false,
           question: {
             quiz: { subThemeId: quiz.subThemeId },
@@ -69,7 +94,7 @@ router.post(
       for (const fa of failedQuestionAttempts) {
         const laterCorrect = await prisma.questionAttempt.findFirst({
           where: {
-            quizAttempt: { userId },
+            quizAttempt: { userId, customPathId },
             questionId: fa.questionId,
             isCorrect: true,
           },
@@ -86,6 +111,7 @@ router.post(
         data: {
           userId,
           quizId: id,
+          customPathId,
           score: 0,
           totalQuestions,
         },
