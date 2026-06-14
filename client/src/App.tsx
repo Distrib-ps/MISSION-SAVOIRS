@@ -13,6 +13,7 @@ import ContentPage from "./pages/admin/ContentPage";
 import QuizPlayPage from "./pages/student/QuizPlayPage";
 import CustomPathPage from "./pages/student/CustomPathPage";
 import RevisionsPage from "./pages/admin/RevisionsPage";
+import StatsPage from "./pages/admin/StatsPage";
 
 function App() {
   return (
@@ -108,6 +109,15 @@ function App() {
           element={
             <ProtectedRoute requiredRole="ADMIN">
               <RevisionsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/stats"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <StatsPage />
             </ProtectedRoute>
           }
         />

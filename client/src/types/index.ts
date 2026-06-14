@@ -226,3 +226,40 @@ export interface QuizResults {
     correctAnswer: string;
   }[];
 }
+
+/* ── KPI / Statistiques (admin) ── */
+
+export interface StatsOverview {
+  cards: {
+    students: number;
+    attempts: number;
+    completed: number;
+    avgSuccessRate: number;
+    themes: number;
+    quizzes: number;
+  };
+  perQuiz: { quizId: number; title: string; theme: string; attempts: number; successRate: number }[];
+  perTheme: { themeId: number; name: string; emoji: string; attempts: number; successRate: number }[];
+  byLevel: { level: SchoolLevel | null; students: number; attempts: number; successRate: number }[];
+  hintUsageRate: number;
+  reinjection: { failed: number; recovered: number; recoveryRate: number };
+}
+
+export interface StudentStatRow {
+  id: number;
+  name: string;
+  level: SchoolLevel | null;
+  attempts: number;
+  completed: number;
+  avgSuccessRate: number;
+  lastActivity: string | null;
+}
+
+export interface StudentStatDetail {
+  student: { id: number; name: string; level: SchoolLevel | null };
+  summary: { attempts: number; completed: number; avgSuccessRate: number };
+  perTheme: { themeId: number; name: string; emoji: string; attempts: number; successRate: number }[];
+  progression: { date: string; quizTitle: string; score: number; total: number; rate: number }[];
+  hintUsageRate: number;
+  reinjection: { failed: number; recovered: number; recoveryRate: number };
+}

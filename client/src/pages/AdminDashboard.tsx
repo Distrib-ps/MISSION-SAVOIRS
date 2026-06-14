@@ -1,8 +1,22 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminLayout from "../components/admin/AdminLayout";
+import type { StatsOverview } from "../types";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const [cards, setCards] = useState<StatsOverview["cards"] | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/stats/overview", {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: StatsOverview | null) => setCards(d?.cards ?? null))
+      .catch(() => setCards(null));
+  }, []);
+
+  const v = (n: number | undefined) => (n === undefined ? "--" : String(n));
 
   return (
     <AdminLayout>
@@ -23,7 +37,7 @@ export default function AdminDashboard() {
               </svg>
             </div>
             <p className="text-sm text-ms-gray font-medium">Total eleves</p>
-            <p className="text-2xl font-extrabold text-ms-dark mt-1">--</p>
+            <p className="text-2xl font-extrabold text-ms-dark mt-1">{v(cards?.students)}</p>
           </div>
           <div className="bg-white rounded-2xl border border-ms-light-gray/50 p-6">
             <div className="w-11 h-11 bg-ms-green-light rounded-xl flex items-center justify-center text-lg mb-3">
@@ -32,7 +46,7 @@ export default function AdminDashboard() {
               </svg>
             </div>
             <p className="text-sm text-ms-gray font-medium">Quiz completes</p>
-            <p className="text-2xl font-extrabold text-ms-dark mt-1">--</p>
+            <p className="text-2xl font-extrabold text-ms-dark mt-1">{v(cards?.completed)}</p>
           </div>
           <div className="bg-white rounded-2xl border border-ms-light-gray/50 p-6">
             <div className="w-11 h-11 bg-ms-peach-light rounded-xl flex items-center justify-center text-lg mb-3">
@@ -41,12 +55,12 @@ export default function AdminDashboard() {
               </svg>
             </div>
             <p className="text-sm text-ms-gray font-medium">Themes actifs</p>
-            <p className="text-2xl font-extrabold text-ms-dark mt-1">--</p>
+            <p className="text-2xl font-extrabold text-ms-dark mt-1">{v(cards?.themes)}</p>
           </div>
         </div>
 
         {/* Quick actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <button
             onClick={() => navigate("/admin/users")}
             className="bg-white rounded-2xl border border-ms-light-gray/50 p-7 hover:shadow-md transition-shadow text-left group"
@@ -78,6 +92,23 @@ export default function AdminDashboard() {
             </h3>
             <p className="text-sm text-ms-gray">
               Creer et organiser vos themes, quiz et questions.
+            </p>
+          </button>
+
+          <button
+            onClick={() => navigate("/admin/stats")}
+            className="bg-white rounded-2xl border border-ms-light-gray/50 p-7 hover:shadow-md transition-shadow text-left group"
+          >
+            <div className="w-12 h-12 bg-ms-lavender-light rounded-2xl flex items-center justify-center text-xl mb-4 group-hover:scale-105 transition-transform">
+              <svg className="w-6 h-6 text-ms-dark" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold text-ms-dark mb-1">
+              KPI &amp; Statistiques
+            </h3>
+            <p className="text-sm text-ms-gray">
+              Suivre la progression et les taux de réussite.
             </p>
           </button>
         </div>
