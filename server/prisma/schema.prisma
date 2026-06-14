@@ -11,7 +11,8 @@ datasource db {
 // ========== UTILISATEURS ==========
 
 enum Role {
-  ADMIN
+  ADMIN   // Owner / dev : accès total
+  TEACHER // Professeur : ne voit/édite que son propre contenu et ses classes
   STUDENT
 }
 
@@ -39,7 +40,15 @@ model User {
   // Relations élève
   quizAttempts QuizAttempt[]
   customPaths  CustomPath[]
-  class        Class?       @relation(fields: [classId], references: [id], onDelete: SetNull)
+  class        Class?       @relation("ClassStudents", fields: [classId], references: [id], onDelete: SetNull)
+
+  // Relations prof (contenu créé / classes gérées)
+  managedClasses   Class[]    @relation("ClassTeacher")
+  createdThemes    Theme[]
+  createdSubThemes SubTheme[]
+  createdQuizzes   Quiz[]
+  createdQuestions Question[]
+  createdRevisions Revision[]
 
   @@map("users")
 }
@@ -50,9 +59,11 @@ model Class {
   id        Int         @id @default(autoincrement())
   name      String      @unique // ex: cm2_2, cm1_3
   level     SchoolLevel // niveau scolaire de la classe
+  teacherId Int?        // prof gestionnaire de la classe (null = géré par l'Owner)
   createdAt DateTime    @default(now())
 
-  students User[]
+  students User[]       @relation("ClassStudents")
+  teacher  User?        @relation("ClassTeacher", fields: [teacherId], references: [id], onDelete: SetNull)
   quizzes  QuizClass[]
 
   @@map("classes")
@@ -78,8 +89,10 @@ model Theme {
   description String?
   emoji       String     @default("📚")
   order       Int        @default(0)
+  createdById Int?       // auteur (null = legacy/Owner)
   createdAt   DateTime   @default(now())
 
+  creator   User?      @relation(fields: [createdById], references: [id], onDelete: SetNull)
   subThemes SubTheme[]
 
   @@map("themes")
@@ -91,9 +104,11 @@ model SubTheme {
   description String?
   order       Int      @default(0)
   themeId     Int
+  createdById Int?
   createdAt   DateTime @default(now())
 
   theme   Theme  @relation(fields: [themeId], references: [id], onDelete: Cascade)
+  creator User?  @relation(fields: [createdById], references: [id], onDelete: SetNull)
   quizzes Quiz[]
 
   @@unique([themeId, name])
@@ -107,9 +122,11 @@ model Quiz {
   timeLimit   Int?     // timer en secondes (null = pas de timer)
   order       Int      @default(0)
   subThemeId  Int
+  createdById Int?
   createdAt   DateTime @default(now())
 
   subTheme  SubTheme      @relation(fields: [subThemeId], references: [id], onDelete: Cascade)
+  creator   User?         @relation(fields: [createdById], references: [id], onDelete: SetNull)
   questions Question[]
   attempts  QuizAttempt[]
   customPaths CustomPathQuiz[]
@@ -137,9 +154,11 @@ model Question {
   solution   String?      // Explication affichée si l'élève échoue après l'indice
   order      Int          @default(0)
   quizId     Int
+  createdById Int?
   createdAt  DateTime     @default(now())
 
   quiz    Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  creator User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
   answers Answer[]
   questionAttempts QuestionAttempt[]
   revisions RevisionQuestion[]
@@ -233,9 +252,11 @@ model Revision {
   description String?
   targetLevel SchoolLevel // niveau scolaire ciblé (CP → CM2)
   endDate     DateTime?   // date de fin optionnelle : au-delà, la révision n'est plus proposée aux élèves
+  createdById Int?        // auteur (null = legacy/Owner)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
+  creator   User?              @relation(fields: [createdById], references: [id], onDelete: SetNull)
   questions RevisionQuestion[]
   attempts  QuizAttempt[]
 

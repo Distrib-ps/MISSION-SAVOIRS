@@ -3,6 +3,7 @@ import type { ChangeEvent, FormEvent, DragEvent } from "react";
 import * as XLSX from "xlsx";
 import AdminLayout from "../../components/admin/AdminLayout";
 import UserPathsModal from "../../components/admin/UserPathsModal";
+import { useAuth } from "../../contexts/AuthContext";
 import type { User, Level, Role, ImportResult, ImportedUser, Classe } from "../../types";
 
 /* ------------------------------------------------------------------ */
@@ -59,6 +60,13 @@ function RoleBadge({ role }: { role: Role }) {
     return (
       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-ms-lavender-light text-ms-dark">
         Admin
+      </span>
+    );
+  }
+  if (role === "TEACHER") {
+    return (
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-ms-yellow-light text-ms-dark">
+        Enseignant
       </span>
     );
   }
@@ -129,6 +137,9 @@ function sortUsers(list: User[], key: SortKey, dir: SortDir): User[] {
 /* ------------------------------------------------------------------ */
 
 export default function UsersPage() {
+  const { user: currentUser } = useAuth();
+  const isOwner = currentUser?.role === "ADMIN";
+
   /* ---------- state ---------- */
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -206,8 +217,7 @@ export default function UsersPage() {
   const filtered = sortUsers(
     users.filter((u) => {
       if (filterLevel !== "ALL" && u.level !== filterLevel) return false;
-      if (filterRole === "STUDENT" && u.role !== "STUDENT") return false;
-      if (filterRole === "ADMIN" && u.role !== "ADMIN") return false;
+      if (filterRole !== "ALL" && u.role !== filterRole) return false;
       if (search) {
         const q = search.toLowerCase();
         const haystack = `${u.username} ${u.firstName} ${u.lastName}`.toLowerCase();
@@ -554,6 +564,7 @@ export default function UsersPage() {
           >
             <option value="ALL">Tous les roles</option>
             <option value="STUDENT">Eleves</option>
+            <option value="TEACHER">Enseignants</option>
             <option value="ADMIN">Admins</option>
           </select>
         </div>
@@ -890,8 +901,8 @@ export default function UsersPage() {
                 <p className="text-xs text-ms-gray mt-1">5 caractères max</p>
               </div>
 
-              {/* Role selector - only on create */}
-              {!editingUser && (
+              {/* Role selector - only on create, et réservé au propriétaire */}
+              {!editingUser && isOwner && (
                 <div>
                   <label className="block text-sm font-semibold text-ms-dark mb-1">
                     Role
@@ -902,6 +913,7 @@ export default function UsersPage() {
                     className="w-full px-4 py-2.5 text-sm border border-ms-light-gray rounded-xl bg-white text-ms-dark focus:outline-none focus:ring-2 focus:ring-ms-lavender/40"
                   >
                     <option value="STUDENT">Eleve</option>
+                    <option value="TEACHER">Enseignant</option>
                     <option value="ADMIN">Admin</option>
                   </select>
                 </div>

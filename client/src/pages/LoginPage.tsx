@@ -18,7 +18,7 @@ export default function LoginPage() {
 
     try {
       const user = await login(username, password);
-      if (user.role === "ADMIN") {
+      if (user.role === "ADMIN" || user.role === "TEACHER") {
         navigate("/admin", { replace: true });
       } else {
         navigate("/dashboard", { replace: true });

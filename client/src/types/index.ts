@@ -1,5 +1,5 @@
 export type Level = "CP" | "CE1" | "CE2" | "CM1" | "CM2";
-export type Role = "ADMIN" | "STUDENT";
+export type Role = "ADMIN" | "TEACHER" | "STUDENT";
 
 export interface User {
   id: number;

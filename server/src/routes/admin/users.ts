@@ -3,7 +3,8 @@ import bcrypt from "bcrypt";
 import multer from "multer";
 import * as XLSX from "xlsx";
 import prisma from "../../lib/prisma";
-import { authenticate, requireAdmin } from "../../middleware/auth";
+import { authenticate, requireAdmin, requireStaff } from "../../middleware/auth";
+import { isOwner, currentUserId } from "../../lib/ownership";
 import { SchoolLevel } from "@prisma/client";
 
 const router = Router();
@@ -12,7 +13,17 @@ const router = Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
 // All routes require authentication + admin role
-router.use(authenticate, requireAdmin);
+router.use(authenticate, requireStaff);
+
+/** Vérifie qu'un élève appartient à une classe gérée par le prof courant (Owner = toujours OK). */
+async function studentInTeacherScope(req: Request, studentId: number): Promise<boolean> {
+  if (isOwner(req)) return true;
+  const student = await prisma.user.findFirst({
+    where: { id: studentId, role: "STUDENT", class: { teacherId: currentUserId(req) } },
+    select: { id: true },
+  });
+  return !!student;
+}
 
 // Valid school levels
 const VALID_LEVELS: string[] = ["CP", "CE1", "CE2", "CM1", "CM2"];
@@ -82,6 +93,12 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
 
     const where: Record<string, unknown> = {};
 
+    // Cloisonnement prof : ne voit que les élèves de ses classes
+    if (!isOwner(req)) {
+      where.role = "STUDENT";
+      where.class = { teacherId: currentUserId(req) };
+    }
+
     // Filter by class
     if (classId && typeof classId === "string") {
       const cid = parseInt(classId, 10);
@@ -136,8 +153,14 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
 
     const userRole: string = role ? role.toUpperCase() : "STUDENT";
 
-    if (userRole !== "ADMIN" && userRole !== "STUDENT") {
-      res.status(400).json({ error: "Rôle invalide. Utilisez ADMIN ou STUDENT" });
+    if (userRole !== "ADMIN" && userRole !== "STUDENT" && userRole !== "TEACHER") {
+      res.status(400).json({ error: "Rôle invalide. Utilisez ADMIN, TEACHER ou STUDENT" });
+      return;
+    }
+
+    // Seul l'Owner peut créer des comptes ADMIN ou TEACHER
+    if (userRole !== "STUDENT" && !isOwner(req)) {
+      res.status(403).json({ error: "Seul le propriétaire peut créer des comptes professeur/admin" });
       return;
     }
 
@@ -153,6 +176,22 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
       }
       resolvedClassId = cls.id;
       resolvedLevel = cls.level; // la classe porte le niveau
+    }
+
+    // Un prof ne peut inscrire un élève que dans une de SES classes
+    if (!isOwner(req)) {
+      if (resolvedClassId == null) {
+        res.status(400).json({ error: "Un professeur doit rattacher l'élève à une de ses classes" });
+        return;
+      }
+      const owned = await prisma.class.findFirst({
+        where: { id: resolvedClassId, teacherId: currentUserId(req) },
+        select: { id: true },
+      });
+      if (!owned) {
+        res.status(403).json({ error: "Cette classe n'est pas la vôtre" });
+        return;
+      }
     }
 
     if (!firstName || !lastName || !password) {
@@ -214,6 +253,12 @@ router.put("/:id", async (req: Request, res: Response): Promise<void> => {
 
     if (!existingUser) {
       res.status(404).json({ error: "Utilisateur introuvable" });
+      return;
+    }
+
+    // Cloisonnement prof : ne peut modifier qu'un élève de ses classes
+    if (!(await studentInTeacherScope(req, id))) {
+      res.status(403).json({ error: "Accès refusé : cet élève n'est pas dans vos classes" });
       return;
     }
 
@@ -316,6 +361,12 @@ router.delete("/:id", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // Cloisonnement prof : ne peut supprimer qu'un élève de ses classes
+    if (!(await studentInTeacherScope(req, id))) {
+      res.status(403).json({ error: "Accès refusé : cet élève n'est pas dans vos classes" });
+      return;
+    }
+
     await prisma.user.delete({ where: { id } });
 
     res.json({ message: "Utilisateur supprimé avec succès" });
@@ -325,9 +376,10 @@ router.delete("/:id", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-// ---------- POST /import - Bulk import students from Excel/CSV ----------
+// ---------- POST /import - Bulk import students from Excel/CSV (Owner uniquement) ----------
 router.post(
   "/import",
+  requireAdmin,
   upload.single("file"),
   async (req: Request, res: Response): Promise<void> => {
     try {
@@ -459,9 +511,10 @@ router.post(
   }
 );
 
-// ---------- PUT /bulk-update - Bulk update users ----------
+// ---------- PUT /bulk-update - Bulk update users (Owner uniquement) ----------
 router.put(
   "/bulk-update",
+  requireAdmin,
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { ids, level } = req.body;
@@ -494,6 +547,7 @@ router.put(
 // ---------- DELETE /bulk-delete - Bulk delete users ----------
 router.delete(
   "/bulk-delete",
+  requireAdmin,
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { ids } = req.body;

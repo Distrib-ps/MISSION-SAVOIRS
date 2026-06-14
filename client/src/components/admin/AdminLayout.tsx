@@ -128,7 +128,9 @@ export default function AdminLayout({ children }: Props) {
               <p className="text-sm font-semibold text-ms-dark truncate">
                 {user?.firstName} {user?.lastName}
               </p>
-              <p className="text-xs text-ms-gray">Administrateur</p>
+              <p className="text-xs text-ms-gray">
+                {user?.role === "TEACHER" ? "Enseignant" : "Propriétaire"}
+              </p>
             </div>
           </div>
           <div className="mt-3 flex gap-2">

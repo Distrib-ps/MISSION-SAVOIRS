@@ -1,16 +1,18 @@
 import { Router, Request, Response } from "express";
 import prisma from "../../lib/prisma";
-import { authenticate, requireAdmin } from "../../middleware/auth";
+import { authenticate, requireStaff } from "../../middleware/auth";
+import { contentOwnerWhere, currentUserId, isOwner } from "../../lib/ownership";
 
 const router = Router();
 
-// All routes require authentication + admin role
-router.use(authenticate, requireAdmin);
+// All routes require authentication + staff role (ADMIN ou TEACHER)
+router.use(authenticate, requireStaff);
 
 // ---------- GET / - List all themes with subThemes count ----------
-router.get("/", async (_req: Request, res: Response): Promise<void> => {
+router.get("/", async (req: Request, res: Response): Promise<void> => {
   try {
     const themes = await prisma.theme.findMany({
+      where: { ...contentOwnerWhere(req) },
       orderBy: { order: "asc" },
       include: {
         _count: { select: { subThemes: true } },
@@ -44,6 +46,7 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
         description: description ?? null,
         emoji: emoji ?? "📚",
         order: nextOrder,
+        createdById: currentUserId(req),
       },
       include: {
         _count: { select: { subThemes: true } },
@@ -75,10 +78,11 @@ router.put("/reorder", async (req: Request, res: Response): Promise<void> => {
     }
 
     // Update each theme's order based on its index in the array
+    // (filtre de propriété : un prof ne réordonne que ses propres thèmes)
     await prisma.$transaction(
       ids.map((id: number, index: number) =>
-        prisma.theme.update({
-          where: { id },
+        prisma.theme.updateMany({
+          where: { id, ...contentOwnerWhere(req) },
           data: { order: index },
         })
       )
@@ -106,6 +110,11 @@ router.put("/:id", async (req: Request, res: Response): Promise<void> => {
 
     if (!existing) {
       res.status(404).json({ error: "Thème introuvable" });
+      return;
+    }
+
+    if (!isOwner(req) && existing.createdById !== currentUserId(req)) {
+      res.status(403).json({ error: "Accès refusé : contenu d'un autre professeur" });
       return;
     }
 
@@ -154,6 +163,11 @@ router.delete("/:id", async (req: Request, res: Response): Promise<void> => {
 
     if (!existing) {
       res.status(404).json({ error: "Thème introuvable" });
+      return;
+    }
+
+    if (!isOwner(req) && existing.createdById !== currentUserId(req)) {
+      res.status(403).json({ error: "Accès refusé : contenu d'un autre professeur" });
       return;
     }
 

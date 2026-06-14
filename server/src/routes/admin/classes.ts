@@ -1,10 +1,11 @@
 import { Router, Request, Response } from "express";
 import { SchoolLevel } from "@prisma/client";
 import prisma from "../../lib/prisma";
-import { authenticate, requireAdmin } from "../../middleware/auth";
+import { authenticate, requireStaff } from "../../middleware/auth";
+import { currentUserId, isOwner } from "../../lib/ownership";
 
 const router = Router();
-router.use(authenticate, requireAdmin);
+router.use(authenticate, requireStaff);
 
 const LEVELS: SchoolLevel[] = ["CP", "CE1", "CE2", "CM1", "CM2"];
 
@@ -39,7 +40,9 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
       res.status(409).json({ error: "Une classe porte déjà ce nom" });
       return;
     }
-    const created = await prisma.class.create({ data: { name, level } });
+    const created = await prisma.class.create({
+      data: { name, level, teacherId: currentUserId(req) },
+    });
     res.status(201).json({ class: created });
   } catch (error) {
     console.error("Erreur classes POST:", error);
@@ -58,6 +61,10 @@ router.put("/:id", async (req: Request, res: Response): Promise<void> => {
     const existing = await prisma.class.findUnique({ where: { id } });
     if (!existing) {
       res.status(404).json({ error: "Classe introuvable" });
+      return;
+    }
+    if (!isOwner(req) && existing.teacherId !== currentUserId(req)) {
+      res.status(403).json({ error: "Accès refusé : classe d'un autre professeur" });
       return;
     }
     const { name, level } = req.body as { name?: string; level?: SchoolLevel };
@@ -96,6 +103,10 @@ router.delete("/:id", async (req: Request, res: Response): Promise<void> => {
     const existing = await prisma.class.findUnique({ where: { id } });
     if (!existing) {
       res.status(404).json({ error: "Classe introuvable" });
+      return;
+    }
+    if (!isOwner(req) && existing.teacherId !== currentUserId(req)) {
+      res.status(403).json({ error: "Accès refusé : classe d'un autre professeur" });
       return;
     }
     await prisma.class.delete({ where: { id } });

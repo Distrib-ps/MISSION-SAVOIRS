@@ -1,11 +1,12 @@
 import { Router, Request, Response } from "express";
 import prisma from "../../lib/prisma";
-import { authenticate, requireAdmin } from "../../middleware/auth";
+import { authenticate, requireStaff } from "../../middleware/auth";
+import { contentOwnerWhere, currentUserId, isOwner } from "../../lib/ownership";
 
 const router = Router();
 
-// All routes require authentication + admin role
-router.use(authenticate, requireAdmin);
+// All routes require authentication + staff role (ADMIN ou TEACHER)
+router.use(authenticate, requireStaff);
 
 // ---------- GET / - List quizzes for a given subtheme ----------
 router.get("/", async (req: Request, res: Response): Promise<void> => {
@@ -25,7 +26,7 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
     }
 
     const quizzes = await prisma.quiz.findMany({
-      where: { subThemeId: parsedSubThemeId },
+      where: { subThemeId: parsedSubThemeId, ...contentOwnerWhere(req) },
       orderBy: { order: "asc" },
       include: {
         _count: { select: { questions: true } },
@@ -84,6 +85,7 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
         timeLimit: timeLimit ?? null,
         subThemeId,
         order: nextOrder,
+        createdById: currentUserId(req),
         ...(Array.isArray(classIds) && classIds.length > 0
           ? { classes: { create: classIds.map((classId) => ({ classId })) } }
           : {}),
@@ -111,10 +113,11 @@ router.put("/reorder", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // (filtre de propriété : un prof ne réordonne que ses propres quiz)
     await prisma.$transaction(
       ids.map((id: number, index: number) =>
-        prisma.quiz.update({
-          where: { id },
+        prisma.quiz.updateMany({
+          where: { id, ...contentOwnerWhere(req) },
           data: { order: index },
         })
       )
@@ -142,6 +145,11 @@ router.put("/:id", async (req: Request, res: Response): Promise<void> => {
 
     if (!existing) {
       res.status(404).json({ error: "Quiz introuvable" });
+      return;
+    }
+
+    if (!isOwner(req) && existing.createdById !== currentUserId(req)) {
+      res.status(403).json({ error: "Accès refusé : contenu d'un autre professeur" });
       return;
     }
 
@@ -201,6 +209,11 @@ router.delete("/:id", async (req: Request, res: Response): Promise<void> => {
 
     if (!existing) {
       res.status(404).json({ error: "Quiz introuvable" });
+      return;
+    }
+
+    if (!isOwner(req) && existing.createdById !== currentUserId(req)) {
+      res.status(403).json({ error: "Accès refusé : contenu d'un autre professeur" });
       return;
     }
 

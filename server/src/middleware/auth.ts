@@ -78,3 +78,16 @@ export const requireAdmin = (
   }
   next();
 };
+
+// Autorise le personnel du back-office : Owner (ADMIN) ou professeur (TEACHER).
+export const requireStaff = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  if (!req.user || (req.user.role !== "ADMIN" && req.user.role !== "TEACHER")) {
+    res.status(403).json({ error: "Accès réservé au personnel" });
+    return;
+  }
+  next();
+};

@@ -1,12 +1,22 @@
 import { Router, Request, Response } from "express";
 import { SchoolLevel } from "@prisma/client";
 import prisma from "../../lib/prisma";
-import { authenticate, requireAdmin } from "../../middleware/auth";
+import { authenticate, requireStaff } from "../../middleware/auth";
+import { isOwner, currentUserId } from "../../lib/ownership";
 
 const router = Router();
-router.use(authenticate, requireAdmin);
+router.use(authenticate, requireStaff);
 
 const LEVELS: SchoolLevel[] = ["CP", "CE1", "CE2", "CM1", "CM2"];
+
+/** Pour un prof : ne compter que ses quiz ; pour l'Owner : tout. */
+function quizScope(req: Request): { createdById?: number } {
+  return isOwner(req) ? {} : { createdById: currentUserId(req) };
+}
+/** Pour un prof : ne compter que les élèves de ses classes ; pour l'Owner : tous. */
+function studentScope(req: Request): Record<string, unknown> {
+  return isOwner(req) ? {} : { class: { teacherId: currentUserId(req) } };
+}
 
 /** Taux de réussite (0-100) d'un lot de tentatives : moyenne de score/total. */
 function successRate(attempts: { score: number; totalQuestions: number }[]): number {
@@ -57,12 +67,14 @@ function parseLevel(raw: unknown): SchoolLevel | undefined {
 router.get("/overview", async (req: Request, res: Response): Promise<void> => {
   try {
     const level = parseLevel(req.query.level);
-    const studentWhere = { role: "STUDENT" as const, ...(level ? { level } : {}) };
+    const studentWhere = { role: "STUDENT" as const, ...(level ? { level } : {}), ...studentScope(req) };
 
     // Tentatives de quiz (classiques + parcours perso) — révisions exclues (quizId null)
+    // Cloisonnement prof : seulement les tentatives sur SES quiz.
     const attemptWhere = {
       quizId: { not: null },
       ...(level ? { user: { level } } : {}),
+      ...(isOwner(req) ? {} : { quiz: { createdById: currentUserId(req) } }),
     };
     const attempts = await prisma.quizAttempt.findMany({
       where: attemptWhere,
@@ -84,8 +96,8 @@ router.get("/overview", async (req: Request, res: Response): Promise<void> => {
     // Cartes
     const studentsCount = await prisma.user.count({ where: studentWhere });
     const completedCount = attempts.filter(isCompleted).length;
-    const themesCount = await prisma.theme.count();
-    const quizzesCount = await prisma.quiz.count();
+    const themesCount = await prisma.theme.count({ where: quizScope(req) });
+    const quizzesCount = await prisma.quiz.count({ where: quizScope(req) });
 
     // Par quiz
     const byQuiz = new Map<number, { title: string; theme: string; items: typeof attempts }>();
@@ -129,7 +141,7 @@ router.get("/overview", async (req: Request, res: Response): Promise<void> => {
     // Par niveau
     const studentsByLevel = await prisma.user.groupBy({
       by: ["level"],
-      where: { role: "STUDENT" },
+      where: { role: "STUDENT", ...studentScope(req) },
       _count: { _all: true },
     });
     const byLevel = LEVELS.map((lv) => {
@@ -140,7 +152,13 @@ router.get("/overview", async (req: Request, res: Response): Promise<void> => {
 
     // Indices + réinjection
     const qAttempts = await prisma.questionAttempt.findMany({
-      where: { quizAttempt: { quizId: { not: null }, ...(level ? { user: { level } } : {}) } },
+      where: {
+        quizAttempt: {
+          quizId: { not: null },
+          ...(level ? { user: { level } } : {}),
+          ...(isOwner(req) ? {} : { quiz: { createdById: currentUserId(req) } }),
+        },
+      },
       select: { questionId: true, isCorrect: true, usedHint: true, quizAttempt: { select: { userId: true } } },
     });
     const hintUsed = qAttempts.filter((q) => q.usedHint).length;
@@ -173,7 +191,7 @@ router.get("/students", async (req: Request, res: Response): Promise<void> => {
   try {
     const level = parseLevel(req.query.level);
     const students = await prisma.user.findMany({
-      where: { role: "STUDENT", ...(level ? { level } : {}) },
+      where: { role: "STUDENT", ...(level ? { level } : {}), ...studentScope(req) },
       select: { id: true, firstName: true, lastName: true, level: true },
       orderBy: [{ level: "asc" }, { firstName: "asc" }],
     });
@@ -224,7 +242,7 @@ router.get("/students/:id", async (req: Request, res: Response): Promise<void> =
     }
 
     const student = await prisma.user.findFirst({
-      where: { id, role: "STUDENT" },
+      where: { id, role: "STUDENT", ...studentScope(req) },
       select: { id: true, firstName: true, lastName: true, level: true },
     });
     if (!student) {
@@ -233,7 +251,7 @@ router.get("/students/:id", async (req: Request, res: Response): Promise<void> =
     }
 
     const attempts = await prisma.quizAttempt.findMany({
-      where: { userId: id, quizId: { not: null } },
+      where: { userId: id, quizId: { not: null }, ...(isOwner(req) ? {} : { quiz: { createdById: currentUserId(req) } }) },
       orderBy: { completedAt: "asc" },
       select: {
         quizId: true,
@@ -278,7 +296,7 @@ router.get("/students/:id", async (req: Request, res: Response): Promise<void> =
 
     // Indices + réinjection + points faibles (avec détail question)
     const qAttempts = await prisma.questionAttempt.findMany({
-      where: { quizAttempt: { userId: id, quizId: { not: null } } },
+      where: { quizAttempt: { userId: id, quizId: { not: null }, ...(isOwner(req) ? {} : { quiz: { createdById: currentUserId(req) } }) } },
       select: {
         questionId: true,
         isCorrect: true,
@@ -407,7 +425,7 @@ router.get(
       // Tentatives de questions de l'élève sur ce quiz (questions propres au quiz)
       const qAttempts = await prisma.questionAttempt.findMany({
         where: {
-          quizAttempt: { userId: id, quizId },
+          quizAttempt: { userId: id, quizId, ...(isOwner(req) ? {} : { quiz: { createdById: currentUserId(req) } }) },
           question: { quizId },
         },
         select: {
