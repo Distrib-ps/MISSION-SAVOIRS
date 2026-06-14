@@ -49,6 +49,7 @@ model User {
   createdQuizzes   Quiz[]
   createdQuestions Question[]
   createdRevisions Revision[]
+  sharedQuizzes    QuizShare[]
 
   @@map("users")
 }
@@ -67,6 +68,18 @@ model Class {
   quizzes  QuizClass[]
 
   @@map("classes")
+}
+
+// Co-accès en lecture : un quiz partagé à un professeur (lecture seule + stats)
+model QuizShare {
+  quizId    Int
+  teacherId Int
+
+  quiz    Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  teacher User @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@id([quizId, teacherId])
+  @@map("quiz_shares")
 }
 
 // Ciblage d'un quiz vers des classes (0 ligne = visible par toutes les classes)
@@ -131,6 +144,7 @@ model Quiz {
   attempts  QuizAttempt[]
   customPaths CustomPathQuiz[]
   classes   QuizClass[]
+  shares    QuizShare[]
 
   @@map("quizzes")
 }

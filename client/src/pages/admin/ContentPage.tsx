@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import AdminLayout from "../../components/admin/AdminLayout";
 import ContentTreeSidebar, { type Selection, type TreeTheme } from "../../components/admin/ContentTreeSidebar";
 import type { Theme, SubTheme, Quiz, Question, Answer, Classe } from "../../types";
+import { useAuth } from "../../contexts/AuthContext";
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -108,6 +109,47 @@ function PlusIcon() {
 /* ------------------------------------------------------------------ */
 
 export default function ContentPage() {
+  const { user: currentUser } = useAuth();
+  const isOwnerRole = currentUser?.role === "ADMIN";
+
+  /* ---- Partage (co-accès) ---- */
+  const [shareQuiz, setShareQuiz] = useState<Quiz | null>(null);
+  const [shareTeachers, setShareTeachers] = useState<{ id: number; firstName: string; lastName: string }[]>([]);
+  const [shareSelected, setShareSelected] = useState<Set<number>>(new Set());
+
+  function canShare(q: Quiz): boolean {
+    return isOwnerRole || q.createdById === currentUser?.id;
+  }
+
+  async function openShare(q: Quiz) {
+    setShareQuiz(q);
+    setShareSelected(new Set());
+    const [t, s] = await Promise.all([
+      fetch("/api/admin/users/teachers", { headers: authHeaders() }).then((r) => (r.ok ? r.json() : { teachers: [] })),
+      fetch(`/api/admin/quizzes/${q.id}/shares`, { headers: authHeaders() }).then((r) => (r.ok ? r.json() : { teacherIds: [] })),
+    ]);
+    setShareTeachers(t.teachers ?? []);
+    setShareSelected(new Set<number>(s.teacherIds ?? []));
+  }
+
+  async function toggleShare(teacherId: number) {
+    if (!shareQuiz) return;
+    const has = shareSelected.has(teacherId);
+    const next = new Set(shareSelected);
+    if (has) {
+      await fetch(`/api/admin/quizzes/${shareQuiz.id}/shares/${teacherId}`, { method: "DELETE", headers: authHeaders() });
+      next.delete(teacherId);
+    } else {
+      await fetch(`/api/admin/quizzes/${shareQuiz.id}/shares`, {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ teacherId }),
+      });
+      next.add(teacherId);
+    }
+    setShareSelected(next);
+  }
+
   /* ---- Navigation state ---- */
   const [selectedTheme, setSelectedTheme] = useState<Theme | null>(null);
   const [selectedSubTheme, setSelectedSubTheme] = useState<SubTheme | null>(null);
@@ -1239,6 +1281,17 @@ export default function ContentPage() {
                 </span>
 
                 <div className="flex items-center gap-1">
+                  {canShare(quiz) && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); openShare(quiz); }}
+                      className="p-2 text-ms-gray hover:text-ms-blue hover:bg-ms-blue-light rounded-xl transition"
+                      title="Partager à un autre prof"
+                    >
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                      </svg>
+                    </button>
+                  )}
                   <button
                     onClick={(e) => { e.stopPropagation(); openQuizEdit(quiz); }}
                     className="p-2 text-ms-gray hover:text-ms-lavender hover:bg-ms-lavender-light rounded-xl transition"
@@ -2264,6 +2317,51 @@ export default function ContentPage() {
           </div>
         )}
         </div>
+
+        {/* Modale de partage (co-accès lecture) */}
+        {shareQuiz && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={() => setShareQuiz(null)}>
+            <div className="bg-white rounded-2xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+              <h2 className="text-lg font-extrabold text-ms-dark mb-1">Partager « {shareQuiz.title} »</h2>
+              <p className="text-sm text-ms-gray mb-4">
+                Les profs cochés peuvent <strong>voir</strong> ce quiz et ses statistiques (lecture seule).
+              </p>
+              {shareTeachers.length === 0 ? (
+                <p className="text-sm text-ms-gray">Aucun autre professeur à qui partager.</p>
+              ) : (
+                <div className="space-y-1.5 max-h-72 overflow-y-auto">
+                  {shareTeachers.map((t) => {
+                    const checked = shareSelected.has(t.id);
+                    return (
+                      <label
+                        key={t.id}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-sm ${
+                          checked ? "bg-ms-blue-light" : "hover:bg-ms-cream"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleShare(t.id)}
+                          className="w-4 h-4 rounded accent-ms-blue"
+                        />
+                        <span className="text-ms-dark">{t.firstName} {t.lastName}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+              <div className="flex justify-end mt-5">
+                <button
+                  onClick={() => setShareQuiz(null)}
+                  className="px-5 py-2 text-sm font-semibold bg-ms-lavender text-white rounded-xl hover:opacity-90 transition"
+                >
+                  Terminé
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </AdminLayout>
   );

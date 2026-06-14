@@ -78,8 +78,20 @@ export interface Quiz {
   timeLimit: number | null;
   order: number;
   subThemeId: number;
+  createdById?: number | null;
   _count?: { questions: number };
   classes?: { classId: number }[];
+}
+
+export interface SharedQuizRow {
+  id: number;
+  title: string;
+  description: string | null;
+  totalQuestions: number;
+  theme: string;
+  emoji: string;
+  subTheme: string;
+  owner: string;
 }
 
 export interface Answer {

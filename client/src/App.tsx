@@ -15,6 +15,7 @@ import CustomPathPage from "./pages/student/CustomPathPage";
 import RevisionsPage from "./pages/admin/RevisionsPage";
 import StatsPage from "./pages/admin/StatsPage";
 import ClassesPage from "./pages/admin/ClassesPage";
+import SharedWithMePage from "./pages/admin/SharedWithMePage";
 
 function App() {
   return (
@@ -128,6 +129,15 @@ function App() {
           element={
             <ProtectedRoute requiredRole="STAFF">
               <ClassesPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/shared"
+          element={
+            <ProtectedRoute requiredRole="STAFF">
+              <SharedWithMePage />
             </ProtectedRoute>
           }
         />
