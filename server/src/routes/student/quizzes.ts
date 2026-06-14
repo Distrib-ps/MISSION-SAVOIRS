@@ -47,10 +47,15 @@ router.post(
         customPathId = parsed;
       }
 
+      // Classe de l'élève (pour le contrôle d'accès au quiz ciblé)
+      const student = await prisma.user.findUnique({ where: { id: userId }, select: { classId: true } });
+      const classId = student?.classId ?? null;
+
       // Verify the quiz exists and has questions
       const quiz = await prisma.quiz.findUnique({
         where: { id },
         include: {
+          classes: { select: { classId: true } },
           questions: {
             orderBy: { order: "asc" },
             include: {
@@ -65,10 +70,22 @@ router.post(
         return;
       }
 
+      // Contrôle d'accès classe : un quiz ciblé n'est jouable que par les classes visées
+      if (quiz.classes.length > 0 && (classId == null || !quiz.classes.some((c) => c.classId === classId))) {
+        res.status(403).json({ error: "Ce quiz n'est pas accessible à votre classe" });
+        return;
+      }
+
       if (quiz.questions.length === 0) {
         res.status(400).json({ error: "Ce quiz ne contient aucune question" });
         return;
       }
+
+      // Filtre de visibilité (réinjection : ne pas rejouer des questions d'un quiz d'une autre classe)
+      const quizClassFilter =
+        classId == null
+          ? { classes: { none: {} } }
+          : { OR: [{ classes: { none: {} } }, { classes: { some: { classId } } }] };
 
       // ── Réinjection: find failed questions from previous quizzes in the same sub-theme ──
       const failedQuestionAttempts = await prisma.questionAttempt.findMany({
@@ -77,7 +94,7 @@ router.post(
           quizAttempt: { userId, customPathId },
           isCorrect: false,
           question: {
-            quiz: { subThemeId: quiz.subThemeId },
+            quiz: { subThemeId: quiz.subThemeId, ...quizClassFilter },
             quizId: { not: id }, // not from this quiz
           },
         },

@@ -3,7 +3,7 @@ import type { ChangeEvent, FormEvent, DragEvent } from "react";
 import * as XLSX from "xlsx";
 import AdminLayout from "../../components/admin/AdminLayout";
 import UserPathsModal from "../../components/admin/UserPathsModal";
-import type { User, Level, Role, ImportResult, ImportedUser } from "../../types";
+import type { User, Level, Role, ImportResult, ImportedUser, Classe } from "../../types";
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                          */
@@ -162,12 +162,14 @@ export default function UsersPage() {
   const [formPassword, setFormPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [formRole, setFormRole] = useState<Role>("STUDENT");
+  const [formClass, setFormClass] = useState<number | "">("");
+  const [classesList, setClassesList] = useState<Classe[]>([]);
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState("");
 
   // Import state
   const [importFile, setImportFile] = useState<File | null>(null);
-  const [importPreview, setImportPreview] = useState<{ prenom: string; nom: string; niveau: string; valid: boolean }[]>([]);
+  const [importPreview, setImportPreview] = useState<{ prenom: string; nom: string; niveau: string; classe: string; valid: boolean }[]>([]);
   const [importLoading, setImportLoading] = useState(false);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [importError, setImportError] = useState("");
@@ -192,6 +194,13 @@ export default function UsersPage() {
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
+
+  useEffect(() => {
+    fetch("/api/admin/classes", { headers: authHeaders() })
+      .then((r) => (r.ok ? r.json() : { classes: [] }))
+      .then((d) => setClassesList(d.classes ?? []))
+      .catch(() => setClassesList([]));
+  }, []);
 
   /* ---------- filtered + sorted users ---------- */
   const filtered = sortUsers(
@@ -247,6 +256,7 @@ export default function UsersPage() {
     setFormPassword(generateRandomPassword());
     setShowPassword(true);
     setFormRole("STUDENT");
+    setFormClass("");
     setFormError("");
     setShowCreateEdit(true);
   }
@@ -259,6 +269,7 @@ export default function UsersPage() {
     setFormPassword("");
     setShowPassword(false);
     setFormRole(u.role);
+    setFormClass(u.classId ?? "");
     setFormError("");
     setShowCreateEdit(true);
   }
@@ -271,10 +282,11 @@ export default function UsersPage() {
     try {
       if (editingUser) {
         // Update
-        const body: Record<string, string> = {
+        const body: Record<string, unknown> = {
           firstName: formFirst,
           lastName: formLast,
           level: formLevel,
+          classId: formClass === "" ? null : formClass,
         };
         if (formPassword) body.password = formPassword;
 
@@ -303,6 +315,7 @@ export default function UsersPage() {
             level: formLevel,
             password: formPassword,
             role: formRole,
+            classId: formClass === "" ? null : formClass,
           }),
         });
         if (!res.ok) {
@@ -403,18 +416,32 @@ export default function UsersPage() {
         if (rows.length === 0) { setImportError("Le fichier est vide"); return; }
 
         const validLevels = ["CP", "CE1", "CE2", "CM1", "CM2"];
+        // Résolution des classes par nom (insensible à la casse) → niveau
+        const classByName = new Map(classesList.map((c) => [c.name.toLowerCase().trim(), c]));
         const parsed = rows.map((row) => {
           const keys = Object.keys(row);
           const prenomKey = keys.find((k) => ["prenom", "prénom"].includes(k.toLowerCase().trim()));
           const nomKey = keys.find((k) => k.toLowerCase().trim() === "nom");
           const niveauKey = keys.find((k) => k.toLowerCase().trim() === "niveau");
+          const classeKey = keys.find((k) => k.toLowerCase().trim() === "classe");
 
           const prenom = prenomKey ? String(row[prenomKey]).trim() : "";
           const nom = nomKey ? String(row[nomKey]).trim() : "";
-          const niveau = niveauKey ? String(row[niveauKey]).trim().toUpperCase() : "";
-          const valid = !!prenom && !!nom && validLevels.includes(niveau);
+          const classe = classeKey ? String(row[classeKey]).trim() : "";
 
-          return { prenom, nom, niveau, valid };
+          // Une classe valide impose son niveau ; sinon on retombe sur la colonne NIVEAU
+          const matchedClass = classe ? classByName.get(classe.toLowerCase()) : undefined;
+          const niveau = matchedClass
+            ? matchedClass.level
+            : niveauKey
+              ? String(row[niveauKey]).trim().toUpperCase()
+              : "";
+
+          // classe renseignée mais inconnue → invalide
+          const classeOk = !classe || !!matchedClass;
+          const valid = !!prenom && !!nom && classeOk && validLevels.includes(niveau);
+
+          return { prenom, nom, niveau, classe, valid };
         });
 
         setImportPreview(parsed);
@@ -625,7 +652,14 @@ export default function UsersPage() {
                       <td className="px-3 py-3 text-ms-dark">{u.firstName}</td>
                       <td className="px-3 py-3 text-ms-dark">{u.lastName}</td>
                       <td className="px-3 py-3">
-                        <LevelBadge level={u.level} />
+                        <div className="flex items-center gap-2">
+                          <LevelBadge level={u.level} />
+                          {u.class && (
+                            <span className="text-xs text-ms-gray bg-ms-cream px-2 py-0.5 rounded-full">
+                              {u.class.name}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-3 py-3">
                         <RoleBadge role={u.role} />
@@ -784,6 +818,30 @@ export default function UsersPage() {
 
               <div>
                 <label className="block text-sm font-semibold text-ms-dark mb-1">
+                  Classe
+                  <span className="font-normal text-ms-gray ml-1">(définit le niveau)</span>
+                </label>
+                <select
+                  value={formClass}
+                  onChange={(e) => {
+                    const val = e.target.value ? Number(e.target.value) : "";
+                    setFormClass(val);
+                    const cls = classesList.find((c) => c.id === val);
+                    if (cls) setFormLevel(cls.level);
+                  }}
+                  className="w-full px-4 py-2.5 text-sm border border-ms-light-gray rounded-xl bg-white text-ms-dark focus:outline-none focus:ring-2 focus:ring-ms-lavender/40"
+                >
+                  <option value="">Aucune</option>
+                  {classesList.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} ({c.level})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-ms-dark mb-1">
                   Mot de passe
                   {editingUser && (
                     <span className="font-normal text-ms-gray ml-1">
@@ -899,13 +957,14 @@ export default function UsersPage() {
                 <p className="text-sm text-ms-gray mb-5">
                   Format attendu du fichier (colonnes) :
                 </p>
-                <div className="bg-ms-cream rounded-xl p-3 mb-5 overflow-x-auto">
+                <div className="bg-ms-cream rounded-xl p-3 mb-3 overflow-x-auto">
                   <table className="text-xs font-mono">
                     <thead>
                       <tr className="text-ms-gray">
                         <th className="px-3 py-1 text-left">PRENOM</th>
                         <th className="px-3 py-1 text-left">NOM</th>
                         <th className="px-3 py-1 text-left">NIVEAU</th>
+                        <th className="px-3 py-1 text-left">CLASSE</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -913,15 +972,23 @@ export default function UsersPage() {
                         <td className="px-3 py-1">Lina</td>
                         <td className="px-3 py-1">Dupont</td>
                         <td className="px-3 py-1">CE1</td>
+                        <td className="px-3 py-1 text-ms-gray">—</td>
                       </tr>
                       <tr className="text-ms-dark">
                         <td className="px-3 py-1">Adam</td>
                         <td className="px-3 py-1">Martin</td>
-                        <td className="px-3 py-1">CM2</td>
+                        <td className="px-3 py-1 text-ms-gray">—</td>
+                        <td className="px-3 py-1">cm2_2</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
+                <p className="text-xs text-ms-gray mb-5">
+                  La colonne <span className="font-mono font-semibold">CLASSE</span> est{" "}
+                  <span className="font-semibold">optionnelle</span> : si renseignée (nom d'une classe
+                  existante), elle rattache l'élève à cette classe et <span className="font-semibold">impose
+                  son niveau</span> (la colonne NIVEAU peut alors être laissée vide). Sinon, NIVEAU est requis.
+                </p>
               </>
             )}
 
@@ -1003,6 +1070,7 @@ export default function UsersPage() {
                         <th className="px-3 py-2 text-left font-bold text-ms-gray">Prénom</th>
                         <th className="px-3 py-2 text-left font-bold text-ms-gray">Nom</th>
                         <th className="px-3 py-2 text-left font-bold text-ms-gray">Niveau</th>
+                        <th className="px-3 py-2 text-left font-bold text-ms-gray">Classe</th>
                         <th className="px-3 py-2 text-left font-bold text-ms-gray">Identifiant</th>
                         <th className="px-3 py-2 text-center font-bold text-ms-gray">Statut</th>
                       </tr>
@@ -1031,6 +1099,15 @@ export default function UsersPage() {
                               <span className="text-ms-pink italic">
                                 {row.niveau || "manquant"}
                               </span>
+                            )}
+                          </td>
+                          <td className="px-3 py-1.5">
+                            {row.classe ? (
+                              <span className="inline-block px-2 py-0.5 rounded-full bg-ms-cream text-ms-dark">
+                                {row.classe}
+                              </span>
+                            ) : (
+                              <span className="text-ms-gray">—</span>
                             )}
                           </td>
                           <td className="px-3 py-1.5 font-mono text-ms-gray">

@@ -29,6 +29,7 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
       orderBy: { order: "asc" },
       include: {
         _count: { select: { questions: true } },
+        classes: { select: { classId: true } },
       },
     });
 
@@ -42,7 +43,13 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
 // ---------- POST / - Create a quiz ----------
 router.post("/", async (req: Request, res: Response): Promise<void> => {
   try {
-    const { title, description, timeLimit, subThemeId } = req.body;
+    const { title, description, timeLimit, subThemeId, classIds } = req.body as {
+      title?: string;
+      description?: string | null;
+      timeLimit?: number | null;
+      subThemeId?: number;
+      classIds?: number[];
+    };
 
     if (!title) {
       res.status(400).json({ error: "Le champ title est requis" });
@@ -77,9 +84,13 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
         timeLimit: timeLimit ?? null,
         subThemeId,
         order: nextOrder,
+        ...(Array.isArray(classIds) && classIds.length > 0
+          ? { classes: { create: classIds.map((classId) => ({ classId })) } }
+          : {}),
       },
       include: {
         _count: { select: { questions: true } },
+        classes: { select: { classId: true } },
       },
     });
 
@@ -134,7 +145,13 @@ router.put("/:id", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const { title, description, timeLimit, order } = req.body;
+    const { title, description, timeLimit, order, classIds } = req.body as {
+      title?: string;
+      description?: string | null;
+      timeLimit?: number | null;
+      order?: number;
+      classIds?: number[];
+    };
     const data: Record<string, unknown> = {};
 
     if (title !== undefined) data.title = title;
@@ -142,12 +159,24 @@ router.put("/:id", async (req: Request, res: Response): Promise<void> => {
     if (timeLimit !== undefined) data.timeLimit = timeLimit;
     if (order !== undefined) data.order = order;
 
-    const quiz = await prisma.quiz.update({
-      where: { id },
-      data,
-      include: {
-        _count: { select: { questions: true } },
-      },
+    const quiz = await prisma.$transaction(async (tx) => {
+      // Remplace le ciblage de classes si fourni (tableau vide = visible par tous)
+      if (classIds !== undefined) {
+        await tx.quizClass.deleteMany({ where: { quizId: id } });
+        if (Array.isArray(classIds) && classIds.length > 0) {
+          await tx.quizClass.createMany({
+            data: classIds.map((classId) => ({ quizId: id, classId })),
+          });
+        }
+      }
+      return tx.quiz.update({
+        where: { id },
+        data,
+        include: {
+          _count: { select: { questions: true } },
+          classes: { select: { classId: true } },
+        },
+      });
     });
 
     res.json({ quiz });

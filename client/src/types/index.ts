@@ -8,6 +8,15 @@ export interface User {
   lastName: string;
   role: Role;
   level?: Level | null;
+  classId?: number | null;
+  class?: { id: number; name: string; level?: Level } | null;
+}
+
+export interface Classe {
+  id: number;
+  name: string;
+  level: Level;
+  _count?: { students: number };
 }
 
 export interface AuthResponse {
@@ -70,6 +79,7 @@ export interface Quiz {
   order: number;
   subThemeId: number;
   _count?: { questions: number };
+  classes?: { classId: number }[];
 }
 
 export interface Answer {

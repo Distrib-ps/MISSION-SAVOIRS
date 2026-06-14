@@ -31,6 +31,7 @@ model User {
   lastName  String
   role      Role        @default(STUDENT)
   level     SchoolLevel?
+  classId   Int?        // classe de l'élève (null = non rattaché ; le niveau est synchronisé sur la classe)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -38,8 +39,35 @@ model User {
   // Relations élève
   quizAttempts QuizAttempt[]
   customPaths  CustomPath[]
+  class        Class?       @relation(fields: [classId], references: [id], onDelete: SetNull)
 
   @@map("users")
+}
+
+// ========== CLASSES ==========
+
+model Class {
+  id        Int         @id @default(autoincrement())
+  name      String      @unique // ex: cm2_2, cm1_3
+  level     SchoolLevel // niveau scolaire de la classe
+  createdAt DateTime    @default(now())
+
+  students User[]
+  quizzes  QuizClass[]
+
+  @@map("classes")
+}
+
+// Ciblage d'un quiz vers des classes (0 ligne = visible par toutes les classes)
+model QuizClass {
+  quizId  Int
+  classId Int
+
+  quiz  Quiz  @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  class Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@id([quizId, classId])
+  @@map("quiz_classes")
 }
 
 // ========== CONTENU PÉDAGOGIQUE ==========
@@ -85,6 +113,7 @@ model Quiz {
   questions Question[]
   attempts  QuizAttempt[]
   customPaths CustomPathQuiz[]
+  classes   QuizClass[]
 
   @@map("quizzes")
 }
