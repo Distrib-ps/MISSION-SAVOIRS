@@ -64,16 +64,29 @@ const userSelect = {
   lastName: true,
   role: true,
   level: true,
+  classId: true,
+  class: { select: { id: true, name: true, level: true } },
   createdAt: true,
   updatedAt: true,
 };
 
+/** Résout une classe par id et renvoie son niveau (pour synchroniser User.level). */
+async function resolveClass(classId: number): Promise<{ id: number; level: SchoolLevel } | null> {
+  return prisma.class.findUnique({ where: { id: classId }, select: { id: true, level: true } });
+}
+
 // ---------- GET / - List all users (students AND admins) ----------
 router.get("/", async (req: Request, res: Response): Promise<void> => {
   try {
-    const { level, role, search } = req.query;
+    const { level, role, search, classId } = req.query;
 
     const where: Record<string, unknown> = {};
+
+    // Filter by class
+    if (classId && typeof classId === "string") {
+      const cid = parseInt(classId, 10);
+      if (!isNaN(cid)) where.classId = cid;
+    }
 
     // Filter by level
     if (level && typeof level === "string") {
@@ -119,13 +132,27 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
 // ---------- POST / - Create a user (student or admin) ----------
 router.post("/", async (req: Request, res: Response): Promise<void> => {
   try {
-    const { firstName, lastName, level, password, role } = req.body;
+    const { firstName, lastName, level, password, role, classId } = req.body;
 
     const userRole: string = role ? role.toUpperCase() : "STUDENT";
 
     if (userRole !== "ADMIN" && userRole !== "STUDENT") {
       res.status(400).json({ error: "Rôle invalide. Utilisez ADMIN ou STUDENT" });
       return;
+    }
+
+    // Classe (optionnelle) : si fournie, elle impose le niveau de l'élève
+    let resolvedLevel: SchoolLevel | null = level ? (level.toUpperCase() as SchoolLevel) : null;
+    let resolvedClassId: number | null = null;
+    if (classId !== undefined && classId !== null) {
+      const cid = parseInt(String(classId), 10);
+      const cls = isNaN(cid) ? null : await resolveClass(cid);
+      if (!cls) {
+        res.status(400).json({ error: "Classe introuvable" });
+        return;
+      }
+      resolvedClassId = cls.id;
+      resolvedLevel = cls.level; // la classe porte le niveau
     }
 
     if (!firstName || !lastName || !password) {
@@ -135,26 +162,18 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // For students, level is required
-    if (userRole === "STUDENT") {
-      if (!level) {
-        res.status(400).json({
-          error: "Le niveau scolaire est requis pour les élèves",
-        });
-        return;
-      }
-      if (!VALID_LEVELS.includes(level.toUpperCase())) {
-        res.status(400).json({ error: "Niveau scolaire invalide" });
-        return;
-      }
+    // Validate explicit level format if provided
+    if (resolvedLevel && !VALID_LEVELS.includes(resolvedLevel)) {
+      res.status(400).json({ error: "Niveau scolaire invalide" });
+      return;
     }
 
-    // For admins, validate level only if provided
-    if (userRole === "ADMIN" && level) {
-      if (!VALID_LEVELS.includes(level.toUpperCase())) {
-        res.status(400).json({ error: "Niveau scolaire invalide" });
-        return;
-      }
+    // For students, a level is required (directly or via class)
+    if (userRole === "STUDENT" && !resolvedLevel) {
+      res.status(400).json({
+        error: "Le niveau scolaire (ou une classe) est requis pour les élèves",
+      });
+      return;
     }
 
     const username = await generateUsername(firstName, lastName);
@@ -167,11 +186,8 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
         firstName,
         lastName,
         role: userRole as "ADMIN" | "STUDENT",
-        level: userRole === "STUDENT"
-          ? (level.toUpperCase() as SchoolLevel)
-          : level
-            ? (level.toUpperCase() as SchoolLevel)
-            : null,
+        level: resolvedLevel,
+        classId: resolvedClassId,
       },
       select: userSelect,
     });
@@ -201,12 +217,28 @@ router.put("/:id", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const { firstName, lastName, level, password, role } = req.body;
+    const { firstName, lastName, level, password, role, classId } = req.body;
 
     const data: Record<string, unknown> = {};
 
     if (firstName !== undefined) data.firstName = firstName;
     if (lastName !== undefined) data.lastName = lastName;
+
+    // Classe : si fournie, elle impose le niveau ; null = détacher
+    if (classId !== undefined) {
+      if (classId === null) {
+        data.classId = null;
+      } else {
+        const cid = parseInt(String(classId), 10);
+        const cls = isNaN(cid) ? null : await resolveClass(cid);
+        if (!cls) {
+          res.status(400).json({ error: "Classe introuvable" });
+          return;
+        }
+        data.classId = cls.id;
+        data.level = cls.level; // synchronise le niveau sur la classe
+      }
+    }
 
     if (role !== undefined) {
       const upperRole = role.toUpperCase();
@@ -334,6 +366,10 @@ router.post(
         return result;
       }
 
+      // Précharge les classes (résolution par nom, insensible à la casse) pour la colonne CLASSE
+      const allClasses = await prisma.class.findMany({ select: { id: true, name: true, level: true } });
+      const classByName = new Map(allClasses.map((c) => [c.name.toLowerCase().trim(), c]));
+
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
         const rowNum = i + 2; // Row 1 is headers, data starts at row 2
@@ -347,10 +383,12 @@ router.post(
         const niveauKey = keys.find(
           (k) => k.toLowerCase().trim() === "niveau"
         );
+        const classeKey = keys.find((k) => k.toLowerCase().trim() === "classe");
 
         const prenom = prenomKey ? String(row[prenomKey]).trim() : "";
         const nom = nomKey ? String(row[nomKey]).trim() : "";
         const niveau = niveauKey ? String(row[niveauKey]).trim().toUpperCase() : "";
+        const classeName = classeKey ? String(row[classeKey]).trim() : "";
 
         // Validate required fields
         if (!prenom) {
@@ -361,13 +399,27 @@ router.post(
           errors.push(`Ligne ${rowNum}: nom manquant`);
           continue;
         }
-        if (!niveau) {
-          errors.push(`Ligne ${rowNum}: niveau manquant`);
+
+        // Résolution de la classe (optionnelle) : si présente, elle impose le niveau
+        let classId: number | null = null;
+        let effectiveLevel = niveau;
+        if (classeName) {
+          const cls = classByName.get(classeName.toLowerCase());
+          if (!cls) {
+            errors.push(`Ligne ${rowNum}: classe "${classeName}" introuvable`);
+            continue;
+          }
+          classId = cls.id;
+          effectiveLevel = cls.level; // la classe porte le niveau
+        }
+
+        if (!effectiveLevel) {
+          errors.push(`Ligne ${rowNum}: niveau ou classe manquant`);
           continue;
         }
-        if (!VALID_LEVELS.includes(niveau)) {
+        if (!VALID_LEVELS.includes(effectiveLevel)) {
           errors.push(
-            `Ligne ${rowNum}: niveau invalide "${niveau}" (attendu: CP, CE1, CE2, CM1, CM2)`
+            `Ligne ${rowNum}: niveau invalide "${effectiveLevel}" (attendu: CP, CE1, CE2, CM1, CM2)`
           );
           continue;
         }
@@ -384,11 +436,12 @@ router.post(
               firstName: prenom,
               lastName: nom,
               role: "STUDENT",
-              level: niveau as SchoolLevel,
+              level: effectiveLevel as SchoolLevel,
+              classId,
             },
           });
 
-          createdUsers.push({ prenom, nom, identifiant: username, motDePasse: plainPassword, niveau });
+          createdUsers.push({ prenom, nom, identifiant: username, motDePasse: plainPassword, niveau: effectiveLevel });
           created++;
         } catch (err) {
           errors.push(

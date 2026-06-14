@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import type { FormEvent } from "react";
 import AdminLayout from "../../components/admin/AdminLayout";
 import ContentTreeSidebar, { type Selection, type TreeTheme } from "../../components/admin/ContentTreeSidebar";
-import type { Theme, SubTheme, Quiz, Question, Answer } from "../../types";
+import type { Theme, SubTheme, Quiz, Question, Answer, Classe } from "../../types";
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -151,6 +151,8 @@ export default function ContentPage() {
   const [formDescription, setFormDescription] = useState("");
   const [formEmoji, setFormEmoji] = useState("📚");
   const [formTimeLimit, setFormTimeLimit] = useState<string>(""); // minutes, empty = no timer
+  const [formClassIds, setFormClassIds] = useState<number[]>([]); // classes ciblées par le quiz (vide = toutes)
+  const [classesList, setClassesList] = useState<Classe[]>([]);
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState("");
 
@@ -263,6 +265,13 @@ export default function ContentPage() {
     fetchThemes();
     fetchTree();
   }, [fetchThemes, fetchTree]);
+
+  useEffect(() => {
+    fetch("/api/admin/classes", { headers: authHeaders() })
+      .then((r) => (r.ok ? r.json() : { classes: [] }))
+      .then((d) => setClassesList(d.classes ?? []))
+      .catch(() => setClassesList([]));
+  }, []);
 
   /* ---- Handle sidebar selection ---- */
   /* Uses the in-memory tree to set selected entities synchronously (no extra fetch).
@@ -578,6 +587,7 @@ export default function ContentPage() {
     setFormName("");
     setFormDescription("");
     setFormTimeLimit("");
+    setFormClassIds([]);
     setFormError("");
     setShowQuizModal(true);
   }
@@ -587,6 +597,7 @@ export default function ContentPage() {
     setFormName(q.title);
     setFormDescription(q.description ?? "");
     setFormTimeLimit(q.timeLimit ? String(Math.round(q.timeLimit / 60)) : "");
+    setFormClassIds(q.classes?.map((c) => c.classId) ?? []);
     setFormError("");
     setShowQuizModal(true);
   }
@@ -605,7 +616,7 @@ export default function ContentPage() {
         const res = await fetch(`${API_QUIZZES}/${editingQuiz.id}`, {
           method: "PUT",
           headers: authHeaders(),
-          body: JSON.stringify({ title: formName, description: formDescription || null, timeLimit: timeLimitSeconds }),
+          body: JSON.stringify({ title: formName, description: formDescription || null, timeLimit: timeLimitSeconds, classIds: formClassIds }),
         });
         if (!res.ok) {
           const d = await res.json().catch(() => null);
@@ -615,7 +626,7 @@ export default function ContentPage() {
         const res = await fetch(API_QUIZZES, {
           method: "POST",
           headers: authHeaders(),
-          body: JSON.stringify({ title: formName, description: formDescription || null, timeLimit: timeLimitSeconds, subThemeId: selectedSubTheme.id }),
+          body: JSON.stringify({ title: formName, description: formDescription || null, timeLimit: timeLimitSeconds, subThemeId: selectedSubTheme.id, classIds: formClassIds }),
         });
         if (!res.ok) {
           const d = await res.json().catch(() => null);
@@ -2132,6 +2143,39 @@ export default function ContentPage() {
                   <p className="text-xs text-ms-gray mt-1">
                     Si renseigné, l'élève doit terminer avant la fin du temps.
                   </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-ms-dark mb-1">
+                    Classes ciblées
+                    <span className="font-normal text-ms-gray ml-1">(aucune = visible par toutes)</span>
+                  </label>
+                  {classesList.length === 0 ? (
+                    <p className="text-xs text-ms-gray">Aucune classe créée pour le moment.</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {classesList.map((c) => {
+                        const checked = formClassIds.includes(c.id);
+                        return (
+                          <button
+                            type="button"
+                            key={c.id}
+                            onClick={() =>
+                              setFormClassIds((prev) =>
+                                prev.includes(c.id) ? prev.filter((x) => x !== c.id) : [...prev, c.id]
+                              )
+                            }
+                            className={`px-3 py-1.5 rounded-full text-sm font-semibold border transition ${
+                              checked
+                                ? "bg-ms-lavender text-white border-ms-lavender"
+                                : "bg-white text-ms-dark border-ms-light-gray hover:bg-ms-cream"
+                            }`}
+                          >
+                            {c.name} ({c.level})
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center justify-end gap-3 pt-2">
                   <button

@@ -3,7 +3,7 @@ import type { ChangeEvent, FormEvent, DragEvent } from "react";
 import * as XLSX from "xlsx";
 import AdminLayout from "../../components/admin/AdminLayout";
 import UserPathsModal from "../../components/admin/UserPathsModal";
-import type { User, Level, Role, ImportResult, ImportedUser } from "../../types";
+import type { User, Level, Role, ImportResult, ImportedUser, Classe } from "../../types";
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                          */
@@ -162,6 +162,8 @@ export default function UsersPage() {
   const [formPassword, setFormPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [formRole, setFormRole] = useState<Role>("STUDENT");
+  const [formClass, setFormClass] = useState<number | "">("");
+  const [classesList, setClassesList] = useState<Classe[]>([]);
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState("");
 
@@ -192,6 +194,13 @@ export default function UsersPage() {
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
+
+  useEffect(() => {
+    fetch("/api/admin/classes", { headers: authHeaders() })
+      .then((r) => (r.ok ? r.json() : { classes: [] }))
+      .then((d) => setClassesList(d.classes ?? []))
+      .catch(() => setClassesList([]));
+  }, []);
 
   /* ---------- filtered + sorted users ---------- */
   const filtered = sortUsers(
@@ -247,6 +256,7 @@ export default function UsersPage() {
     setFormPassword(generateRandomPassword());
     setShowPassword(true);
     setFormRole("STUDENT");
+    setFormClass("");
     setFormError("");
     setShowCreateEdit(true);
   }
@@ -259,6 +269,7 @@ export default function UsersPage() {
     setFormPassword("");
     setShowPassword(false);
     setFormRole(u.role);
+    setFormClass(u.classId ?? "");
     setFormError("");
     setShowCreateEdit(true);
   }
@@ -271,10 +282,11 @@ export default function UsersPage() {
     try {
       if (editingUser) {
         // Update
-        const body: Record<string, string> = {
+        const body: Record<string, unknown> = {
           firstName: formFirst,
           lastName: formLast,
           level: formLevel,
+          classId: formClass === "" ? null : formClass,
         };
         if (formPassword) body.password = formPassword;
 
@@ -303,6 +315,7 @@ export default function UsersPage() {
             level: formLevel,
             password: formPassword,
             role: formRole,
+            classId: formClass === "" ? null : formClass,
           }),
         });
         if (!res.ok) {
@@ -625,7 +638,14 @@ export default function UsersPage() {
                       <td className="px-3 py-3 text-ms-dark">{u.firstName}</td>
                       <td className="px-3 py-3 text-ms-dark">{u.lastName}</td>
                       <td className="px-3 py-3">
-                        <LevelBadge level={u.level} />
+                        <div className="flex items-center gap-2">
+                          <LevelBadge level={u.level} />
+                          {u.class && (
+                            <span className="text-xs text-ms-gray bg-ms-cream px-2 py-0.5 rounded-full">
+                              {u.class.name}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-3 py-3">
                         <RoleBadge role={u.role} />
@@ -777,6 +797,30 @@ export default function UsersPage() {
                   {LEVELS.map((l) => (
                     <option key={l} value={l}>
                       {l}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-ms-dark mb-1">
+                  Classe
+                  <span className="font-normal text-ms-gray ml-1">(définit le niveau)</span>
+                </label>
+                <select
+                  value={formClass}
+                  onChange={(e) => {
+                    const val = e.target.value ? Number(e.target.value) : "";
+                    setFormClass(val);
+                    const cls = classesList.find((c) => c.id === val);
+                    if (cls) setFormLevel(cls.level);
+                  }}
+                  className="w-full px-4 py-2.5 text-sm border border-ms-light-gray rounded-xl bg-white text-ms-dark focus:outline-none focus:ring-2 focus:ring-ms-lavender/40"
+                >
+                  <option value="">Aucune</option>
+                  {classesList.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} ({c.level})
                     </option>
                   ))}
                 </select>
