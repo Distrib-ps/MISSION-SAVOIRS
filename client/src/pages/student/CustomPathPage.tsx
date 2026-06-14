@@ -89,7 +89,7 @@ export default function CustomPathPage() {
               return (
                 <button
                   key={quiz.id}
-                  onClick={() => navigate(`/quiz/${quiz.id}`)}
+                  onClick={() => navigate(`/quiz/${quiz.id}?pathId=${pathId}`)}
                   className={`w-full text-left rounded-3xl border-2 p-5 flex items-center gap-4 min-h-[80px] transition-all duration-200 hover:shadow-md hover:scale-[1.01] ${
                     isCompleted
                       ? "bg-ms-green-light border-ms-green/40"
