@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import confetti from "canvas-confetti";
 import StudentLayout from "../../components/student/StudentLayout";
 import DragDropAnswers from "../../components/student/DragDropAnswers";
@@ -85,6 +85,8 @@ const INITIAL_ATTEMPT: AttemptState = {
 
 export default function QuizPlayPage() {
   const { quizId } = useParams<{ quizId: string }>();
+  const [searchParams] = useSearchParams();
+  const pathId = searchParams.get("pathId");
   const navigate = useNavigate();
 
   /* high‑level state */
@@ -124,6 +126,7 @@ export default function QuizPlayPage() {
       const res = await fetch(`/api/student/quizzes/${quizId}/start`, {
         method: "POST",
         headers: authHeaders(),
+        body: JSON.stringify(pathId ? { pathId: Number(pathId) } : {}),
       });
       if (!res.ok) throw new Error("Impossible de demarrer le quiz");
       const data: QuizSession = await res.json();
@@ -141,7 +144,7 @@ export default function QuizPlayPage() {
     } finally {
       setLoading(false);
     }
-  }, [quizId]);
+  }, [quizId, pathId]);
 
   /* ── Submit answer ── */
 
