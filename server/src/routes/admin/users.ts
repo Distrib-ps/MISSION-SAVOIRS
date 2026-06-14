@@ -25,6 +25,21 @@ async function studentInTeacherScope(req: Request, studentId: number): Promise<b
   return !!student;
 }
 
+// ---------- GET /teachers - Liste des profs (pour le sélecteur de partage) ----------
+router.get("/teachers", async (req: Request, res: Response): Promise<void> => {
+  try {
+    const teachers = await prisma.user.findMany({
+      where: { role: "TEACHER", id: { not: currentUserId(req) } },
+      select: { id: true, firstName: true, lastName: true },
+      orderBy: { firstName: "asc" },
+    });
+    res.json({ teachers });
+  } catch (error) {
+    console.error("Erreur teachers GET:", error);
+    res.status(500).json({ error: "Erreur interne du serveur" });
+  }
+});
+
 // Valid school levels
 const VALID_LEVELS: string[] = ["CP", "CE1", "CE2", "CM1", "CM2"];
 

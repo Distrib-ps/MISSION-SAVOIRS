@@ -226,4 +226,99 @@ router.delete("/:id", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
+/* ══════════ Co-accès : partage d'un quiz en lecture ══════════ */
+
+// Vérifie que l'utilisateur peut gérer les partages du quiz (propriétaire ou Owner)
+async function canManageShares(req: Request, quizId: number): Promise<boolean> {
+  if (isOwner(req)) {
+    const q = await prisma.quiz.findUnique({ where: { id: quizId }, select: { id: true } });
+    return !!q;
+  }
+  const q = await prisma.quiz.findFirst({
+    where: { id: quizId, createdById: currentUserId(req) },
+    select: { id: true },
+  });
+  return !!q;
+}
+
+// GET /:id/shares - liste des profs ayant le co-accès
+router.get("/:id/shares", async (req: Request, res: Response): Promise<void> => {
+  try {
+    const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+    if (isNaN(id)) {
+      res.status(400).json({ error: "ID invalide" });
+      return;
+    }
+    if (!(await canManageShares(req, id))) {
+      res.status(403).json({ error: "Accès refusé" });
+      return;
+    }
+    const shares = await prisma.quizShare.findMany({
+      where: { quizId: id },
+      select: { teacherId: true },
+    });
+    res.json({ teacherIds: shares.map((s) => s.teacherId) });
+  } catch (error) {
+    console.error("Erreur quiz shares GET:", error);
+    res.status(500).json({ error: "Erreur interne du serveur" });
+  }
+});
+
+// POST /:id/shares { teacherId } - partager le quiz à un prof
+router.post("/:id/shares", async (req: Request, res: Response): Promise<void> => {
+  try {
+    const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+    const { teacherId } = req.body as { teacherId?: number };
+    if (isNaN(id) || !teacherId) {
+      res.status(400).json({ error: "ID quiz et teacherId requis" });
+      return;
+    }
+    if (!(await canManageShares(req, id))) {
+      res.status(403).json({ error: "Accès refusé : vous n'êtes pas propriétaire de ce quiz" });
+      return;
+    }
+    const teacher = await prisma.user.findFirst({
+      where: { id: teacherId, role: "TEACHER" },
+      select: { id: true },
+    });
+    if (!teacher) {
+      res.status(404).json({ error: "Professeur introuvable" });
+      return;
+    }
+    await prisma.quizShare.upsert({
+      where: { quizId_teacherId: { quizId: id, teacherId } },
+      create: { quizId: id, teacherId },
+      update: {},
+    });
+    res.status(201).json({ message: "Quiz partagé" });
+  } catch (error) {
+    console.error("Erreur quiz shares POST:", error);
+    res.status(500).json({ error: "Erreur interne du serveur" });
+  }
+});
+
+// DELETE /:id/shares/:teacherId - retirer le co-accès
+router.delete("/:id/shares/:teacherId", async (req: Request, res: Response): Promise<void> => {
+  try {
+    const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+    const teacherId = parseInt(
+      Array.isArray(req.params.teacherId) ? req.params.teacherId[0] : req.params.teacherId,
+      10
+    );
+    if (isNaN(id) || isNaN(teacherId)) {
+      res.status(400).json({ error: "ID invalide" });
+      return;
+    }
+    if (!(await canManageShares(req, id))) {
+      res.status(403).json({ error: "Accès refusé" });
+      return;
+    }
+    await prisma.quizShare.deleteMany({ where: { quizId: id, teacherId } });
+    res.json({ message: "Partage retiré" });
+  } catch (error) {
+    console.error("Erreur quiz shares DELETE:", error);
+    res.status(500).json({ error: "Erreur interne du serveur" });
+  }
+});
+
 export default router;

@@ -74,7 +74,7 @@ router.get("/overview", async (req: Request, res: Response): Promise<void> => {
     const attemptWhere = {
       quizId: { not: null },
       ...(level ? { user: { level } } : {}),
-      ...(isOwner(req) ? {} : { quiz: { createdById: currentUserId(req) } }),
+      ...(isOwner(req) ? {} : { quiz: { OR: [{ createdById: currentUserId(req) }, { shares: { some: { teacherId: currentUserId(req) } } }] } }),
     };
     const attempts = await prisma.quizAttempt.findMany({
       where: attemptWhere,
@@ -156,7 +156,7 @@ router.get("/overview", async (req: Request, res: Response): Promise<void> => {
         quizAttempt: {
           quizId: { not: null },
           ...(level ? { user: { level } } : {}),
-          ...(isOwner(req) ? {} : { quiz: { createdById: currentUserId(req) } }),
+          ...(isOwner(req) ? {} : { quiz: { OR: [{ createdById: currentUserId(req) }, { shares: { some: { teacherId: currentUserId(req) } } }] } }),
         },
       },
       select: { questionId: true, isCorrect: true, usedHint: true, quizAttempt: { select: { userId: true } } },
@@ -251,7 +251,7 @@ router.get("/students/:id", async (req: Request, res: Response): Promise<void> =
     }
 
     const attempts = await prisma.quizAttempt.findMany({
-      where: { userId: id, quizId: { not: null }, ...(isOwner(req) ? {} : { quiz: { createdById: currentUserId(req) } }) },
+      where: { userId: id, quizId: { not: null }, ...(isOwner(req) ? {} : { quiz: { OR: [{ createdById: currentUserId(req) }, { shares: { some: { teacherId: currentUserId(req) } } }] } }) },
       orderBy: { completedAt: "asc" },
       select: {
         quizId: true,
@@ -296,7 +296,7 @@ router.get("/students/:id", async (req: Request, res: Response): Promise<void> =
 
     // Indices + réinjection + points faibles (avec détail question)
     const qAttempts = await prisma.questionAttempt.findMany({
-      where: { quizAttempt: { userId: id, quizId: { not: null }, ...(isOwner(req) ? {} : { quiz: { createdById: currentUserId(req) } }) } },
+      where: { quizAttempt: { userId: id, quizId: { not: null }, ...(isOwner(req) ? {} : { quiz: { OR: [{ createdById: currentUserId(req) }, { shares: { some: { teacherId: currentUserId(req) } } }] } }) } },
       select: {
         questionId: true,
         isCorrect: true,
@@ -425,7 +425,7 @@ router.get(
       // Tentatives de questions de l'élève sur ce quiz (questions propres au quiz)
       const qAttempts = await prisma.questionAttempt.findMany({
         where: {
-          quizAttempt: { userId: id, quizId, ...(isOwner(req) ? {} : { quiz: { createdById: currentUserId(req) } }) },
+          quizAttempt: { userId: id, quizId, ...(isOwner(req) ? {} : { quiz: { OR: [{ createdById: currentUserId(req) }, { shares: { some: { teacherId: currentUserId(req) } } }] } }) },
           question: { quizId },
         },
         select: {
