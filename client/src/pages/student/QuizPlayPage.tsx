@@ -318,6 +318,19 @@ export default function QuizPlayPage() {
 
   return (
     <StudentLayout>
+      {/* ── Bouton retour (avant la fin ; l'écran de résultats a le sien) ── */}
+      {phase !== "results" && (
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-ms-gray hover:text-ms-dark font-semibold mb-6 transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          Retour
+        </button>
+      )}
+
       {/* ── Error banner ── */}
       {error && (
         <div className="bg-ms-pink-light border border-ms-pink/30 rounded-2xl p-6 text-center mb-6">
@@ -1016,6 +1029,9 @@ function ResultsContent({
                 {rejected && (
                   <p className="text-sm text-ms-gray mt-1">Dessin non valid\u00E9 \u2014 tu peux r\u00E9essayer en rejouant.</p>
                 )}
+                {q.type === "DRAWING" && q.validationStatus === "APPROVED" && (
+                  <p className="text-sm text-ms-green font-semibold mt-1">Dessin validé par ton professeur ✅</p>
+                )}
                 {!pending && !rejected && !q.isCorrect && q.type !== "DRAWING" && (
                   <p className="text-sm text-ms-gray mt-1">
                     Bonne reponse :{" "}
@@ -1023,6 +1039,14 @@ function ResultsContent({
                       {q.correctAnswer}
                     </span>
                   </p>
+                )}
+                {/* Aperçu du dessin rendu, pour que l'élève sache lequel c'était */}
+                {q.type === "DRAWING" && q.givenAnswer?.startsWith("data:") && (
+                  <img
+                    src={q.givenAnswer}
+                    alt="Ton dessin"
+                    className="mt-2 max-h-40 rounded-lg border border-ms-light-gray bg-white object-contain"
+                  />
                 )}
               </div>
             </div>

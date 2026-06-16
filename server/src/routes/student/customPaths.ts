@@ -26,23 +26,20 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
       },
     });
 
-    /* Compute per-quiz best score, isolated per path (Option B) */
+    /* Dernière tentative par quiz, isolée par parcours (Option B) — la plus récente fait foi */
     const attempts = await prisma.quizAttempt.findMany({
       where: {
         userId,
         customPathId: { in: paths.map((p) => p.id) },
       },
+      orderBy: [{ completedAt: "asc" }, { id: "asc" }],
       select: { quizId: true, customPathId: true, score: true, totalQuestions: true },
     });
-    // key = `${customPathId}:${quizId}` so the same quiz in two paths is tracked separately
+    // key = `${customPathId}:${quizId}` ; ordre asc → la dernière écriture = tentative la plus récente
     const bestByPathQuiz = new Map<string, { score: number; totalQuestions: number }>();
     for (const a of attempts) {
       if (a.quizId == null) continue; // tentatives de révision ignorées ici
-      const key = `${a.customPathId}:${a.quizId}`;
-      const prev = bestByPathQuiz.get(key);
-      if (!prev || a.score > prev.score) {
-        bestByPathQuiz.set(key, { score: a.score, totalQuestions: a.totalQuestions });
-      }
+      bestByPathQuiz.set(`${a.customPathId}:${a.quizId}`, { score: a.score, totalQuestions: a.totalQuestions });
     }
 
     const result = paths.map((p) => ({
@@ -101,18 +98,16 @@ router.get("/:id", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Best score isolated to THIS path only (Option B)
+    // Dernière tentative isolée à CE parcours (Option B) — la plus récente fait foi
     const attempts = await prisma.quizAttempt.findMany({
       where: { userId, customPathId: path.id },
+      orderBy: [{ completedAt: "asc" }, { id: "asc" }],
       select: { quizId: true, score: true, totalQuestions: true },
     });
     const bestByQuiz = new Map<number, { score: number; totalQuestions: number }>();
     for (const a of attempts) {
       if (a.quizId == null) continue; // tentatives de révision ignorées ici
-      const prev = bestByQuiz.get(a.quizId);
-      if (!prev || a.score > prev.score) {
-        bestByQuiz.set(a.quizId, { score: a.score, totalQuestions: a.totalQuestions });
-      }
+      bestByQuiz.set(a.quizId, { score: a.score, totalQuestions: a.totalQuestions });
     }
 
     res.json({

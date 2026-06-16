@@ -142,7 +142,7 @@ export interface StudentQuiz {
   _count: { questions: number };
   bestScore: number | null;
   totalQuestions: number;
-  status: "completed" | "available" | "locked";
+  status: "completed" | "available" | "locked" | "pending";
 }
 
 /* ── Quiz play types ── */
