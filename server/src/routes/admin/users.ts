@@ -15,16 +15,6 @@ const upload = multer({ storage: multer.memoryStorage() });
 // All routes require authentication + admin role
 router.use(authenticate, requireStaff);
 
-/** Vérifie qu'un élève appartient à une classe gérée par le prof courant (Owner = toujours OK). */
-async function studentInTeacherScope(req: Request, studentId: number): Promise<boolean> {
-  if (isOwner(req)) return true;
-  const student = await prisma.user.findFirst({
-    where: { id: studentId, role: "STUDENT", classes: { some: { teacherId: currentUserId(req) } } },
-    select: { id: true },
-  });
-  return !!student;
-}
-
 // ---------- GET /teachers - Liste des profs (pour le sélecteur de partage) ----------
 router.get("/teachers", async (req: Request, res: Response): Promise<void> => {
   try {
@@ -109,23 +99,17 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
 
     const where: Record<string, unknown> = {};
 
-    // Filtre d'appartenance (combine cloisonnement prof + filtre classe demandé)
-    const classSome: { teacherId?: number; id?: number } = {};
-
-    // Cloisonnement prof : ne voit que les élèves de ses classes
+    // Un prof voit TOUS les élèves (pas seulement ceux de ses classes) afin
+    // d'éviter, en cas de multi-classe, de recréer un compte déjà existant.
+    // Il ne voit en revanche pas les comptes admin/prof.
     if (!isOwner(req)) {
       where.role = "STUDENT";
-      classSome.teacherId = currentUserId(req);
     }
 
-    // Filter by class
+    // Filtre par classe demandé explicitement
     if (classId && typeof classId === "string") {
       const cid = parseInt(classId, 10);
-      if (!isNaN(cid)) classSome.id = cid;
-    }
-
-    if (Object.keys(classSome).length > 0) {
-      where.classes = { some: classSome };
+      if (!isNaN(cid)) where.classes = { some: { id: cid } };
     }
 
     // Filter by level
@@ -269,9 +253,9 @@ router.put("/:id", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Cloisonnement prof : ne peut modifier qu'un élève de ses classes
-    if (!(await studentInTeacherScope(req, id))) {
-      res.status(403).json({ error: "Accès refusé : cet élève n'est pas dans vos classes" });
+    // Un prof peut éditer n'importe quel élève (pool partagé) mais pas un compte admin/prof.
+    if (!isOwner(req) && existingUser.role !== "STUDENT") {
+      res.status(403).json({ error: "Seul le propriétaire peut modifier un compte professeur/admin" });
       return;
     }
 
@@ -302,6 +286,10 @@ router.put("/:id", async (req: Request, res: Response): Promise<void> => {
       const upperRole = role.toUpperCase();
       if (upperRole !== "ADMIN" && upperRole !== "STUDENT") {
         res.status(400).json({ error: "Rôle invalide. Utilisez ADMIN ou STUDENT" });
+        return;
+      }
+      if (upperRole !== "STUDENT" && !isOwner(req)) {
+        res.status(403).json({ error: "Seul le propriétaire peut attribuer un rôle professeur/admin" });
         return;
       }
       data.role = upperRole;
@@ -374,9 +362,9 @@ router.delete("/:id", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Cloisonnement prof : ne peut supprimer qu'un élève de ses classes
-    if (!(await studentInTeacherScope(req, id))) {
-      res.status(403).json({ error: "Accès refusé : cet élève n'est pas dans vos classes" });
+    // Un prof peut supprimer n'importe quel élève (pool partagé) mais pas un compte admin/prof.
+    if (!isOwner(req) && existingUser.role !== "STUDENT") {
+      res.status(403).json({ error: "Seul le propriétaire peut supprimer un compte professeur/admin" });
       return;
     }
 
