@@ -63,7 +63,7 @@ interface AttemptState {
   attempts: number;
   usedHint: boolean;
   disabledAnswerIds: number[];        // QCM: answers already tried & wrong
-  feedback: null | "correct" | "wrong";
+  feedback: null | "correct" | "wrong" | "pending";
   hint: string | null;
   solution: string | null;
   correctAnswer: string | null;       // revealed after 2nd wrong
@@ -178,7 +178,13 @@ export default function QuizPlayPage() {
 
         const newAttempts = attempt.attempts + 1;
 
-        if (result.correct) {
+        if (result.pending) {
+          /* 🎨 Dessin envoyé, en attente de validation par le professeur */
+          setStreak(0);
+          setShowStreakBadge(false);
+          setAttempt((prev) => ({ ...prev, attempts: newAttempts, feedback: "pending" }));
+          setTimeout(() => advanceToNext(), 1600);
+        } else if (result.correct) {
           /* ✅ Correct */
           smallConfettiBurst();
           setAttempt((prev) => ({
@@ -546,6 +552,14 @@ function PlayingScreen({
           <p className="text-2xl font-extrabold text-ms-dark">
             Bravo ! &#127775;
           </p>
+        </div>
+      )}
+
+      {/* ── Dessin envoyé : en attente de validation ── */}
+      {attempt.feedback === "pending" && (
+        <div className="bg-ms-yellow-light border-2 border-ms-yellow/40 rounded-3xl p-6 mb-6 text-center animate-bounce-once">
+          <p className="text-xl font-extrabold text-ms-dark">Dessin envoyé ! &#128396;&#65039;</p>
+          <p className="text-sm text-ms-gray mt-1">Ton professeur va le regarder et le valider.</p>
         </div>
       )}
 
@@ -974,24 +988,35 @@ function ResultsContent({
 
       {/* Recap list */}
       <div className="space-y-3 mb-8">
-        {results.questions.map((q, i) => (
+        {results.questions.map((q, i) => {
+          const pending = q.validationStatus === "PENDING";
+          const rejected = q.validationStatus === "REJECTED";
+          return (
           <div
             key={q.id}
             className={`rounded-2xl border-2 p-5 ${
-              q.isCorrect
+              pending
+                ? "bg-ms-yellow-light border-ms-yellow/40"
+                : q.isCorrect
                 ? "bg-ms-green-light border-ms-green/30"
                 : "bg-ms-pink-light border-ms-pink/30"
             }`}
           >
             <div className="flex items-start gap-3">
               <span className="text-xl shrink-0 mt-0.5">
-                {q.isCorrect ? "\u2705" : "\u274C"}
+                {pending ? "\u23F3" : q.isCorrect ? "\u2705" : "\u274C"}
               </span>
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-ms-dark text-base">
                   {i + 1}. {q.text}
                 </p>
-                {!q.isCorrect && (
+                {pending && (
+                  <p className="text-sm text-ms-gray mt-1">En attente de validation par ton professeur.</p>
+                )}
+                {rejected && (
+                  <p className="text-sm text-ms-gray mt-1">Dessin non valid\u00E9 \u2014 tu peux r\u00E9essayer en rejouant.</p>
+                )}
+                {!pending && !rejected && !q.isCorrect && q.type !== "DRAWING" && (
                   <p className="text-sm text-ms-gray mt-1">
                     Bonne reponse :{" "}
                     <span className="font-semibold text-ms-dark">
@@ -1002,7 +1027,8 @@ function ResultsContent({
               </div>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Action buttons */}

@@ -189,7 +189,10 @@ export async function recordAnswer(params: {
   const check = checkAnswer(question, answer);
   if (!check.ok) return { status: 400, body: { error: check.error } };
 
-  const { isCorrect, correctAnswerText, givenAnswerText } = check;
+  const { correctAnswerText, givenAnswerText } = check;
+  // Les dessins ne sont PAS auto-validés : ils passent en attente de validation prof (#17)
+  const isDrawing = question.type === "DRAWING";
+  const isCorrect = isDrawing ? false : check.isCorrect;
 
   const existingAttempt = await prisma.questionAttempt.findFirst({
     where: { quizAttemptId: attemptId, questionId: question.id },
@@ -206,9 +209,11 @@ export async function recordAnswer(params: {
       where: { id: existingAttempt.id },
       data: {
         givenAnswer: givenAnswerText,
-        isCorrect: existingAttempt.isCorrect || isCorrect,
+        // un dessin re-soumis repasse en attente (non acquis tant que non validé)
+        isCorrect: isDrawing ? false : existingAttempt.isCorrect || isCorrect,
         usedHint: existingAttempt.usedHint || usedHint || false,
         attempts: questionAttemptCount,
+        validationStatus: isDrawing ? "PENDING" : "NONE",
       },
     });
   } else {
@@ -221,16 +226,22 @@ export async function recordAnswer(params: {
         isCorrect,
         usedHint: usedHint || false,
         attempts: 1,
+        validationStatus: isDrawing ? "PENDING" : "NONE",
       },
     });
   }
 
-  // Incrémente le score uniquement à la première bonne réponse
-  if (isCorrect && !wasAlreadyCorrect) {
+  // Incrémente le score uniquement à la première bonne réponse (jamais pour un dessin en attente)
+  if (!isDrawing && isCorrect && !wasAlreadyCorrect) {
     await prisma.quizAttempt.update({
       where: { id: attemptId },
       data: { score: { increment: 1 } },
     });
+  }
+
+  // Dessin : réponse "en attente de validation"
+  if (isDrawing) {
+    return { status: 200, body: { pending: true } };
   }
 
   const body: Record<string, unknown> = { correct: isCorrect };

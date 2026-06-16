@@ -214,6 +214,13 @@ model QuizAttempt {
   @@map("quiz_attempts")
 }
 
+enum ValidationStatus {
+  NONE     // correction automatique (types autres que dessin)
+  PENDING  // dessin en attente de validation par le prof
+  APPROVED // dessin validé
+  REJECTED // dessin refusé
+}
+
 model QuestionAttempt {
   id            Int     @id @default(autoincrement())
   quizAttemptId Int
@@ -222,6 +229,7 @@ model QuestionAttempt {
   isCorrect     Boolean
   usedHint      Boolean @default(false) // l'élève a-t-il utilisé l'indice ?
   attempts      Int     @default(1) // nombre de tentatives sur cette question
+  validationStatus ValidationStatus @default(NONE) // dessins : PENDING/APPROVED/REJECTED
 
   quizAttempt QuizAttempt @relation(fields: [quizAttemptId], references: [id], onDelete: Cascade)
   question    Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)

@@ -271,6 +271,7 @@ router.get(
           isCorrect: qa.isCorrect,
           usedHint: qa.usedHint,
           attempts: qa.attempts,
+          validationStatus: qa.validationStatus,
           correctAnswer: correctAnswers.map((a) => a.text).join(", "),
         };
       });

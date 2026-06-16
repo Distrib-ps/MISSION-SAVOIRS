@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import { useState, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import AccessibilitySettings from "../AccessibilitySettings";
 
 interface Props {
@@ -78,12 +78,32 @@ const navItems = [
     ),
     end: false,
   },
+  {
+    to: "/admin/drawings",
+    label: "Dessins à valider",
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h10a2 2 0 012 2v12a4 4 0 01-4 4H7zm0 0a4 4 0 004-4v-1a2 2 0 012-2h4" />
+      </svg>
+    ),
+    end: false,
+  },
 ];
 
 export default function AdminLayout({ children }: Props) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [showSettings, setShowSettings] = useState(false);
+  const [drawingCount, setDrawingCount] = useState(0);
+
+  useEffect(() => {
+    fetch("/api/admin/drawings/count", {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    })
+      .then((r) => (r.ok ? r.json() : { count: 0 }))
+      .then((d) => setDrawingCount(d.count ?? 0))
+      .catch(() => setDrawingCount(0));
+  }, []);
 
   function handleLogout() {
     logout();
@@ -122,7 +142,12 @@ export default function AdminLayout({ children }: Props) {
               }
             >
               {item.icon}
-              <span>{item.label}</span>
+              <span className="flex-1">{item.label}</span>
+              {item.to === "/admin/drawings" && drawingCount > 0 && (
+                <span className="ml-auto bg-ms-pink text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                  {drawingCount}
+                </span>
+              )}
             </NavLink>
           ))}
         </nav>
