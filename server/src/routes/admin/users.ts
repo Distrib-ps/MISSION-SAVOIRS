@@ -465,15 +465,24 @@ router.post(
           continue;
         }
 
-        // Classe (optionnelle) : rattachement par nom (le niveau vient de la colonne NIVEAU)
-        let classConnectId: number | null = null;
+        // Classe(s) (optionnel) : rattachement par nom, plusieurs séparés par ; ou ,
+        // (le niveau vient toujours de la colonne NIVEAU)
+        const classConnectIds: number[] = [];
         if (classeName) {
-          const cls = classByName.get(classeName.toLowerCase());
-          if (!cls) {
-            errors.push(`Ligne ${rowNum}: classe "${classeName}" introuvable`);
+          const names = classeName
+            .split(/[;,]/)
+            .map((n) => n.trim())
+            .filter(Boolean);
+          const notFound: string[] = [];
+          for (const n of names) {
+            const cls = classByName.get(n.toLowerCase());
+            if (!cls) notFound.push(n);
+            else if (!classConnectIds.includes(cls.id)) classConnectIds.push(cls.id);
+          }
+          if (notFound.length > 0) {
+            errors.push(`Ligne ${rowNum}: classe(s) introuvable(s) : ${notFound.join(", ")}`);
             continue;
           }
-          classConnectId = cls.id;
         }
 
         if (!niveau) {
@@ -500,7 +509,9 @@ router.post(
               lastName: nom,
               role: "STUDENT",
               level: niveau as SchoolLevel,
-              ...(classConnectId ? { classes: { connect: { id: classConnectId } } } : {}),
+              ...(classConnectIds.length > 0
+                ? { classes: { connect: classConnectIds.map((id) => ({ id })) } }
+                : {}),
             },
           });
 
