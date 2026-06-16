@@ -235,6 +235,24 @@ function QuizCard({
     );
   }
 
+  if (quiz.status === "pending") {
+    return (
+      <button onClick={onClick} className="bg-ms-yellow-light border-2 border-ms-yellow/40 rounded-3xl p-6 flex items-center gap-5 min-h-[80px] w-full text-left hover:shadow-md hover:scale-[1.01] transition-all duration-200 cursor-pointer">
+        {/* Hourglass icon */}
+        <div className="w-14 h-14 bg-ms-yellow rounded-2xl flex items-center justify-center shrink-0 shadow-sm text-2xl">
+          ⏳
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-extrabold text-ms-dark text-xl truncate">{quiz.title}</h3>
+          <p className="text-ms-gray text-base mt-1">
+            En attente de validation de ton dessin par le professeur
+          </p>
+        </div>
+        <span className="text-ms-dark/70 font-bold text-sm shrink-0">Rejouer</span>
+      </button>
+    );
+  }
+
   /* available */
   return (
     <button

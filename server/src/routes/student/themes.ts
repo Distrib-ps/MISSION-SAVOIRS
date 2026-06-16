@@ -148,13 +148,31 @@ router.get(
           customPathId: null, // progression classique : ignore les tentatives jouées depuis un parcours
         },
         orderBy: [{ completedAt: "asc" }, { id: "asc" }],
-        select: { quizId: true, score: true },
+        select: { quizId: true, score: true, id: true },
       });
       // ordre asc → la dernière valeur écrite est la tentative la plus récente
       const latestScoreMap = new Map<number, number>();
+      const latestAttemptIdMap = new Map<number, number>();
       for (const a of attempts) {
-        if (a.quizId !== null) latestScoreMap.set(a.quizId, a.score);
+        if (a.quizId !== null) {
+          latestScoreMap.set(a.quizId, a.score);
+          latestAttemptIdMap.set(a.quizId, a.id);
+        }
       }
+
+      // Dessins en attente de validation sur la dernière tentative de chaque quiz
+      const latestAttemptIds = [...latestAttemptIdMap.values()];
+      const pendingRows = latestAttemptIds.length
+        ? await prisma.questionAttempt.findMany({
+            where: { quizAttemptId: { in: latestAttemptIds }, validationStatus: "PENDING" },
+            select: { quizAttemptId: true },
+          })
+        : [];
+      const pendingAttemptIds = new Set(pendingRows.map((r) => r.quizAttemptId));
+      const quizHasPending = (quizId: number) => {
+        const aid = latestAttemptIdMap.get(quizId);
+        return aid !== undefined && pendingAttemptIds.has(aid);
+      };
 
       const isQuizCompleted = (quiz: { id: number; _count: { questions: number } }) => {
         const s = latestScoreMap.get(quiz.id);
@@ -166,9 +184,11 @@ router.get(
         const latestScore = latestScoreMap.get(quiz.id);
         const completed = isQuizCompleted(quiz);
 
-        let status: "completed" | "available" | "locked";
+        let status: "completed" | "available" | "locked" | "pending";
         if (completed) {
           status = "completed";
+        } else if (quizHasPending(quiz.id)) {
+          status = "pending"; // l'élève a rendu un dessin en attente de validation
         } else if (index === 0) {
           status = "available";
         } else {
