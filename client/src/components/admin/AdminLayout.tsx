@@ -97,12 +97,18 @@ export default function AdminLayout({ children }: Props) {
   const [drawingCount, setDrawingCount] = useState(0);
 
   useEffect(() => {
-    fetch("/api/admin/drawings/count", {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-    })
-      .then((r) => (r.ok ? r.json() : { count: 0 }))
-      .then((d) => setDrawingCount(d.count ?? 0))
-      .catch(() => setDrawingCount(0));
+    const refresh = () => {
+      fetch("/api/admin/drawings/count", {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      })
+        .then((r) => (r.ok ? r.json() : { count: 0 }))
+        .then((d) => setDrawingCount(d.count ?? 0))
+        .catch(() => setDrawingCount(0));
+    };
+    refresh();
+    // rafraîchi après chaque validation/refus de dessin (événement émis par DrawingsPage)
+    window.addEventListener("drawings:refresh", refresh);
+    return () => window.removeEventListener("drawings:refresh", refresh);
   }, []);
 
   function handleLogout() {
@@ -113,7 +119,7 @@ export default function AdminLayout({ children }: Props) {
   return (
     <div className="min-h-screen bg-ms-cream flex">
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-ms-light-gray flex flex-col shrink-0 hidden lg:flex">
+      <aside className="w-64 bg-white border-r border-ms-light-gray flex-col shrink-0 hidden lg:flex lg:sticky lg:top-0 lg:h-screen">
         {/* Logo */}
         <div className="px-6 py-5 border-b border-ms-light-gray">
           <div className="flex items-center gap-3">
@@ -127,7 +133,7 @@ export default function AdminLayout({ children }: Props) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 py-6 space-y-1">
+        <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-1">
           {navItems.map((item) => (
             <NavLink
               key={item.to}

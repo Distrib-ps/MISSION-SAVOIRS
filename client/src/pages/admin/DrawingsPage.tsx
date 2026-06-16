@@ -31,6 +31,8 @@ export default function DrawingsPage() {
         body: JSON.stringify({ approve }),
       });
       setDrawings((prev) => prev.filter((d) => d.attemptId !== attemptId));
+      // met à jour le badge "Dessins à valider" dans la nav
+      window.dispatchEvent(new Event("drawings:refresh"));
     } finally {
       setBusy(null);
     }

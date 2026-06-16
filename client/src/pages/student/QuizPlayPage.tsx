@@ -1029,6 +1029,9 @@ function ResultsContent({
                 {rejected && (
                   <p className="text-sm text-ms-gray mt-1">Dessin non valid\u00E9 \u2014 tu peux r\u00E9essayer en rejouant.</p>
                 )}
+                {q.type === "DRAWING" && q.validationStatus === "APPROVED" && (
+                  <p className="text-sm text-ms-green font-semibold mt-1">Dessin validé par ton professeur ✅</p>
+                )}
                 {!pending && !rejected && !q.isCorrect && q.type !== "DRAWING" && (
                   <p className="text-sm text-ms-gray mt-1">
                     Bonne reponse :{" "}
@@ -1036,6 +1039,14 @@ function ResultsContent({
                       {q.correctAnswer}
                     </span>
                   </p>
+                )}
+                {/* Aperçu du dessin rendu, pour que l'élève sache lequel c'était */}
+                {q.type === "DRAWING" && q.givenAnswer?.startsWith("data:") && (
+                  <img
+                    src={q.givenAnswer}
+                    alt="Ton dessin"
+                    className="mt-2 max-h-40 rounded-lg border border-ms-light-gray bg-white object-contain"
+                  />
                 )}
               </div>
             </div>
