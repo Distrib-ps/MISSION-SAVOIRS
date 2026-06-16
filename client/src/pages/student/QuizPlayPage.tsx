@@ -318,6 +318,19 @@ export default function QuizPlayPage() {
 
   return (
     <StudentLayout>
+      {/* ── Bouton retour (avant la fin ; l'écran de résultats a le sien) ── */}
+      {phase !== "results" && (
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-ms-gray hover:text-ms-dark font-semibold mb-6 transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          Retour
+        </button>
+      )}
+
       {/* ── Error banner ── */}
       {error && (
         <div className="bg-ms-pink-light border border-ms-pink/30 rounded-2xl p-6 text-center mb-6">

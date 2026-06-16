@@ -36,15 +36,14 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
     // Meilleur score par révision (tentatives stampées revisionQuizId)
     const attempts = await prisma.quizAttempt.findMany({
       where: { userId, revisionQuizId: { in: revisions.map((r) => r.id) } },
+      orderBy: [{ completedAt: "asc" }, { id: "asc" }],
       select: { revisionQuizId: true, score: true, totalQuestions: true },
     });
+    // ordre asc → la dernière écriture = tentative la plus récente
     const bestByRev = new Map<number, { score: number; totalQuestions: number }>();
     for (const a of attempts) {
       if (a.revisionQuizId == null) continue;
-      const prev = bestByRev.get(a.revisionQuizId);
-      if (!prev || a.score > prev.score) {
-        bestByRev.set(a.revisionQuizId, { score: a.score, totalQuestions: a.totalQuestions });
-      }
+      bestByRev.set(a.revisionQuizId, { score: a.score, totalQuestions: a.totalQuestions });
     }
 
     res.json({

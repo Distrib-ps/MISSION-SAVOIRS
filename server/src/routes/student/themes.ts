@@ -139,80 +139,45 @@ router.get(
         },
       });
 
-      // Fetch the student's best attempt for each quiz in this sub-theme
-      const bestAttempts = await prisma.quizAttempt.groupBy({
-        by: ["quizId"],
+      // Dernière tentative de chaque quiz : la plus récente fait foi
+      // (un quiz raté en le rejouant repasse "non réussi").
+      const attempts = await prisma.quizAttempt.findMany({
         where: {
           userId,
           quizId: { in: quizzes.map((q) => q.id) },
           customPathId: null, // progression classique : ignore les tentatives jouées depuis un parcours
         },
-        _max: { score: true },
+        orderBy: [{ completedAt: "asc" }, { id: "asc" }],
+        select: { quizId: true, score: true },
       });
-
-      // Build a map of quizId -> best score
-      const bestScoreMap = new Map<number, number>();
-      for (const attempt of bestAttempts) {
-        if (attempt.quizId !== null && attempt._max.score !== null) {
-          bestScoreMap.set(attempt.quizId, attempt._max.score);
-        }
+      // ordre asc → la dernière valeur écrite est la tentative la plus récente
+      const latestScoreMap = new Map<number, number>();
+      for (const a of attempts) {
+        if (a.quizId !== null) latestScoreMap.set(a.quizId, a.score);
       }
 
-      // Also fetch the full best attempt record for each quiz
-      const bestAttemptRecords = await Promise.all(
-        quizzes.map(async (quiz) => {
-          const bestScore = bestScoreMap.get(quiz.id);
-          if (bestScore === undefined) return { quizId: quiz.id, attempt: null };
+      const isQuizCompleted = (quiz: { id: number; _count: { questions: number } }) => {
+        const s = latestScoreMap.get(quiz.id);
+        return s !== undefined && s >= Math.ceil(quiz._count.questions * 0.7);
+      };
 
-          const attempt = await prisma.quizAttempt.findFirst({
-            where: {
-              userId,
-              quizId: quiz.id,
-              score: bestScore,
-              customPathId: null,
-            },
-            orderBy: { completedAt: "desc" },
-          });
-
-          return { quizId: quiz.id, attempt };
-        })
-      );
-
-      const bestAttemptMap = new Map(
-        bestAttemptRecords.map((r) => [r.quizId, r.attempt])
-      );
-
-      // Compute status for each quiz with progressive unlocking
+      // Compute status for each quiz with progressive unlocking (sur la dernière tentative)
       const quizzesWithStatus = quizzes.map((quiz, index) => {
-        const totalQuestions = quiz._count.questions;
-        const bestScore = bestScoreMap.get(quiz.id);
-        const bestAttempt = bestAttemptMap.get(quiz.id) ?? null;
-
-        const isCompleted =
-          bestScore !== undefined && bestScore >= Math.ceil(totalQuestions * 0.7);
+        const latestScore = latestScoreMap.get(quiz.id);
+        const completed = isQuizCompleted(quiz);
 
         let status: "completed" | "available" | "locked";
-
-        if (isCompleted) {
+        if (completed) {
           status = "completed";
         } else if (index === 0) {
-          // First quiz is always available
           status = "available";
         } else {
-          // Check if previous quiz is completed
-          const prevQuiz = quizzes[index - 1];
-          const prevBestScore = bestScoreMap.get(prevQuiz.id);
-          const prevTotal = prevQuiz._count.questions;
-          const prevCompleted =
-            prevBestScore !== undefined &&
-            prevBestScore >= Math.ceil(prevTotal * 0.7);
-
-          status = prevCompleted ? "available" : "locked";
+          status = isQuizCompleted(quizzes[index - 1]) ? "available" : "locked";
         }
 
         return {
           ...quiz,
-          bestAttempt,
+          bestAttempt: latestScore !== undefined ? { score: latestScore } : null,
           status,
         };
       });
