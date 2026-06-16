@@ -15,6 +15,7 @@ export interface Classe {
   id: number;
   name: string;
   level: Level;
+  teacher?: { id: number; firstName: string; lastName: string } | null;
   _count?: { students: number };
 }
 

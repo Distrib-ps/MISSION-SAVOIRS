@@ -173,6 +173,12 @@ export default function ClassesPage() {
                   <h3 className="font-bold text-ms-dark truncate">{c.name}</h3>
                   <p className="text-sm text-ms-gray">
                     {c._count?.students ?? 0} élève{(c._count?.students ?? 0) > 1 ? "s" : ""}
+                    {" · "}
+                    {c.teacher ? (
+                      <>Propriétaire : {c.teacher.firstName} {c.teacher.lastName}</>
+                    ) : (
+                      <span className="italic">Sans propriétaire</span>
+                    )}
                   </p>
                 </div>
                 <button
