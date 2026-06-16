@@ -16,6 +16,7 @@ import RevisionsPage from "./pages/admin/RevisionsPage";
 import StatsPage from "./pages/admin/StatsPage";
 import ClassesPage from "./pages/admin/ClassesPage";
 import SharedWithMePage from "./pages/admin/SharedWithMePage";
+import DrawingsPage from "./pages/admin/DrawingsPage";
 
 function App() {
   return (
@@ -138,6 +139,15 @@ function App() {
           element={
             <ProtectedRoute requiredRole="STAFF">
               <SharedWithMePage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/drawings"
+          element={
+            <ProtectedRoute requiredRole="STAFF">
+              <DrawingsPage />
             </ProtectedRoute>
           }
         />

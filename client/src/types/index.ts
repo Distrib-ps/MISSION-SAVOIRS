@@ -226,11 +226,23 @@ export interface QuizSession {
   questions: QuizQuestion[];
 }
 
+export type ValidationStatus = "NONE" | "PENDING" | "APPROVED" | "REJECTED";
+
 export interface AnswerResult {
   correct: boolean;
+  pending?: boolean; // dessin en attente de validation
   correctAnswer?: string;
   hint?: string | null;
   solution?: string | null;
+}
+
+export interface PendingDrawing {
+  attemptId: number;
+  image: string;
+  questionText: string;
+  quizTitle: string;
+  student: string;
+  submittedAt: string;
 }
 
 export interface QuizResults {
@@ -245,6 +257,7 @@ export interface QuizResults {
     isCorrect: boolean;
     usedHint: boolean;
     attempts: number;
+    validationStatus?: ValidationStatus;
     correctAnswer: string;
   }[];
 }
