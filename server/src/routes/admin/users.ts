@@ -201,20 +201,10 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
     const resolvedClassIds = await validClassIds(requestedClassIds);
     const resolvedLevel: SchoolLevel | null = level ? (level.toUpperCase() as SchoolLevel) : null;
 
-    // Un prof ne peut inscrire un élève que dans SES classes (au moins une)
-    if (!isOwner(req)) {
-      if (resolvedClassIds.length === 0) {
-        res.status(400).json({ error: "Un professeur doit rattacher l'élève à au moins une de ses classes" });
-        return;
-      }
-      const owned = await prisma.class.findMany({
-        where: { id: { in: resolvedClassIds }, teacherId: currentUserId(req) },
-        select: { id: true },
-      });
-      if (owned.length !== resolvedClassIds.length) {
-        res.status(403).json({ error: "Une des classes sélectionnées n'est pas la vôtre" });
-        return;
-      }
+    // Un prof doit rattacher l'élève à au moins une classe/groupe (sans restriction de propriété)
+    if (!isOwner(req) && resolvedClassIds.length === 0) {
+      res.status(400).json({ error: "Un professeur doit rattacher l'élève à au moins une classe ou un groupe" });
+      return;
     }
 
     if (!firstName || !lastName || !password) {
@@ -305,17 +295,6 @@ router.put("/:id", async (req: Request, res: Response): Promise<void> => {
         ? classIds.map((c) => Number(c)).filter((n) => !isNaN(n))
         : [];
       const valid = await validClassIds(ids);
-      // Un prof ne peut rattacher qu'à SES classes
-      if (!isOwner(req) && valid.length > 0) {
-        const owned = await prisma.class.findMany({
-          where: { id: { in: valid }, teacherId: currentUserId(req) },
-          select: { id: true },
-        });
-        if (owned.length !== valid.length) {
-          res.status(403).json({ error: "Une des classes sélectionnées n'est pas la vôtre" });
-          return;
-        }
-      }
       data.classes = { set: valid.map((cid) => ({ id: cid })) };
     }
 
