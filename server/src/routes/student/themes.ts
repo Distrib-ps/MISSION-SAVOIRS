@@ -13,21 +13,24 @@ router.use(authenticate);
  * - quiz ciblé → visible seulement si ciblé sur la classe de l'élève.
  * Un élève sans classe ne voit que les quiz non ciblés.
  */
-function quizClassFilter(classId: number | null) {
-  return classId == null
+function quizClassFilter(classIds: number[]) {
+  return classIds.length === 0
     ? { classes: { none: {} } }
-    : { OR: [{ classes: { none: {} } }, { classes: { some: { classId } } }] };
+    : { OR: [{ classes: { none: {} } }, { classes: { some: { classId: { in: classIds } } } }] };
 }
 
-async function getClassId(userId: number): Promise<number | null> {
-  const u = await prisma.user.findUnique({ where: { id: userId }, select: { classId: true } });
-  return u?.classId ?? null;
+async function getClassIds(userId: number): Promise<number[]> {
+  const u = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { classes: { select: { id: true } } },
+  });
+  return u?.classes.map((c) => c.id) ?? [];
 }
 
 // ---------- GET / - List all themes (only those with content visible to the class) ----------
 router.get("/", async (req: Request, res: Response): Promise<void> => {
   try {
-    const classId = await getClassId(req.user!.userId);
+    const classIds = await getClassIds(req.user!.userId);
     const themes = await prisma.theme.findMany({
       where: {
         subThemes: {
@@ -35,7 +38,7 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
             quizzes: {
               some: {
                 questions: { some: {} },
-                ...quizClassFilter(classId),
+                ...quizClassFilter(classIds),
               },
             },
           },
@@ -65,7 +68,7 @@ router.get("/:id", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const classId = await getClassId(req.user!.userId);
+    const classIds = await getClassIds(req.user!.userId);
     const theme = await prisma.theme.findUnique({
       where: { id },
       include: {
@@ -74,7 +77,7 @@ router.get("/:id", async (req: Request, res: Response): Promise<void> => {
             quizzes: {
               some: {
                 questions: { some: {} },
-                ...quizClassFilter(classId),
+                ...quizClassFilter(classIds),
               },
             },
           },
@@ -114,7 +117,7 @@ router.get(
       }
 
       const userId = req.user!.userId;
-      const classId = await getClassId(userId);
+      const classIds = await getClassIds(userId);
 
       // Verify the sub-theme exists and belongs to the theme
       const subTheme = await prisma.subTheme.findFirst({
@@ -131,7 +134,7 @@ router.get(
         where: {
           subThemeId,
           questions: { some: {} },
-          ...quizClassFilter(classId),
+          ...quizClassFilter(classIds),
         },
         orderBy: { order: "asc" },
         include: {

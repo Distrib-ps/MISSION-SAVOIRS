@@ -19,7 +19,7 @@ router.use(authenticate, requireStaff);
 async function studentInTeacherScope(req: Request, studentId: number): Promise<boolean> {
   if (isOwner(req)) return true;
   const student = await prisma.user.findFirst({
-    where: { id: studentId, role: "STUDENT", class: { teacherId: currentUserId(req) } },
+    where: { id: studentId, role: "STUDENT", classes: { some: { teacherId: currentUserId(req) } } },
     select: { id: true },
   });
   return !!student;
@@ -90,15 +90,16 @@ const userSelect = {
   lastName: true,
   role: true,
   level: true,
-  classId: true,
-  class: { select: { id: true, name: true, level: true } },
+  classes: { select: { id: true, name: true, level: true } },
   createdAt: true,
   updatedAt: true,
 };
 
-/** Résout une classe par id et renvoie son niveau (pour synchroniser User.level). */
-async function resolveClass(classId: number): Promise<{ id: number; level: SchoolLevel } | null> {
-  return prisma.class.findUnique({ where: { id: classId }, select: { id: true, level: true } });
+/** Vérifie que toutes les classes fournies existent ; renvoie les ids valides. */
+async function validClassIds(ids: number[]): Promise<number[]> {
+  if (ids.length === 0) return [];
+  const found = await prisma.class.findMany({ where: { id: { in: ids } }, select: { id: true } });
+  return found.map((c) => c.id);
 }
 
 // ---------- GET / - List all users (students AND admins) ----------
@@ -108,16 +109,23 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
 
     const where: Record<string, unknown> = {};
 
+    // Filtre d'appartenance (combine cloisonnement prof + filtre classe demandé)
+    const classSome: { teacherId?: number; id?: number } = {};
+
     // Cloisonnement prof : ne voit que les élèves de ses classes
     if (!isOwner(req)) {
       where.role = "STUDENT";
-      where.class = { teacherId: currentUserId(req) };
+      classSome.teacherId = currentUserId(req);
     }
 
     // Filter by class
     if (classId && typeof classId === "string") {
       const cid = parseInt(classId, 10);
-      if (!isNaN(cid)) where.classId = cid;
+      if (!isNaN(cid)) classSome.id = cid;
+    }
+
+    if (Object.keys(classSome).length > 0) {
+      where.classes = { some: classSome };
     }
 
     // Filter by level
@@ -164,7 +172,14 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
 // ---------- POST / - Create a user (student or admin) ----------
 router.post("/", async (req: Request, res: Response): Promise<void> => {
   try {
-    const { firstName, lastName, level, password, role, classId } = req.body;
+    const { firstName, lastName, level, password, role, classIds } = req.body as {
+      firstName?: string;
+      lastName?: string;
+      level?: string;
+      password?: string;
+      role?: string;
+      classIds?: number[];
+    };
 
     const userRole: string = role ? role.toUpperCase() : "STUDENT";
 
@@ -179,32 +194,25 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Classe (optionnelle) : si fournie, elle impose le niveau de l'élève
-    let resolvedLevel: SchoolLevel | null = level ? (level.toUpperCase() as SchoolLevel) : null;
-    let resolvedClassId: number | null = null;
-    if (classId !== undefined && classId !== null) {
-      const cid = parseInt(String(classId), 10);
-      const cls = isNaN(cid) ? null : await resolveClass(cid);
-      if (!cls) {
-        res.status(400).json({ error: "Classe introuvable" });
-        return;
-      }
-      resolvedClassId = cls.id;
-      resolvedLevel = cls.level; // la classe porte le niveau
-    }
+    // Classes/groupes (multi-appartenance, optionnel)
+    const requestedClassIds = Array.isArray(classIds)
+      ? classIds.map((c) => Number(c)).filter((n) => !isNaN(n))
+      : [];
+    const resolvedClassIds = await validClassIds(requestedClassIds);
+    const resolvedLevel: SchoolLevel | null = level ? (level.toUpperCase() as SchoolLevel) : null;
 
-    // Un prof ne peut inscrire un élève que dans une de SES classes
+    // Un prof ne peut inscrire un élève que dans SES classes (au moins une)
     if (!isOwner(req)) {
-      if (resolvedClassId == null) {
-        res.status(400).json({ error: "Un professeur doit rattacher l'élève à une de ses classes" });
+      if (resolvedClassIds.length === 0) {
+        res.status(400).json({ error: "Un professeur doit rattacher l'élève à au moins une de ses classes" });
         return;
       }
-      const owned = await prisma.class.findFirst({
-        where: { id: resolvedClassId, teacherId: currentUserId(req) },
+      const owned = await prisma.class.findMany({
+        where: { id: { in: resolvedClassIds }, teacherId: currentUserId(req) },
         select: { id: true },
       });
-      if (!owned) {
-        res.status(403).json({ error: "Cette classe n'est pas la vôtre" });
+      if (owned.length !== resolvedClassIds.length) {
+        res.status(403).json({ error: "Une des classes sélectionnées n'est pas la vôtre" });
         return;
       }
     }
@@ -222,11 +230,9 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // For students, a level is required (directly or via class)
+    // Pour un élève, le niveau est requis (attribut propre, décorrélé des classes)
     if (userRole === "STUDENT" && !resolvedLevel) {
-      res.status(400).json({
-        error: "Le niveau scolaire (ou une classe) est requis pour les élèves",
-      });
+      res.status(400).json({ error: "Le niveau scolaire est requis pour les élèves" });
       return;
     }
 
@@ -239,9 +245,11 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
         password: hashedPassword,
         firstName,
         lastName,
-        role: userRole as "ADMIN" | "STUDENT",
+        role: userRole as "ADMIN" | "STUDENT" | "TEACHER",
         level: resolvedLevel,
-        classId: resolvedClassId,
+        ...(resolvedClassIds.length > 0
+          ? { classes: { connect: resolvedClassIds.map((id) => ({ id })) } }
+          : {}),
       },
       select: userSelect,
     });
@@ -277,27 +285,38 @@ router.put("/:id", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const { firstName, lastName, level, password, role, classId } = req.body;
+    const { firstName, lastName, level, password, role, classIds } = req.body as {
+      firstName?: string;
+      lastName?: string;
+      level?: string | null;
+      password?: string;
+      role?: string;
+      classIds?: number[];
+    };
 
     const data: Record<string, unknown> = {};
 
     if (firstName !== undefined) data.firstName = firstName;
     if (lastName !== undefined) data.lastName = lastName;
 
-    // Classe : si fournie, elle impose le niveau ; null = détacher
-    if (classId !== undefined) {
-      if (classId === null) {
-        data.classId = null;
-      } else {
-        const cid = parseInt(String(classId), 10);
-        const cls = isNaN(cid) ? null : await resolveClass(cid);
-        if (!cls) {
-          res.status(400).json({ error: "Classe introuvable" });
+    // Classes/groupes : remplace l'ensemble des appartenances si fourni
+    if (classIds !== undefined) {
+      const ids = Array.isArray(classIds)
+        ? classIds.map((c) => Number(c)).filter((n) => !isNaN(n))
+        : [];
+      const valid = await validClassIds(ids);
+      // Un prof ne peut rattacher qu'à SES classes
+      if (!isOwner(req) && valid.length > 0) {
+        const owned = await prisma.class.findMany({
+          where: { id: { in: valid }, teacherId: currentUserId(req) },
+          select: { id: true },
+        });
+        if (owned.length !== valid.length) {
+          res.status(403).json({ error: "Une des classes sélectionnées n'est pas la vôtre" });
           return;
         }
-        data.classId = cls.id;
-        data.level = cls.level; // synchronise le niveau sur la classe
       }
+      data.classes = { set: valid.map((cid) => ({ id: cid })) };
     }
 
     if (role !== undefined) {
@@ -467,26 +486,24 @@ router.post(
           continue;
         }
 
-        // Résolution de la classe (optionnelle) : si présente, elle impose le niveau
-        let classId: number | null = null;
-        let effectiveLevel = niveau;
+        // Classe (optionnelle) : rattachement par nom (le niveau vient de la colonne NIVEAU)
+        let classConnectId: number | null = null;
         if (classeName) {
           const cls = classByName.get(classeName.toLowerCase());
           if (!cls) {
             errors.push(`Ligne ${rowNum}: classe "${classeName}" introuvable`);
             continue;
           }
-          classId = cls.id;
-          effectiveLevel = cls.level; // la classe porte le niveau
+          classConnectId = cls.id;
         }
 
-        if (!effectiveLevel) {
-          errors.push(`Ligne ${rowNum}: niveau ou classe manquant`);
+        if (!niveau) {
+          errors.push(`Ligne ${rowNum}: niveau manquant`);
           continue;
         }
-        if (!VALID_LEVELS.includes(effectiveLevel)) {
+        if (!VALID_LEVELS.includes(niveau)) {
           errors.push(
-            `Ligne ${rowNum}: niveau invalide "${effectiveLevel}" (attendu: CP, CE1, CE2, CM1, CM2)`
+            `Ligne ${rowNum}: niveau invalide "${niveau}" (attendu: CP, CE1, CE2, CM1, CM2)`
           );
           continue;
         }
@@ -503,12 +520,12 @@ router.post(
               firstName: prenom,
               lastName: nom,
               role: "STUDENT",
-              level: effectiveLevel as SchoolLevel,
-              classId,
+              level: niveau as SchoolLevel,
+              ...(classConnectId ? { classes: { connect: { id: classConnectId } } } : {}),
             },
           });
 
-          createdUsers.push({ prenom, nom, identifiant: username, motDePasse: plainPassword, niveau: effectiveLevel });
+          createdUsers.push({ prenom, nom, identifiant: username, motDePasse: plainPassword, niveau });
           created++;
         } catch (err) {
           errors.push(

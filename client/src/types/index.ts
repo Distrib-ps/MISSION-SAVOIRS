@@ -8,8 +8,7 @@ export interface User {
   lastName: string;
   role: Role;
   level?: Level | null;
-  classId?: number | null;
-  class?: { id: number; name: string; level?: Level } | null;
+  classes?: { id: number; name: string; level?: Level }[];
 }
 
 export interface Classe {

@@ -11,7 +11,7 @@ router.use(authenticate, requireStaff);
 async function studentInScope(req: Request, studentId: number): Promise<boolean> {
   if (isOwner(req)) return true;
   const s = await prisma.user.findFirst({
-    where: { id: studentId, class: { teacherId: currentUserId(req) } },
+    where: { id: studentId, classes: { some: { teacherId: currentUserId(req) } } },
     select: { id: true },
   });
   return !!s;

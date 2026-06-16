@@ -15,7 +15,7 @@ function quizScope(req: Request): { createdById?: number } {
 }
 /** Pour un prof : ne compter que les élèves de ses classes ; pour l'Owner : tous. */
 function studentScope(req: Request): Record<string, unknown> {
-  return isOwner(req) ? {} : { class: { teacherId: currentUserId(req) } };
+  return isOwner(req) ? {} : { classes: { some: { teacherId: currentUserId(req) } } };
 }
 
 /** Taux de réussite (0-100) d'un lot de tentatives : moyenne de score/total. */
