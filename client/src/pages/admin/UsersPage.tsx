@@ -855,6 +855,12 @@ export default function UsersPage() {
                           />
                           <span>
                             {c.name} <span className="text-ms-gray">({c.level})</span>
+                            {c.teacher && (
+                              <span className="text-ms-gray">
+                                {" — "}
+                                {c.teacher.firstName} {c.teacher.lastName}
+                              </span>
+                            )}
                           </span>
                         </label>
                       );
@@ -1007,12 +1013,33 @@ export default function UsersPage() {
                     </tbody>
                   </table>
                 </div>
-                <p className="text-xs text-ms-gray mb-5">
+                <p className="text-xs text-ms-gray mb-3">
                   La colonne <span className="font-mono font-semibold">CLASSE</span> est{" "}
                   <span className="font-semibold">optionnelle</span> : si renseignée (nom d'une classe
                   existante), elle rattache l'élève à cette classe et <span className="font-semibold">impose
                   son niveau</span> (la colonne NIVEAU peut alors être laissée vide). Sinon, NIVEAU est requis.
                 </p>
+                {classesList.length > 0 && (
+                  <div className="bg-ms-cream/60 rounded-xl p-3 mb-5">
+                    <p className="text-xs font-semibold text-ms-dark mb-2">
+                      Classes & groupes disponibles (à recopier dans la colonne CLASSE) :
+                    </p>
+                    <ul className="space-y-1">
+                      {classesList.map((c) => (
+                        <li key={c.id} className="text-xs text-ms-gray flex items-baseline gap-1.5">
+                          <span className="font-mono font-semibold text-ms-dark">{c.name}</span>
+                          <span>({c.level})</span>
+                          <span>
+                            —{" "}
+                            {c.teacher
+                              ? `${c.teacher.firstName} ${c.teacher.lastName}`
+                              : "sans propriétaire"}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </>
             )}
 

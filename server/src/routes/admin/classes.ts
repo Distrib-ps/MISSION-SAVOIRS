@@ -14,7 +14,10 @@ router.get("/", async (_req: Request, res: Response): Promise<void> => {
   try {
     const classes = await prisma.class.findMany({
       orderBy: [{ level: "asc" }, { name: "asc" }],
-      include: { _count: { select: { students: true } } },
+      include: {
+        _count: { select: { students: true } },
+        teacher: { select: { id: true, firstName: true, lastName: true } },
+      },
     });
     res.json({ classes });
   } catch (error) {
