@@ -96,6 +96,23 @@ function downloadCredentials(users: ImportedUser[]) {
   XLSX.writeFile(wb, `identifiants_eleves_${new Date().toISOString().slice(0, 10)}.xlsx`);
 }
 
+/* Modèle d'import prêt à remplir (avec exemples, dont un élève multi-groupes) */
+function downloadImportTemplate(classes: Classe[]) {
+  const g1 = classes[0]?.name ?? "CE2-2";
+  const g2 = classes[1]?.name ?? "Groupe 1";
+  const wsData = [
+    ["PRENOM", "NOM", "NIVEAU", "CLASSE"],
+    ["Lina", "Dupont", "CE1", ""],
+    ["Adam", "Martin", "CM2", g1],
+    ["Lucas", "Bernard", "CM1", `${g1} ; ${g2}`],
+  ];
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  ws["!cols"] = [{ wch: 15 }, { wch: 15 }, { wch: 8 }, { wch: 30 }];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Élèves");
+  XLSX.writeFile(wb, "modele_import_eleves.xlsx");
+}
+
 /* ------------------------------------------------------------------ */
 /*  Helper: generate random 5-char password                            */
 /* ------------------------------------------------------------------ */
@@ -442,9 +459,11 @@ export default function UsersPage() {
           // Le niveau vient toujours de la colonne NIVEAU (attribut propre de l'élève)
           const niveau = niveauKey ? String(row[niveauKey]).trim().toUpperCase() : "";
 
-          // classe renseignée mais inconnue → invalide
-          const matchedClass = classe ? classByName.get(classe.toLowerCase()) : undefined;
-          const classeOk = !classe || !!matchedClass;
+          // Classe(s) : plusieurs groupes séparés par ; ou , — toutes doivent exister
+          const classeNames = classe
+            ? classe.split(/[;,]/).map((s) => s.trim()).filter(Boolean)
+            : [];
+          const classeOk = classeNames.every((n) => classByName.has(n.toLowerCase()));
           const valid = !!prenom && !!nom && classeOk && validLevels.includes(niveau);
 
           return { prenom, nom, niveau, classe, valid };
@@ -1007,6 +1026,12 @@ export default function UsersPage() {
                         <td className="px-3 py-1">CM2</td>
                         <td className="px-3 py-1">CE2-2</td>
                       </tr>
+                      <tr className="text-ms-dark">
+                        <td className="px-3 py-1">Lucas</td>
+                        <td className="px-3 py-1">Bernard</td>
+                        <td className="px-3 py-1">CM1</td>
+                        <td className="px-3 py-1">CE2-2 ; Géo Sabrina</td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>
@@ -1021,10 +1046,22 @@ export default function UsersPage() {
                     <span className="font-mono font-semibold">CLASSE</span> est{" "}
                     <span className="font-semibold">optionnelle</span> : laissez vide, ou mettez le{" "}
                     <span className="font-semibold">nom exact</span> d'une classe/groupe existant
-                    (voir la liste ci-dessous) pour y rattacher l'élève.
+                    (voir la liste ci-dessous). Pour rattacher l'élève à{" "}
+                    <span className="font-semibold">plusieurs groupes</span>, séparez les noms par un{" "}
+                    point-virgule, ex. <span className="font-mono">CE2-2 ; Géo Sabrina</span>.
                   </li>
                   <li>L'identifiant et le mot de passe sont générés automatiquement.</li>
                 </ul>
+                <button
+                  type="button"
+                  onClick={() => downloadImportTemplate(classesList)}
+                  className="inline-flex items-center gap-2 mb-5 px-4 py-2 text-sm font-semibold text-ms-lavender border border-ms-lavender/40 rounded-xl hover:bg-ms-lavender-light/40 transition"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16" />
+                  </svg>
+                  Télécharger un modèle (.xlsx)
+                </button>
                 {classesList.length > 0 && (
                   <div className="bg-ms-cream/60 rounded-xl p-3 mb-5">
                     <p className="text-xs font-semibold text-ms-dark mb-2">
@@ -1160,8 +1197,19 @@ export default function UsersPage() {
                           </td>
                           <td className="px-3 py-1.5">
                             {row.classe ? (
-                              <span className="inline-block px-2 py-0.5 rounded-full bg-ms-cream text-ms-dark">
-                                {row.classe}
+                              <span className="flex flex-wrap gap-1">
+                                {row.classe
+                                  .split(/[;,]/)
+                                  .map((s) => s.trim())
+                                  .filter(Boolean)
+                                  .map((name, j) => (
+                                    <span
+                                      key={j}
+                                      className="inline-block px-2 py-0.5 rounded-full bg-ms-cream text-ms-dark"
+                                    >
+                                      {name}
+                                    </span>
+                                  ))}
                               </span>
                             ) : (
                               <span className="text-ms-gray">—</span>
