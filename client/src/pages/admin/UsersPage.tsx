@@ -439,15 +439,11 @@ export default function UsersPage() {
           const nom = nomKey ? String(row[nomKey]).trim() : "";
           const classe = classeKey ? String(row[classeKey]).trim() : "";
 
-          // Une classe valide impose son niveau ; sinon on retombe sur la colonne NIVEAU
-          const matchedClass = classe ? classByName.get(classe.toLowerCase()) : undefined;
-          const niveau = matchedClass
-            ? matchedClass.level
-            : niveauKey
-              ? String(row[niveauKey]).trim().toUpperCase()
-              : "";
+          // Le niveau vient toujours de la colonne NIVEAU (attribut propre de l'élève)
+          const niveau = niveauKey ? String(row[niveauKey]).trim().toUpperCase() : "";
 
           // classe renseignée mais inconnue → invalide
+          const matchedClass = classe ? classByName.get(classe.toLowerCase()) : undefined;
           const classeOk = !classe || !!matchedClass;
           const valid = !!prenom && !!nom && classeOk && validLevels.includes(niveau);
 
@@ -984,8 +980,9 @@ export default function UsersPage() {
 
             {!importFile && !importResult && (
               <>
-                <p className="text-sm text-ms-gray mb-5">
-                  Format attendu du fichier (colonnes) :
+                <p className="text-sm text-ms-gray mb-3">
+                  Un fichier Excel (.xlsx) ou CSV, <span className="font-semibold">une ligne par élève</span>,
+                  avec ces 4 colonnes :
                 </p>
                 <div className="bg-ms-cream rounded-xl p-3 mb-3 overflow-x-auto">
                   <table className="text-xs font-mono">
@@ -1002,27 +999,36 @@ export default function UsersPage() {
                         <td className="px-3 py-1">Lina</td>
                         <td className="px-3 py-1">Dupont</td>
                         <td className="px-3 py-1">CE1</td>
-                        <td className="px-3 py-1 text-ms-gray">—</td>
+                        <td className="px-3 py-1 text-ms-gray">(vide)</td>
                       </tr>
                       <tr className="text-ms-dark">
                         <td className="px-3 py-1">Adam</td>
                         <td className="px-3 py-1">Martin</td>
-                        <td className="px-3 py-1 text-ms-gray">—</td>
-                        <td className="px-3 py-1">cm2_2</td>
+                        <td className="px-3 py-1">CM2</td>
+                        <td className="px-3 py-1">CE2-2</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
-                <p className="text-xs text-ms-gray mb-3">
-                  La colonne <span className="font-mono font-semibold">CLASSE</span> est{" "}
-                  <span className="font-semibold">optionnelle</span> : si renseignée (nom d'une classe
-                  existante), elle rattache l'élève à cette classe et <span className="font-semibold">impose
-                  son niveau</span> (la colonne NIVEAU peut alors être laissée vide). Sinon, NIVEAU est requis.
-                </p>
+                <ul className="text-xs text-ms-gray mb-3 space-y-1 list-disc pl-4">
+                  <li>
+                    <span className="font-mono font-semibold">PRENOM</span>,{" "}
+                    <span className="font-mono font-semibold">NOM</span> et{" "}
+                    <span className="font-mono font-semibold">NIVEAU</span> sont{" "}
+                    <span className="font-semibold">obligatoires</span> (NIVEAU : CP, CE1, CE2, CM1 ou CM2).
+                  </li>
+                  <li>
+                    <span className="font-mono font-semibold">CLASSE</span> est{" "}
+                    <span className="font-semibold">optionnelle</span> : laissez vide, ou mettez le{" "}
+                    <span className="font-semibold">nom exact</span> d'une classe/groupe existant
+                    (voir la liste ci-dessous) pour y rattacher l'élève.
+                  </li>
+                  <li>L'identifiant et le mot de passe sont générés automatiquement.</li>
+                </ul>
                 {classesList.length > 0 && (
                   <div className="bg-ms-cream/60 rounded-xl p-3 mb-5">
                     <p className="text-xs font-semibold text-ms-dark mb-2">
-                      Classes & groupes disponibles (à recopier dans la colonne CLASSE) :
+                      Noms à utiliser dans la colonne CLASSE :
                     </p>
                     <ul className="space-y-1">
                       {classesList.map((c) => (
