@@ -85,15 +85,15 @@ export default function ClassesPage() {
     <AdminLayout>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-extrabold text-ms-dark">Classes</h1>
-          <p className="text-ms-gray">Regroupez les élèves par classe et ciblez le contenu.</p>
+          <h1 className="text-2xl font-extrabold text-ms-dark">Classes & groupes</h1>
+          <p className="text-ms-gray">Regroupez les élèves par classe ou groupe et ciblez le contenu.</p>
         </div>
         {editing === null && (
           <button
             onClick={openCreate}
             className="bg-ms-lavender text-white font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition shrink-0"
           >
-            + Créer une classe
+            + Créer une classe / un groupe
           </button>
         )}
       </div>
@@ -101,7 +101,7 @@ export default function ClassesPage() {
       {editing !== null && (
         <div className="bg-white border border-ms-light-gray rounded-2xl p-5 mb-6">
           <h2 className="text-lg font-bold text-ms-dark mb-4">
-            {editing === "new" ? "Nouvelle classe" : `Modifier « ${(editing as Classe).name} »`}
+            {editing === "new" ? "Nouvelle classe / groupe" : `Modifier « ${(editing as Classe).name} »`}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="sm:col-span-2">
@@ -109,7 +109,7 @@ export default function ClassesPage() {
               <input
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
-                placeholder="cm2_2"
+                placeholder="CE2-2 ou Groupe 1"
                 className="w-full px-3 py-2 border border-ms-light-gray rounded-lg focus:outline-none focus:ring-2 focus:ring-ms-lavender/40"
               />
             </div>

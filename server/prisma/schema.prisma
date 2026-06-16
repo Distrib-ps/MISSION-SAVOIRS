@@ -31,8 +31,7 @@ model User {
   firstName String
   lastName  String
   role      Role        @default(STUDENT)
-  level     SchoolLevel?
-  classId   Int?        // classe de l'élève (null = non rattaché ; le niveau est synchronisé sur la classe)
+  level     SchoolLevel? // niveau scolaire propre à l'élève (décorrélé des classes)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -40,7 +39,7 @@ model User {
   // Relations élève
   quizAttempts QuizAttempt[]
   customPaths  CustomPath[]
-  class        Class?       @relation("ClassStudents", fields: [classId], references: [id], onDelete: SetNull)
+  classes      Class[]      @relation("StudentClasses") // un élève peut être dans plusieurs classes/groupes
 
   // Relations prof (contenu créé / classes gérées)
   managedClasses   Class[]    @relation("ClassTeacher")
@@ -63,7 +62,7 @@ model Class {
   teacherId Int?        // prof gestionnaire de la classe (null = géré par l'Owner)
   createdAt DateTime    @default(now())
 
-  students User[]       @relation("ClassStudents")
+  students User[]       @relation("StudentClasses")
   teacher  User?        @relation("ClassTeacher", fields: [teacherId], references: [id], onDelete: SetNull)
   quizzes  QuizClass[]
 

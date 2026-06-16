@@ -173,7 +173,7 @@ export default function UsersPage() {
   const [formPassword, setFormPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [formRole, setFormRole] = useState<Role>("STUDENT");
-  const [formClass, setFormClass] = useState<number | "">("");
+  const [formClassIds, setFormClassIds] = useState<number[]>([]);
   const [classesList, setClassesList] = useState<Classe[]>([]);
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState("");
@@ -266,7 +266,7 @@ export default function UsersPage() {
     setFormPassword(generateRandomPassword());
     setShowPassword(true);
     setFormRole("STUDENT");
-    setFormClass("");
+    setFormClassIds([]);
     setFormError("");
     setShowCreateEdit(true);
   }
@@ -279,7 +279,7 @@ export default function UsersPage() {
     setFormPassword("");
     setShowPassword(false);
     setFormRole(u.role);
-    setFormClass(u.classId ?? "");
+    setFormClassIds(u.classes?.map((c) => c.id) ?? []);
     setFormError("");
     setShowCreateEdit(true);
   }
@@ -296,7 +296,7 @@ export default function UsersPage() {
           firstName: formFirst,
           lastName: formLast,
           level: formLevel,
-          classId: formClass === "" ? null : formClass,
+          classIds: formClassIds,
         };
         if (formPassword) body.password = formPassword;
 
@@ -325,7 +325,7 @@ export default function UsersPage() {
             level: formLevel,
             password: formPassword,
             role: formRole,
-            classId: formClass === "" ? null : formClass,
+            classIds: formClassIds,
           }),
         });
         if (!res.ok) {
@@ -663,13 +663,13 @@ export default function UsersPage() {
                       <td className="px-3 py-3 text-ms-dark">{u.firstName}</td>
                       <td className="px-3 py-3 text-ms-dark">{u.lastName}</td>
                       <td className="px-3 py-3">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           <LevelBadge level={u.level} />
-                          {u.class && (
-                            <span className="text-xs text-ms-gray bg-ms-cream px-2 py-0.5 rounded-full">
-                              {u.class.name}
+                          {u.classes?.map((c) => (
+                            <span key={c.id} className="text-xs text-ms-gray bg-ms-cream px-2 py-0.5 rounded-full">
+                              {c.name}
                             </span>
-                          )}
+                          ))}
                         </div>
                       </td>
                       <td className="px-3 py-3">
@@ -829,26 +829,38 @@ export default function UsersPage() {
 
               <div>
                 <label className="block text-sm font-semibold text-ms-dark mb-1">
-                  Classe
-                  <span className="font-normal text-ms-gray ml-1">(définit le niveau)</span>
+                  Classes & groupes
+                  <span className="font-normal text-ms-gray ml-1">(un élève peut en cumuler plusieurs)</span>
                 </label>
-                <select
-                  value={formClass}
-                  onChange={(e) => {
-                    const val = e.target.value ? Number(e.target.value) : "";
-                    setFormClass(val);
-                    const cls = classesList.find((c) => c.id === val);
-                    if (cls) setFormLevel(cls.level);
-                  }}
-                  className="w-full px-4 py-2.5 text-sm border border-ms-light-gray rounded-xl bg-white text-ms-dark focus:outline-none focus:ring-2 focus:ring-ms-lavender/40"
-                >
-                  <option value="">Aucune</option>
-                  {classesList.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} ({c.level})
-                    </option>
-                  ))}
-                </select>
+                {classesList.length === 0 ? (
+                  <p className="text-sm text-ms-gray">Aucune classe ou groupe disponible.</p>
+                ) : (
+                  <div className="max-h-44 overflow-y-auto border border-ms-light-gray rounded-xl bg-white divide-y divide-ms-light-gray">
+                    {classesList.map((c) => {
+                      const checked = formClassIds.includes(c.id);
+                      return (
+                        <label
+                          key={c.id}
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-ms-dark cursor-pointer hover:bg-ms-cream/50"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={(e) =>
+                              setFormClassIds((prev) =>
+                                e.target.checked ? [...prev, c.id] : prev.filter((id) => id !== c.id),
+                              )
+                            }
+                            className="accent-ms-lavender"
+                          />
+                          <span>
+                            {c.name} <span className="text-ms-gray">({c.level})</span>
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               <div>

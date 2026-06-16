@@ -18,7 +18,7 @@ router.post("/login", async (req: Request, res: Response): Promise<void> => {
 
     const user = await prisma.user.findUnique({
       where: { username },
-      include: { class: { select: { id: true, name: true } } },
+      include: { classes: { select: { id: true, name: true } } },
     });
 
     if (!user) {
@@ -70,8 +70,7 @@ router.get("/me", authenticate, async (req: Request, res: Response): Promise<voi
         lastName: true,
         role: true,
         level: true,
-        classId: true,
-        class: { select: { id: true, name: true } },
+        classes: { select: { id: true, name: true } },
         createdAt: true,
         updatedAt: true,
       },

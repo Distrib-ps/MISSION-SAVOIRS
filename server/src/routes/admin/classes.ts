@@ -76,14 +76,8 @@ router.put("/:id", async (req: Request, res: Response): Promise<void> => {
     if (name !== undefined) data.name = name;
     if (level !== undefined) data.level = level;
 
-    const updated = await prisma.$transaction(async (tx) => {
-      const c = await tx.class.update({ where: { id }, data });
-      // Si le niveau change, resynchroniser le niveau des élèves de la classe
-      if (level !== undefined && level !== existing.level) {
-        await tx.user.updateMany({ where: { classId: id }, data: { level } });
-      }
-      return c;
-    });
+    // Le niveau de l'élève est désormais décorrélé des classes (multi-appartenance) : pas de resync.
+    const updated = await prisma.class.update({ where: { id }, data });
 
     res.json({ class: updated });
   } catch (error) {
