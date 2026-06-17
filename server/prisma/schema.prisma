@@ -147,7 +147,9 @@ model SubTheme {
   creator User?  @relation(fields: [createdById], references: [id], onDelete: SetNull)
   quizzes Quiz[]
 
-  @@unique([themeId, name])
+  // Unicité par créateur : chaque prof peut avoir son propre sous-thème de même nom
+  // sous un thème partagé.
+  @@unique([themeId, name, createdById])
   @@map("sub_themes")
 }
 

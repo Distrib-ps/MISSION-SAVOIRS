@@ -541,6 +541,21 @@ export default function ContentPage() {
           throw new Error(d?.error || "Erreur lors de la modification");
         }
       } else {
+        // Anti-doublon : les thèmes sont partagés. Si un thème du même nom existe déjà
+        // (créé par n'importe quel prof), on propose de le réutiliser plutôt que d'en créer un.
+        const existing = themes.find(
+          (t) => t.name.trim().toLowerCase() === formName.trim().toLowerCase()
+        );
+        if (existing) {
+          const ok = window.confirm(
+            `Le thème « ${existing.name} » existe déjà. Voulez-vous l'utiliser ? ` +
+              `Vous pourrez y ajouter vos propres sous-thèmes.`
+          );
+          setShowThemeModal(false);
+          setFormLoading(false);
+          if (ok) navigateToTheme(existing);
+          return;
+        }
         const res = await fetch(API_THEMES, {
           method: "POST",
           headers: authHeaders(),
@@ -1089,16 +1104,18 @@ export default function ContentPage() {
               className="bg-white rounded-2xl border border-ms-light-gray/50 p-5 hover:shadow-md transition-shadow cursor-pointer group"
             >
               <div className="flex items-center gap-4">
-                <div className="flex flex-col items-center gap-0.5">
-                  <ArrowUp
-                    disabled={index === 0}
-                    onClick={() => reorderItems(API_THEMES, sorted, index, "up", fetchThemes)}
-                  />
-                  <ArrowDown
-                    disabled={index === sorted.length - 1}
-                    onClick={() => reorderItems(API_THEMES, sorted, index, "down", fetchThemes)}
-                  />
-                </div>
+                {isOwnerRole && (
+                  <div className="flex flex-col items-center gap-0.5">
+                    <ArrowUp
+                      disabled={index === 0}
+                      onClick={() => reorderItems(API_THEMES, sorted, index, "up", fetchThemes)}
+                    />
+                    <ArrowDown
+                      disabled={index === sorted.length - 1}
+                      onClick={() => reorderItems(API_THEMES, sorted, index, "down", fetchThemes)}
+                    />
+                  </div>
+                )}
 
                 <div className="flex-1 min-w-0">
                   <h3 className="text-base font-bold text-ms-dark group-hover:text-ms-lavender transition">
@@ -1113,22 +1130,24 @@ export default function ContentPage() {
                   {theme._count?.subThemes ?? 0} sous-theme{(theme._count?.subThemes ?? 0) !== 1 ? "s" : ""}
                 </span>
 
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); openThemeEdit(theme); }}
-                    className="p-2 text-ms-gray hover:text-ms-lavender hover:bg-ms-lavender-light rounded-xl transition"
-                    title="Modifier"
-                  >
-                    <EditIcon />
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm({ type: "theme", id: theme.id, label: theme.name }); }}
-                    className="p-2 text-ms-gray hover:text-ms-pink hover:bg-ms-pink-light rounded-xl transition"
-                    title="Supprimer"
-                  >
-                    <DeleteIcon />
-                  </button>
-                </div>
+                {(isOwnerRole || theme.createdById === currentUser?.id) && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); openThemeEdit(theme); }}
+                      className="p-2 text-ms-gray hover:text-ms-lavender hover:bg-ms-lavender-light rounded-xl transition"
+                      title="Modifier"
+                    >
+                      <EditIcon />
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm({ type: "theme", id: theme.id, label: theme.name }); }}
+                      className="p-2 text-ms-gray hover:text-ms-pink hover:bg-ms-pink-light rounded-xl transition"
+                      title="Supprimer"
+                    >
+                      <DeleteIcon />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ))}

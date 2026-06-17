@@ -19,12 +19,8 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
     const owner = isOwner(req);
     const uid = currentUserId(req);
 
-    // where par niveau : contenu propre, + (si includePublic) chemins menant à un quiz public
-    const themeWhere = owner
-      ? {}
-      : includePublic
-        ? { OR: [{ createdById: uid }, { subThemes: { some: { quizzes: { some: { visibility: "PUBLIC" as const } } } } }] }
-        : { createdById: uid };
+    // Les THÈMES sont partagés : visibles par tous les profs (taxonomie commune).
+    // Les sous-thèmes/quiz restent cloisonnés au prof, sauf includePublic (quiz publics des autres).
     const subThemeWhere = owner
       ? {}
       : includePublic
@@ -37,7 +33,6 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
         : { createdById: uid };
 
     const themes = await prisma.theme.findMany({
-      where: themeWhere,
       orderBy: { order: "asc" },
       include: {
         subThemes: {
@@ -62,7 +57,8 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
             _count: { select: { quizzes: true } },
           },
         },
-        _count: { select: { subThemes: true } },
+        // Comptage des sous-thèmes filtré sur ce que le prof voit réellement
+        _count: { select: { subThemes: { where: subThemeWhere } } },
       },
     });
 

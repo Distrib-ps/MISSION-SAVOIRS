@@ -59,6 +59,7 @@ export interface Theme {
   description: string | null;
   emoji: string;
   order: number;
+  createdById?: number | null;
   _count?: { subThemes: number };
 }
 
