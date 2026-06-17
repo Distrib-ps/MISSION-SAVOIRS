@@ -17,6 +17,19 @@ async function studentInScope(req: Request, studentId: number): Promise<boolean>
   return !!s;
 }
 
+/** Le prof ne peut composer un parcours qu'avec ses propres quiz (ou partagés avec lui). */
+async function quizzesAccessible(req: Request, quizIds: number[]): Promise<boolean> {
+  if (isOwner(req)) return true;
+  const uid = currentUserId(req);
+  const ok = await prisma.quiz.count({
+    where: {
+      id: { in: quizIds },
+      OR: [{ createdById: uid }, { shares: { some: { teacherId: uid } } }],
+    },
+  });
+  return ok === new Set(quizIds).size;
+}
+
 /* ── GET /?userId=X - List custom paths for a user ── */
 router.get("/", async (req: Request, res: Response): Promise<void> => {
   try {
@@ -96,6 +109,10 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
       res.status(403).json({ error: "Cet élève n'est pas dans vos classes" });
       return;
     }
+    if (!(await quizzesAccessible(req, quizIds))) {
+      res.status(403).json({ error: "Un des quiz sélectionnés ne vous est pas accessible" });
+      return;
+    }
 
     const path = await prisma.customPath.create({
       data: {
@@ -156,6 +173,9 @@ router.put("/:id", async (req: Request, res: Response): Promise<void> => {
       if (quizIds !== undefined) {
         if (!Array.isArray(quizIds) || quizIds.length === 0) {
           throw new Error("Au moins un quiz est requis");
+        }
+        if (!(await quizzesAccessible(req, quizIds))) {
+          throw new Error("Un des quiz sélectionnés ne vous est pas accessible");
         }
         await tx.customPathQuiz.deleteMany({ where: { customPathId: id } });
         await tx.customPathQuiz.createMany({

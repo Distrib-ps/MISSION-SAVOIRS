@@ -306,8 +306,8 @@ router.put("/:id", async (req: Request, res: Response): Promise<void> => {
 
     if (role !== undefined) {
       const upperRole = role.toUpperCase();
-      if (upperRole !== "ADMIN" && upperRole !== "STUDENT") {
-        res.status(400).json({ error: "Rôle invalide. Utilisez ADMIN ou STUDENT" });
+      if (upperRole !== "ADMIN" && upperRole !== "STUDENT" && upperRole !== "TEACHER") {
+        res.status(400).json({ error: "Rôle invalide. Utilisez ADMIN, TEACHER ou STUDENT" });
         return;
       }
       if (upperRole !== "STUDENT" && !isOwner(req)) {
