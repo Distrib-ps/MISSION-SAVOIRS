@@ -6,7 +6,7 @@
 
 ## Parties
 
-- **Responsable de traitement** : École Élémentaire Grand Pré Bulcos – B2, représentée par Sabrina Letellier — [adresse de l'établissement à préciser]
+- **Responsable de traitement** : École Élémentaire Grand Pré Bulcos – B2 (7 bis Av. du Vercors, 38240 Meylan), représentée par Sabrina Letellier
 - **Sous-traitant** : Théo Delhay, développeur de Mission Savoirs (projet éducatif personnel, non commercial) — delhay70@gmail.com
 
 ## 1. Objet

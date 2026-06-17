@@ -1,12 +1,11 @@
 # Registre des activités de traitement (RGPD art. 30)
 
-> Renseigné pour l'École Élémentaire Grand Pré Bulcos – B2. Quelques coordonnées restent à préciser
-> par l'établissement (entre crochets).
+> Renseigné pour l'École Élémentaire Grand Pré Bulcos – B2.
 
 ## Identification
 
-- **Responsable de traitement** : École Élémentaire Grand Pré Bulcos – B2
-- **Représentant / contact** : Sabrina Letellier (enseignante) — [email de l'établissement à préciser]
+- **Responsable de traitement** : École Élémentaire Grand Pré Bulcos – B2 — 7 bis Av. du Vercors, 38240 Meylan
+- **Représentant / contact** : Sabrina Letellier (enseignante) — delhay70@gmail.com
 - **Délégué à la protection des données (DPO)** : aucun désigné
 - **Sous-traitant** : Théo Delhay, développeur (projet éducatif personnel, non commercial) — delhay70@gmail.com
 - **Sous-traitant ultérieur** : Supabase Inc. (hébergement base de données, UE — région à confirmer ; migration vers un hébergement local / France prévue). Front hébergé chez OVH.
