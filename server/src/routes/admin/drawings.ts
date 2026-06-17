@@ -96,6 +96,9 @@ router.post("/:attemptId/validate", async (req: Request, res: Response): Promise
       data: {
         validationStatus: approve ? "APPROVED" : "REJECTED",
         isCorrect: approve,
+        // RGPD : l'image du dessin (donnée sensible d'enfant) est purgée dès
+        // la validation/refus ; on ne conserve que le statut.
+        givenAnswer: "",
       },
     });
 
