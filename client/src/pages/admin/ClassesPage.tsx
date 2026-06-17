@@ -1,6 +1,27 @@
 import { useEffect, useState } from "react";
 import AdminLayout from "../../components/admin/AdminLayout";
+import DemoButton from "../../components/admin/DemoButton";
+import type { TourStep } from "../../components/admin/GuidedTour";
 import type { Classe, Level } from "../../types";
+
+const CLASSES_DEMO: TourStep[] = [
+  {
+    title: "Classes & groupes 🏫",
+    text: "Ici vous organisez vos élèves. Une « classe » ou un « groupe » sert à les regrouper et à cibler du contenu.",
+  },
+  {
+    title: "Créer",
+    text: "Cliquez sur « + Créer une classe / un groupe », donnez un nom (ex. CE2-2 ou Groupe lecture) et choisissez le niveau.",
+  },
+  {
+    title: "Multi-appartenance",
+    text: "Un même élève peut être dans plusieurs groupes (sa classe + un groupe de besoin, par ex.). Le rattachement se fait depuis la fiche de l'élève (menu Élèves).",
+  },
+  {
+    title: "Cibler un quiz",
+    text: "Un quiz « Privé » ne sera visible que par les élèves de vos classes/groupes. Pratique pour différencier.",
+  },
+];
 
 const LEVELS: Level[] = ["CP", "CE1", "CE2", "CM1", "CM2"];
 
@@ -83,19 +104,22 @@ export default function ClassesPage() {
 
   return (
     <AdminLayout>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-extrabold text-ms-dark">Classes & groupes</h1>
           <p className="text-ms-gray">Regroupez les élèves par classe ou groupe et ciblez le contenu.</p>
         </div>
-        {editing === null && (
-          <button
-            onClick={openCreate}
-            className="bg-ms-lavender text-white font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition shrink-0"
-          >
-            + Créer une classe / un groupe
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          <DemoButton steps={CLASSES_DEMO} />
+          {editing === null && (
+            <button
+              onClick={openCreate}
+              className="bg-ms-lavender text-white font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition shrink-0"
+            >
+              + Créer une classe / un groupe
+            </button>
+          )}
+        </div>
       </div>
 
       {editing !== null && (

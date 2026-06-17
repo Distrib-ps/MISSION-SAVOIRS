@@ -1,5 +1,30 @@
 import { useEffect, useState } from "react";
 import AdminLayout from "../../components/admin/AdminLayout";
+import DemoButton from "../../components/admin/DemoButton";
+import type { TourStep } from "../../components/admin/GuidedTour";
+
+const REVISIONS_DEMO: TourStep[] = [
+  {
+    title: "Révisions par niveau 🔁",
+    text: "Une révision regroupe des questions piochées dans plusieurs quiz, pour réviser un niveau — idéal avant une évaluation.",
+  },
+  {
+    title: "Créer une révision",
+    text: "Cliquez sur « + Créer une révision », donnez un nom et choisissez le niveau ciblé.",
+  },
+  {
+    title: "Choisir les questions",
+    text: "Sélectionnez les questions à inclure (parmi vos contenus). Vous pouvez piocher dans différents quiz.",
+  },
+  {
+    title: "Date de fin (option)",
+    text: "Ajoutez une date de fin : passé cette date, la révision disparaît automatiquement de l'espace des élèves.",
+  },
+  {
+    title: "Pour qui ?",
+    text: "Tous les élèves du niveau ciblé verront la révision dans leur espace, sans action de votre part.",
+  },
+];
 import QuestionTreePicker from "../../components/admin/QuestionTreePicker";
 import type { AdminRevision, SchoolLevel } from "../../types";
 
@@ -108,21 +133,24 @@ export default function RevisionsPage() {
 
   return (
     <AdminLayout>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-extrabold text-ms-dark">Révisions par niveau</h1>
           <p className="text-ms-gray">
             Des parcours de révision mixant des questions piochées dans plusieurs quiz, ciblés par niveau.
           </p>
         </div>
-        {editing === null && (
-          <button
-            onClick={openCreate}
-            className="bg-ms-lavender text-white font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition shrink-0"
-          >
-            + Créer une révision
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          <DemoButton steps={REVISIONS_DEMO} />
+          {editing === null && (
+            <button
+              onClick={openCreate}
+              className="bg-ms-lavender text-white font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition shrink-0"
+            >
+              + Créer une révision
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ── Formulaire (création / édition) ── */}

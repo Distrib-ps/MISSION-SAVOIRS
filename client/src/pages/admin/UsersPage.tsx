@@ -1,6 +1,31 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import type { ChangeEvent, FormEvent, DragEvent } from "react";
 import { readSpreadsheet, downloadXlsx } from "../../lib/spreadsheet";
+import DemoButton from "../../components/admin/DemoButton";
+import type { TourStep } from "../../components/admin/GuidedTour";
+
+const ELEVES_DEMO: TourStep[] = [
+  {
+    title: "Les élèves 👧",
+    text: "Cette page gère tous les comptes. Vous voyez tous les élèves de l'établissement (pour éviter les doublons), même créés par un autre enseignant.",
+  },
+  {
+    title: "Créer un élève",
+    text: "« + Ajouter un utilisateur » : prénom, nom, niveau, mot de passe et classe(s). L'identifiant de connexion est généré automatiquement.",
+  },
+  {
+    title: "Importer toute une classe",
+    text: "« Importer (Excel) » : téléchargez le modèle, remplissez une ligne par élève (plusieurs groupes séparés par « ; »), puis importez. Les identifiants générés sont téléchargeables.",
+  },
+  {
+    title: "Modifier / réinitialiser",
+    text: "L'icône ✏️ permet de changer la classe d'un élève ou de réinitialiser son mot de passe. La recherche en haut retrouve un élève par nom.",
+  },
+  {
+    title: "Parcours personnalisé",
+    text: "L'icône 📋 sur la ligne d'un élève crée un parcours de quiz sur mesure pour l'accompagner.",
+  },
+];
 import AdminLayout from "../../components/admin/AdminLayout";
 import UserPathsModal from "../../components/admin/UserPathsModal";
 import { useAuth } from "../../contexts/AuthContext";
@@ -542,6 +567,7 @@ export default function UsersPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <DemoButton steps={ELEVES_DEMO} />
             <button
               onClick={openImport}
               className="px-4 py-2.5 text-sm font-semibold bg-white border border-ms-light-gray text-ms-dark hover:bg-ms-cream rounded-xl transition"
