@@ -3,6 +3,7 @@ import { SchoolLevel } from "@prisma/client";
 import prisma from "../../lib/prisma";
 import { authenticate, requireStaff } from "../../middleware/auth";
 import { isOwner, currentUserId } from "../../lib/ownership";
+import { logAudit } from "../../lib/audit";
 
 const router = Router();
 router.use(authenticate, requireStaff);
@@ -249,6 +250,7 @@ router.get("/students/:id", async (req: Request, res: Response): Promise<void> =
       res.status(404).json({ error: "Élève introuvable" });
       return;
     }
+    logAudit(req, "STUDENT_STATS_VIEW", { targetType: "USER", targetId: id });
 
     const attempts = await prisma.quizAttempt.findMany({
       where: { userId: id, quizId: { not: null }, ...(isOwner(req) ? {} : { quiz: { OR: [{ createdById: currentUserId(req) }, { shares: { some: { teacherId: currentUserId(req) } } }] } }) },

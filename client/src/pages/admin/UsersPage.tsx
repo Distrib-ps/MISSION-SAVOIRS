@@ -295,6 +295,25 @@ export default function UsersPage() {
     setShowCreateEdit(true);
   }
 
+  async function exportStudent(u: User) {
+    try {
+      const res = await fetch(`${API}/${u.id}/export`, { headers: authHeaders() });
+      if (!res.ok) throw new Error("Échec de l'export");
+      const data = await res.json();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `export_${u.username}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      setError("Impossible d'exporter les données de cet élève");
+    }
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setFormLoading(true);
@@ -679,6 +698,17 @@ export default function UsersPage() {
                       </td>
                       <td className="px-3 py-3 text-right">
                         <div className="flex items-center justify-end gap-1">
+                          {u.role === "STUDENT" && (
+                            <button
+                              onClick={() => exportStudent(u)}
+                              className="p-2 text-ms-gray hover:text-ms-blue hover:bg-ms-blue-light rounded-xl transition"
+                              title="Exporter les données (RGPD)"
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                              </svg>
+                            </button>
+                          )}
                           {u.role === "STUDENT" && (
                             <button
                               onClick={() => setPathsModalStudent(u)}

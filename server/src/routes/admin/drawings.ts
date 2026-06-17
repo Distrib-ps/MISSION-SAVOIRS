@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import prisma from "../../lib/prisma";
 import { authenticate, requireStaff } from "../../middleware/auth";
 import { isOwner, currentUserId } from "../../lib/ownership";
+import { logAudit } from "../../lib/audit";
 
 const router = Router();
 router.use(authenticate, requireStaff);
@@ -46,6 +47,7 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
       orderBy: { id: "desc" },
     });
 
+    if (items.length > 0) logAudit(req, "DRAWINGS_VIEW", { detail: `${items.length} dessin(s)` });
     res.json({
       drawings: items.map((it) => ({
         attemptId: it.id,
