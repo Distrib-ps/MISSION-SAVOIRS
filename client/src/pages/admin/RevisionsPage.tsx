@@ -9,8 +9,9 @@ const REVISIONS_DEMO: TourStep[] = [
     text: "Une révision regroupe des questions piochées dans plusieurs quiz, pour réviser un niveau — idéal avant une évaluation.",
   },
   {
+    selector: '[data-demo="rev-create"]',
     title: "Créer une révision",
-    text: "Cliquez sur « + Créer une révision », donnez un nom et choisissez le niveau ciblé.",
+    text: "Ce bouton ouvre le formulaire : nommez la révision et choisissez le niveau ciblé.",
   },
   {
     title: "Choisir les questions",
@@ -144,6 +145,7 @@ export default function RevisionsPage() {
           <DemoButton steps={REVISIONS_DEMO} />
           {editing === null && (
             <button
+              data-demo="rev-create"
               onClick={openCreate}
               className="bg-ms-lavender text-white font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition shrink-0"
             >

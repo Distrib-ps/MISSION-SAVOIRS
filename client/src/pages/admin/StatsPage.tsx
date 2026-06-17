@@ -22,12 +22,13 @@ const STATS_DEMO: TourStep[] = [
     text: "Suivez la progression des élèves. Deux vues : « Global » (vue d'ensemble) et « Par élève » (détail individuel).",
   },
   {
-    title: "Vue globale",
-    text: "Taux de réussite, quiz les plus réussis/ratés, activité… avec des graphiques. Filtrez par niveau si besoin.",
+    selector: '[data-demo="stats-tabs"]',
+    title: "Deux vues",
+    text: "Basculez entre « Vue globale » (taux de réussite, quiz les plus ratés, graphiques) et « Par élève ».",
   },
   {
     title: "Vue par élève",
-    text: "Choisissez un élève pour voir sa progression, ses points faibles, et le détail quiz par quiz — cliquez un quiz pour le détail question par question.",
+    text: "Dans « Par élève », choisissez un élève pour voir sa progression et ses points faibles, puis cliquez un quiz pour le détail question par question.",
   },
   {
     title: "Exporter",
@@ -201,7 +202,7 @@ export default function StatsPage() {
   }
 
   const Tabs = (
-    <div className="flex gap-2 bg-ms-cream rounded-xl p-1">
+    <div data-demo="stats-tabs" className="flex gap-2 bg-ms-cream rounded-xl p-1">
       {(["global", "student"] as const).map((t) => (
         <button
           key={t}
