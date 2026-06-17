@@ -13,28 +13,7 @@ import {
   Cell,
 } from "recharts";
 import AdminLayout from "../../components/admin/AdminLayout";
-import DemoButton from "../../components/admin/DemoButton";
-import type { TourStep } from "../../components/admin/GuidedTour";
-
-const STATS_DEMO: TourStep[] = [
-  {
-    title: "Statistiques 📊",
-    text: "Suivez la progression des élèves. Deux vues : « Global » (vue d'ensemble) et « Par élève » (détail individuel).",
-  },
-  {
-    selector: '[data-demo="stats-tabs"]',
-    title: "Deux vues",
-    text: "Basculez entre « Vue globale » (taux de réussite, quiz les plus ratés, graphiques) et « Par élève ».",
-  },
-  {
-    title: "Vue par élève",
-    text: "Dans « Par élève », choisissez un élève pour voir sa progression et ses points faibles, puis cliquez un quiz pour le détail question par question.",
-  },
-  {
-    title: "Exporter",
-    text: "Le bouton « Exporter (CSV) » télécharge les chiffres affichés, pratique pour préparer un bilan ou un conseil de classe.",
-  },
-];
+import { StatsDemo } from "../../components/admin/StatsDemo";
 import type {
   SchoolLevel,
   StatsOverview,
@@ -222,7 +201,7 @@ export default function StatsPage() {
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-extrabold text-ms-dark">KPI &amp; Statistiques</h1>
-          <DemoButton steps={STATS_DEMO} />
+          <StatsDemo />
         </div>
         {Tabs}
       </div>

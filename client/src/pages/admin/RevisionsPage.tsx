@@ -1,31 +1,6 @@
 import { useEffect, useState } from "react";
 import AdminLayout from "../../components/admin/AdminLayout";
-import DemoButton from "../../components/admin/DemoButton";
-import type { TourStep } from "../../components/admin/GuidedTour";
-
-const REVISIONS_DEMO: TourStep[] = [
-  {
-    title: "Révisions par niveau 🔁",
-    text: "Une révision regroupe des questions piochées dans plusieurs quiz, pour réviser un niveau — idéal avant une évaluation.",
-  },
-  {
-    selector: '[data-demo="rev-create"]',
-    title: "Créer une révision",
-    text: "Ce bouton ouvre le formulaire : nommez la révision, choisissez le niveau ciblé, et éventuellement une date de fin.",
-  },
-  {
-    title: "Choisir les questions",
-    text: "Sélectionnez les questions à inclure (parmi vos contenus). Vous pouvez piocher dans différents quiz.",
-  },
-  {
-    title: "Date de fin (option)",
-    text: "Ajoutez une date de fin : passé cette date, la révision disparaît automatiquement de l'espace des élèves.",
-  },
-  {
-    title: "Pour qui ?",
-    text: "Tous les élèves du niveau ciblé verront la révision dans leur espace, sans action de votre part.",
-  },
-];
+import RevisionsDemo from "../../components/admin/RevisionsDemo";
 import QuestionTreePicker from "../../components/admin/QuestionTreePicker";
 import type { AdminRevision, SchoolLevel } from "../../types";
 
@@ -142,7 +117,7 @@ export default function RevisionsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <DemoButton steps={REVISIONS_DEMO} />
+          <RevisionsDemo />
           {editing === null && (
             <button
               data-demo="rev-create"

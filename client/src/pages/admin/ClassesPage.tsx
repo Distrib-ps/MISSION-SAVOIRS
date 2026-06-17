@@ -1,28 +1,7 @@
 import { useEffect, useState } from "react";
 import AdminLayout from "../../components/admin/AdminLayout";
-import DemoButton from "../../components/admin/DemoButton";
-import type { TourStep } from "../../components/admin/GuidedTour";
+import ClassesDemo from "../../components/admin/ClassesDemo";
 import type { Classe, Level } from "../../types";
-
-const CLASSES_DEMO: TourStep[] = [
-  {
-    title: "Classes & groupes 🏫",
-    text: "Ici vous organisez vos élèves. Une « classe » ou un « groupe » sert à les regrouper et à cibler du contenu.",
-  },
-  {
-    selector: '[data-demo="class-create"]',
-    title: "Créer",
-    text: "Ce bouton ouvre un formulaire : un nom (ex. CE2-2 ou Groupe lecture) et un niveau, puis Enregistrer.",
-  },
-  {
-    title: "Multi-appartenance",
-    text: "Un même élève peut être dans plusieurs groupes (sa classe + un groupe de besoin, par ex.). Le rattachement se fait depuis la fiche de l'élève (menu Élèves).",
-  },
-  {
-    title: "Cibler un quiz",
-    text: "Un quiz « Privé » ne sera visible que par les élèves de vos classes/groupes. Pratique pour différencier.",
-  },
-];
 
 const LEVELS: Level[] = ["CP", "CE1", "CE2", "CM1", "CM2"];
 
@@ -111,7 +90,7 @@ export default function ClassesPage() {
           <p className="text-ms-gray">Regroupez les élèves par classe ou groupe et ciblez le contenu.</p>
         </div>
         <div className="flex items-center gap-2">
-          <DemoButton steps={CLASSES_DEMO} />
+          <ClassesDemo />
           {editing === null && (
             <button
               data-demo="class-create"
