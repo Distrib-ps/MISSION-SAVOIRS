@@ -2,10 +2,55 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useState, useEffect, type ReactNode } from "react";
 import AccessibilitySettings from "../AccessibilitySettings";
+import GuidedTour, { type TourStep } from "./GuidedTour";
 
 interface Props {
   children: ReactNode;
 }
+
+const TOUR_STEPS: TourStep[] = [
+  {
+    title: "Bienvenue sur Mission Savoirs 👋",
+    text: "Une visite éclair (1 min) pour repérer l'essentiel. Vous pourrez la revoir à tout moment depuis l'Aide.",
+  },
+  {
+    selector: '[data-tour="/admin/users"]',
+    title: "Vos élèves",
+    text: "Créez les comptes un par un ou importez toute une classe via un fichier Excel. C'est aussi ici qu'on réinitialise un mot de passe.",
+  },
+  {
+    selector: '[data-tour="/admin/classes"]',
+    title: "Classes & groupes",
+    text: "Organisez vos élèves. Un élève peut appartenir à plusieurs groupes (sa classe + un groupe de besoin).",
+  },
+  {
+    selector: '[data-tour="/admin/content"]',
+    title: "Vos contenus",
+    text: "Créez vos thèmes, quiz et questions (QCM, texte, dessin…), et choisissez si un quiz est public ou réservé à vos élèves.",
+  },
+  {
+    selector: '[data-tour="/admin/revisions"]',
+    title: "Révisions",
+    text: "Préparez une révision qui mélange des questions, ciblée sur un niveau — idéal avant une évaluation.",
+  },
+  {
+    selector: '[data-tour="/admin/drawings"]',
+    title: "Dessins à valider",
+    text: "Quand un élève rend un dessin, validez-le ici. Le chiffre rouge indique le nombre en attente.",
+  },
+  {
+    selector: '[data-tour="/admin/stats"]',
+    title: "Statistiques",
+    text: "Suivez la progression de chaque élève et repérez les points faibles, quiz par quiz.",
+  },
+  {
+    selector: '[data-tour="/admin/aide"]',
+    title: "Besoin d'aide ?",
+    text: "Tout le guide est ici, avec une recherche et un bouton pour relancer cette visite. Bonne route ! 🎓",
+  },
+];
+
+const TOUR_DONE_KEY = "ms_tour_done_v1";
 
 const navItems = [
   {
@@ -116,6 +161,26 @@ export default function AdminLayout({ children }: Props) {
   const navigate = useNavigate();
   const [showSettings, setShowSettings] = useState(false);
   const [drawingCount, setDrawingCount] = useState(0);
+  const [tourActive, setTourActive] = useState(false);
+
+  // Visite guidée : au tout premier accès (staff), puis relançable via l'Aide.
+  useEffect(() => {
+    const start = () => setTourActive(true);
+    window.addEventListener("tour:start", start);
+    if (user && !localStorage.getItem(TOUR_DONE_KEY)) {
+      const t = setTimeout(() => setTourActive(true), 500);
+      return () => {
+        clearTimeout(t);
+        window.removeEventListener("tour:start", start);
+      };
+    }
+    return () => window.removeEventListener("tour:start", start);
+  }, [user]);
+
+  function closeTour() {
+    setTourActive(false);
+    localStorage.setItem(TOUR_DONE_KEY, "1");
+  }
 
   useEffect(() => {
     const refresh = () => {
@@ -164,6 +229,7 @@ export default function AdminLayout({ children }: Props) {
               key={item.to}
               to={item.to}
               end={item.end}
+              data-tour={item.to}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-colors ${
                   isActive
@@ -290,6 +356,9 @@ export default function AdminLayout({ children }: Props) {
       {showSettings && (
         <AccessibilitySettings onClose={() => setShowSettings(false)} />
       )}
+
+      {/* Visite guidée */}
+      <GuidedTour steps={TOUR_STEPS} active={tourActive} onClose={closeTour} />
     </div>
   );
 }

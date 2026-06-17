@@ -59,7 +59,7 @@ const SECTIONS: Section[] = [
         />
         <Tip>
           Après plusieurs essais ratés, la connexion se bloque quelques minutes (sécurité).
-          Patientez, ou demandez à l'administrateur de réinitialiser votre accès.
+          Patientez, ou demandez à Sabrina Letellier de réinitialiser votre accès.
         </Tip>
       </>
     ),
@@ -339,9 +339,17 @@ export default function AidePage() {
 
   return (
     <AdminLayout>
-      <div className="mb-6">
-        <h1 className="text-2xl font-extrabold text-ms-dark">Guide de l'enseignant</h1>
-        <p className="text-ms-gray">Tout ce qu'il faut pour prendre l'application en main.</p>
+      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-extrabold text-ms-dark">Guide de l'enseignant</h1>
+          <p className="text-ms-gray">Tout ce qu'il faut pour prendre l'application en main.</p>
+        </div>
+        <button
+          onClick={() => window.dispatchEvent(new Event("tour:start"))}
+          className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold bg-ms-lavender text-white rounded-xl hover:opacity-90 transition shrink-0"
+        >
+          ▶ Revoir la visite guidée
+        </button>
       </div>
 
       <div className="mb-5">
