@@ -1,34 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import type { ChangeEvent, FormEvent, DragEvent } from "react";
 import { readSpreadsheet, downloadXlsx } from "../../lib/spreadsheet";
-import DemoButton from "../../components/admin/DemoButton";
-import type { TourStep } from "../../components/admin/GuidedTour";
-
-const ELEVES_DEMO: TourStep[] = [
-  {
-    title: "Les élèves 👧",
-    text: "Cette page gère tous les comptes. Vous voyez tous les élèves de l'établissement (pour éviter les doublons), même créés par un autre enseignant.",
-  },
-  {
-    selector: '[data-demo="eleve-create"]',
-    title: "Créer un élève",
-    text: "Ce bouton ouvre un formulaire : prénom, nom, niveau, mot de passe et classe(s). L'identifiant de connexion est généré automatiquement.",
-  },
-  {
-    selector: '[data-demo="eleve-import"]',
-    title: "Importer toute une classe",
-    text: "Plutôt qu'un par un : téléchargez le modèle, remplissez une ligne par élève (plusieurs groupes séparés par « ; »), puis importez. Les identifiants générés sont téléchargeables.",
-  },
-  {
-    selector: '[data-demo="eleve-search"]',
-    title: "Retrouver un élève",
-    text: "Tapez un nom ou un identifiant pour filtrer la liste. Sur chaque ligne, l'icône ✏️ permet de modifier (classe, mot de passe).",
-  },
-  {
-    title: "Parcours personnalisé",
-    text: "L'icône 📋 sur la ligne d'un élève crée un parcours de quiz sur mesure pour l'accompagner.",
-  },
-];
+import ElevesDemo from "../../components/admin/ElevesDemo";
 import AdminLayout from "../../components/admin/AdminLayout";
 import UserPathsModal from "../../components/admin/UserPathsModal";
 import { useAuth } from "../../contexts/AuthContext";
@@ -570,7 +543,7 @@ export default function UsersPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <DemoButton steps={ELEVES_DEMO} />
+            <ElevesDemo />
             <button
               data-demo="eleve-import"
               onClick={openImport}
