@@ -44,12 +44,13 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
 // ---------- POST / - Create a quiz ----------
 router.post("/", async (req: Request, res: Response): Promise<void> => {
   try {
-    const { title, description, timeLimit, subThemeId, classIds } = req.body as {
+    const { title, description, timeLimit, subThemeId, classIds, visibility } = req.body as {
       title?: string;
       description?: string | null;
       timeLimit?: number | null;
       subThemeId?: number;
       classIds?: number[];
+      visibility?: "PUBLIC" | "PRIVATE";
     };
 
     if (!title) {
@@ -86,6 +87,7 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
         subThemeId,
         order: nextOrder,
         createdById: currentUserId(req),
+        visibility: visibility === "PRIVATE" ? "PRIVATE" : "PUBLIC",
         ...(Array.isArray(classIds) && classIds.length > 0
           ? { classes: { create: classIds.map((classId) => ({ classId })) } }
           : {}),
@@ -153,12 +155,13 @@ router.put("/:id", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const { title, description, timeLimit, order, classIds } = req.body as {
+    const { title, description, timeLimit, order, classIds, visibility } = req.body as {
       title?: string;
       description?: string | null;
       timeLimit?: number | null;
       order?: number;
       classIds?: number[];
+      visibility?: "PUBLIC" | "PRIVATE";
     };
     const data: Record<string, unknown> = {};
 
@@ -166,6 +169,7 @@ router.put("/:id", async (req: Request, res: Response): Promise<void> => {
     if (description !== undefined) data.description = description;
     if (timeLimit !== undefined) data.timeLimit = timeLimit;
     if (order !== undefined) data.order = order;
+    if (visibility !== undefined) data.visibility = visibility === "PRIVATE" ? "PRIVATE" : "PUBLIC";
 
     const quiz = await prisma.$transaction(async (tx) => {
       // Remplace le ciblage de classes si fourni (tableau vide = visible par tous)

@@ -59,6 +59,7 @@ router.post(
         where: { id },
         include: {
           classes: { select: { classId: true } },
+          creator: { select: { managedClasses: { select: { id: true } } } },
           questions: {
             orderBy: { order: "asc" },
             include: {
@@ -80,16 +81,38 @@ router.post(
         return;
       }
 
+      // Contrôle de visibilité : un quiz privé n'est jouable que par les élèves du créateur
+      if (quiz.visibility === "PRIVATE") {
+        const creatorClassIds = new Set(quiz.creator?.managedClasses.map((c) => c.id) ?? []);
+        if (!classIds.some((id) => creatorClassIds.has(id))) {
+          res.status(403).json({ error: "Ce quiz n'est pas accessible" });
+          return;
+        }
+      }
+
       if (quiz.questions.length === 0) {
         res.status(400).json({ error: "Ce quiz ne contient aucune question" });
         return;
       }
 
-      // Filtre de visibilité (réinjection : ne pas rejouer des questions d'un quiz d'une autre classe)
-      const quizClassFilter =
+      // Filtre d'accès (réinjection : ne pas rejouer des questions d'un quiz non accessible à l'élève)
+      const classFilter =
         classIds.length === 0
           ? { classes: { none: {} } }
           : { OR: [{ classes: { none: {} } }, { classes: { some: { classId: { in: classIds } } } }] };
+      const visibilityFilter = {
+        OR: [
+          { visibility: "PUBLIC" as const },
+          ...(classIds.length > 0
+            ? [
+                {
+                  visibility: "PRIVATE" as const,
+                  creator: { managedClasses: { some: { id: { in: classIds } } } },
+                },
+              ]
+            : []),
+        ],
+      };
 
       // ── Réinjection: find failed questions from previous quizzes in the same sub-theme ──
       const failedQuestionAttempts = await prisma.questionAttempt.findMany({
@@ -98,7 +121,7 @@ router.post(
           quizAttempt: { userId, customPathId },
           isCorrect: false,
           question: {
-            quiz: { subThemeId: quiz.subThemeId, ...quizClassFilter },
+            quiz: { subThemeId: quiz.subThemeId, AND: [classFilter, visibilityFilter] },
             quizId: { not: id }, // not from this quiz
           },
         },

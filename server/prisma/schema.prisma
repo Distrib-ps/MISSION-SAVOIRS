@@ -93,6 +93,11 @@ model QuizClass {
   @@map("quiz_classes")
 }
 
+enum QuizVisibility {
+  PUBLIC
+  PRIVATE
+}
+
 // ========== CONTENU PÉDAGOGIQUE ==========
 
 model Theme {
@@ -135,6 +140,7 @@ model Quiz {
   order       Int      @default(0)
   subThemeId  Int
   createdById Int?
+  visibility  QuizVisibility @default(PUBLIC) // PUBLIC = tous les élèves ; PRIVATE = élèves du créateur
   createdAt   DateTime @default(now())
 
   subTheme  SubTheme      @relation(fields: [subThemeId], references: [id], onDelete: Cascade)
