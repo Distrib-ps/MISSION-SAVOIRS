@@ -98,15 +98,14 @@ export default function GuidedTour({ steps, active, onClose }: Props) {
               outline: "3px solid #b9a7f7",
             }}
           />
-          {/* Anneau animé pour attirer l'œil */}
+          {/* Anneau animé (clignotement doux) pour attirer l'œil */}
           <div
-            className="fixed rounded-xl pointer-events-none border-2 border-ms-lavender animate-ping"
+            className="fixed rounded-xl pointer-events-none border-4 border-ms-lavender animate-pulse"
             style={{
               top: rect.top - pad,
               left: rect.left - pad,
               width: rect.width + pad * 2,
               height: rect.height + pad * 2,
-              opacity: 0.6,
             }}
           />
         </>

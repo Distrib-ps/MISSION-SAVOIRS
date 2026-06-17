@@ -12,24 +12,25 @@ const CONTENT_DEMO: TourStep[] = [
     text: "Le contenu s'organise en arborescence : Thème → Sous-thème → Quiz → Questions. Cette colonne permet de naviguer et de tout déplier.",
   },
   {
-    title: "Créer l'arborescence",
-    text: "Créez d'abord un Thème (ex. Histoire), puis un Sous-thème (ex. La Préhistoire), puis un Quiz à l'intérieur.",
+    selector: '[data-demo="content-add-theme"]',
+    title: "1) Créer un thème",
+    text: "On commence toujours par un thème (ex. Histoire). Ce bouton ouvre le formulaire. Astuce : cliquez ensuite sur le thème pour entrer dedans.",
   },
   {
-    title: "Ajouter des questions",
-    text: "Dans un quiz, ajoutez des questions et choisissez le type : QCM, texte, glisser-déposer, association, classement ou dessin. On peut ajouter un indice et une solution.",
+    title: "2) Sous-thème, quiz, questions",
+    text: "Une fois dans un thème, le même bouton « + » apparaît pour créer un sous-thème, puis un quiz, puis des questions. On descend ainsi niveau par niveau.",
+  },
+  {
+    title: "Les types de questions",
+    text: "Pour chaque question, choisissez le type : QCM, texte, glisser-déposer, association, classement ou dessin. Vous pouvez ajouter un indice et une solution.",
   },
   {
     title: "Public ou privé",
     text: "À la création d'un quiz, choisissez sa visibilité : Public (tous les élèves) ou Privé (seulement vos élèves). Un badge 🔒 signale les quiz privés.",
   },
   {
-    title: "Déblocage progressif",
-    text: "Côté élève, les quiz se débloquent au fur et à mesure (≈ 70 % de réussite pour passer au suivant). Les questions ratées peuvent revenir automatiquement.",
-  },
-  {
-    title: "Partager",
-    text: "L'icône 🔗 sur un quiz permet de le partager en lecture à un collègue, qui le retrouvera dans « Partagés avec moi ».",
+    title: "Déblocage & partage",
+    text: "Côté élève, les quiz se débloquent au fur et à mesure (≈ 70 % de réussite). Et l'icône 🔗 sur un quiz permet de le partager à un collègue.",
   },
 ];
 import type { Theme, SubTheme, Quiz, Question, Answer } from "../../types";
@@ -1091,6 +1092,7 @@ export default function ContentPage() {
             <p className="text-ms-gray mt-1">Organisez vos themes, sous-themes, quiz et questions.</p>
           </div>
           <button
+            data-demo="content-add-theme"
             onClick={openThemeCreate}
             className="flex items-center gap-2 px-5 py-2.5 bg-ms-lavender text-white font-semibold text-sm rounded-xl hover:opacity-90 transition shadow-sm"
           >
@@ -2024,8 +2026,7 @@ export default function ContentPage() {
 
   return (
     <AdminLayout>
-      <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
-        <h1 className="text-xl font-extrabold text-ms-dark">Contenus</h1>
+      <div className="flex justify-end mb-2">
         <DemoButton steps={CONTENT_DEMO} />
       </div>
       <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
