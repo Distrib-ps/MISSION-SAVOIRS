@@ -672,7 +672,7 @@ router.delete(
 );
 
 // ---------- GET /:id/export - Export RGPD des données d'un élève (accès/portabilité) ----------
-router.get("/:id/export", async (req: Request, res: Response): Promise<void> => {
+router.get("/:id/export", requireAdmin, async (req: Request, res: Response): Promise<void> => {
   try {
     const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
     if (isNaN(id)) {
