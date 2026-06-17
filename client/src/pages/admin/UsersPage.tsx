@@ -698,7 +698,7 @@ export default function UsersPage() {
                       </td>
                       <td className="px-3 py-3 text-right">
                         <div className="flex items-center justify-end gap-1">
-                          {u.role === "STUDENT" && (
+                          {isOwner && u.role === "STUDENT" && (
                             <button
                               onClick={() => exportStudent(u)}
                               className="p-2 text-ms-gray hover:text-ms-blue hover:bg-ms-blue-light rounded-xl transition"
