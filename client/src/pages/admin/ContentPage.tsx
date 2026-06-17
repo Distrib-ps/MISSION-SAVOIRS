@@ -9,28 +9,50 @@ const CONTENT_DEMO: TourStep[] = [
   {
     selector: '[data-demo="content-tree"]',
     title: "Vos contenus 📚",
-    text: "Le contenu s'organise en arborescence : Thème → Sous-thème → Quiz → Questions. Cette colonne permet de naviguer et de tout déplier.",
+    text: "Tout s'organise en arborescence : Thème → Sous-thème → Quiz → Questions. Cette colonne permet de naviguer. Suivez la visite, je vous guide clic par clic !",
   },
   {
     selector: '[data-demo="content-add-theme"]',
     title: "1) Créer un thème",
-    text: "On commence toujours par un thème (ex. Histoire). Ce bouton ouvre le formulaire. Astuce : cliquez ensuite sur le thème pour entrer dedans.",
+    text: "On commence toujours par un thème (ex. Histoire). Cliquez ce bouton pour ouvrir le formulaire.",
+    advanceOn: "click",
   },
   {
-    title: "2) Sous-thème, quiz, questions",
-    text: "Une fois dans un thème, le même bouton « + » apparaît pour créer un sous-thème, puis un quiz, puis des questions. On descend ainsi niveau par niveau.",
+    selector: '[data-demo="theme-name"]',
+    title: "Nommer le thème",
+    text: "Donnez un nom à votre thème, choisissez un emoji si vous voulez, puis enregistrez. Cliquez « Ignorer → » pour continuer la visite.",
   },
   {
-    title: "Les types de questions",
-    text: "Pour chaque question, choisissez le type : QCM, texte, glisser-déposer, association, classement ou dessin. Vous pouvez ajouter un indice et une solution.",
+    selector: '[data-demo="content-add-subtheme"]',
+    title: "2) Ajouter un sous-thème",
+    text: "Vous êtes maintenant dans votre thème (cliquez-le dans la liste si besoin). Cliquez « Ajouter un sous-thème ».",
+    advanceOn: "click",
   },
   {
+    selector: '[data-demo="content-add-quiz"]',
+    title: "3) Ajouter un quiz",
+    text: "Dans le sous-thème, créez un quiz. Cliquez « Ajouter un quiz ».",
+    advanceOn: "click",
+  },
+  {
+    selector: '[data-demo="content-visibility"]',
     title: "Public ou privé",
-    text: "À la création d'un quiz, choisissez sa visibilité : Public (tous les élèves) ou Privé (seulement vos élèves). Un badge 🔒 signale les quiz privés.",
+    text: "Dans le formulaire du quiz, choisissez sa visibilité : Public (tous les élèves) ou Privé (seulement vos élèves). Enregistrez, puis « Ignorer → ».",
   },
   {
-    title: "Déblocage & partage",
-    text: "Côté élève, les quiz se débloquent au fur et à mesure (≈ 70 % de réussite). Et l'icône 🔗 sur un quiz permet de le partager à un collègue.",
+    selector: '[data-demo="content-add-question"]',
+    title: "4) Ajouter une question",
+    text: "Ouvrez votre quiz, puis cliquez « Ajouter une question ».",
+    advanceOn: "click",
+  },
+  {
+    selector: '[data-demo="content-qtype"]',
+    title: "Le type de question",
+    text: "Choisissez le type : QCM, texte, glisser-déposer, association, classement ou dessin. Renseignez ensuite l'énoncé, les réponses, et (option) un indice et une solution.",
+  },
+  {
+    title: "C'est tout ! 🎉",
+    text: "Côté élève, les quiz se débloquent au fur et à mesure (≈ 70 % de réussite). L'icône 🔗 sur un quiz permet aussi de le partager à un collègue. Vous savez tout faire !",
   },
 ];
 import type { Theme, SubTheme, Quiz, Question, Answer } from "../../types";
@@ -1177,6 +1199,7 @@ export default function ContentPage() {
             Sous-themes de &laquo; {selectedTheme?.name} &raquo;
           </h2>
           <button
+            data-demo="content-add-subtheme"
             onClick={openSubThemeCreate}
             className="flex items-center gap-2 px-5 py-2.5 bg-ms-lavender text-white font-semibold text-sm rounded-xl hover:opacity-90 transition shadow-sm"
           >
@@ -1261,6 +1284,7 @@ export default function ContentPage() {
             Quiz de &laquo; {selectedSubTheme?.name} &raquo;
           </h2>
           <button
+            data-demo="content-add-quiz"
             onClick={openQuizCreate}
             className="flex items-center gap-2 px-5 py-2.5 bg-ms-lavender text-white font-semibold text-sm rounded-xl hover:opacity-90 transition shadow-sm"
           >
@@ -1361,6 +1385,7 @@ export default function ContentPage() {
             Questions de &laquo; {selectedQuiz?.title} &raquo;
           </h2>
           <button
+            data-demo="content-add-question"
             onClick={openQuestionCreate}
             className="flex items-center gap-2 px-5 py-2.5 bg-ms-lavender text-white font-semibold text-sm rounded-xl hover:opacity-90 transition shadow-sm"
           >
@@ -1547,7 +1572,7 @@ export default function ContentPage() {
 
           <form onSubmit={handleQuestionSubmit} className="space-y-4">
             {/* Type selector */}
-            <div>
+            <div data-demo="content-qtype">
               <label className="block text-sm font-semibold text-ms-dark mb-2">Type de question</label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 <button
@@ -2125,7 +2150,7 @@ export default function ContentPage() {
                     ))}
                   </div>
                 </div>
-                <div>
+                <div data-demo="theme-name">
                   <label className="block text-sm font-semibold text-ms-dark mb-1">Nom du thème *</label>
                   <input
                     type="text"
@@ -2233,7 +2258,7 @@ export default function ContentPage() {
                     Si renseigné, l'élève doit terminer avant la fin du temps.
                   </p>
                 </div>
-                <div>
+                <div data-demo="content-visibility">
                   <label className="block text-sm font-semibold text-ms-dark mb-1">
                     Visibilité
                   </label>

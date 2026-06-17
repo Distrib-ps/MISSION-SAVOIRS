@@ -12,7 +12,13 @@ const CLASSES_DEMO: TourStep[] = [
   {
     selector: '[data-demo="class-create"]',
     title: "Créer",
-    text: "Ce bouton ouvre le formulaire : donnez un nom (ex. CE2-2 ou Groupe lecture) et choisissez le niveau.",
+    text: "Cliquez ce bouton pour ouvrir le formulaire.",
+    advanceOn: "click",
+  },
+  {
+    selector: '[data-demo="class-name"]',
+    title: "Nom & niveau",
+    text: "Donnez un nom (ex. CE2-2 ou Groupe lecture) et choisissez le niveau, puis Enregistrer.",
   },
   {
     title: "Multi-appartenance",
@@ -130,7 +136,7 @@ export default function ClassesPage() {
             {editing === "new" ? "Nouvelle classe / groupe" : `Modifier « ${(editing as Classe).name} »`}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="sm:col-span-2">
+            <div className="sm:col-span-2" data-demo="class-name">
               <label className="block text-xs font-bold uppercase text-ms-gray mb-1">Nom</label>
               <input
                 value={formName}
