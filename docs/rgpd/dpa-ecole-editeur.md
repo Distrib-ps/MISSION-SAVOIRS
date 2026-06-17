@@ -6,7 +6,7 @@
 
 ## Parties
 
-- **Responsable de traitement** : École Élémentaire Grand Pré Bulcos (7 bis Av. du Vercors, 38240 Meylan), représentée par Sabrina Letellier
+- **Responsable de traitement** : École Élémentaire Grand Pré Bulcos (7 bis Av. du Vercors, 38240 Meylan). Référente du projet au sein de l'établissement : Sabrina Letellier (enseignante)
 - **Sous-traitant** : Théo Delhay, développeur de Mission Savoirs (projet éducatif personnel, non commercial) — delhay70@gmail.com
 
 ## 1. Objet
@@ -52,5 +52,5 @@ instructions documentées.
 
 ## Signatures
 
-- Pour le responsable de traitement : Sabrina Letellier, École Élémentaire Grand Pré Bulcos — date / signature : __________
+- Pour le responsable de traitement (École Élémentaire Grand Pré Bulcos) : Sabrina Letellier, enseignante référente du projet — date / signature : __________
 - Pour le sous-traitant : Théo Delhay — date / signature : __________

@@ -28,10 +28,11 @@ export default function ConfidentialitePage() {
         <Section title="Responsable de traitement">
           <p>
             Dans le cadre scolaire, le responsable de traitement est l'établissement qui utilise la
-            plateforme : <strong>École Élémentaire Grand Pré Bulcos</strong>, représentée par
-            Sabrina Letellier. Mission Savoirs a été développée par Théo Delhay (projet éducatif, à
-            titre personnel et non commercial), qui agit en tant que sous-traitant technique
-            (article 28 du RGPD). Contact technique : delhay70@gmail.com.
+            plateforme : <strong>École Élémentaire Grand Pré Bulcos</strong>. Au sein de
+            l'établissement, le projet est porté par Sabrina Letellier (enseignante référente).
+            Mission Savoirs a été développée par Théo Delhay (projet éducatif, à titre personnel et
+            non commercial), qui agit en tant que sous-traitant technique (article 28 du RGPD).
+            Contact technique : delhay70@gmail.com.
           </p>
         </Section>
 

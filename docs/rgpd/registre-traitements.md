@@ -5,7 +5,7 @@
 ## Identification
 
 - **Responsable de traitement** : École Élémentaire Grand Pré Bulcos — 7 bis Av. du Vercors, 38240 Meylan
-- **Représentant / contact** : Sabrina Letellier (enseignante) — delhay70@gmail.com
+- **Référente du projet (établissement) / contact** : Sabrina Letellier (enseignante) — delhay70@gmail.com
 - **Délégué à la protection des données (DPO)** : aucun désigné
 - **Sous-traitant** : Théo Delhay, développeur (projet éducatif personnel, non commercial) — delhay70@gmail.com
 - **Sous-traitant ultérieur** : aucun — application et données hébergées localement, en France (auto-hébergement).
