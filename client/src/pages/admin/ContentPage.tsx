@@ -7,8 +7,9 @@ import type { TourStep } from "../../components/admin/GuidedTour";
 
 const CONTENT_DEMO: TourStep[] = [
   {
+    selector: '[data-demo="content-tree"]',
     title: "Vos contenus 📚",
-    text: "Le contenu s'organise en arborescence : Thème → Sous-thème → Quiz → Questions. La colonne de gauche permet de naviguer.",
+    text: "Le contenu s'organise en arborescence : Thème → Sous-thème → Quiz → Questions. Cette colonne permet de naviguer et de tout déplier.",
   },
   {
     title: "Créer l'arborescence",
@@ -2040,7 +2041,7 @@ export default function ContentPage() {
         </button>
 
         {/* Sidebar */}
-        <div className={`${sidebarOpen ? "block" : "hidden"} lg:block`}>
+        <div data-demo="content-tree" className={`${sidebarOpen ? "block" : "hidden"} lg:block`}>
           <ContentTreeSidebar
             themes={tree}
             loading={treeLoading}

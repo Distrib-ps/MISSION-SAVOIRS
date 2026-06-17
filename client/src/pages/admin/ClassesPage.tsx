@@ -10,8 +10,9 @@ const CLASSES_DEMO: TourStep[] = [
     text: "Ici vous organisez vos élèves. Une « classe » ou un « groupe » sert à les regrouper et à cibler du contenu.",
   },
   {
+    selector: '[data-demo="class-create"]',
     title: "Créer",
-    text: "Cliquez sur « + Créer une classe / un groupe », donnez un nom (ex. CE2-2 ou Groupe lecture) et choisissez le niveau.",
+    text: "Ce bouton ouvre le formulaire : donnez un nom (ex. CE2-2 ou Groupe lecture) et choisissez le niveau.",
   },
   {
     title: "Multi-appartenance",
@@ -113,6 +114,7 @@ export default function ClassesPage() {
           <DemoButton steps={CLASSES_DEMO} />
           {editing === null && (
             <button
+              data-demo="class-create"
               onClick={openCreate}
               className="bg-ms-lavender text-white font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition shrink-0"
             >

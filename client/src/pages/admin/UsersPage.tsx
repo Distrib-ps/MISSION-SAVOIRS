@@ -10,16 +10,19 @@ const ELEVES_DEMO: TourStep[] = [
     text: "Cette page gère tous les comptes. Vous voyez tous les élèves de l'établissement (pour éviter les doublons), même créés par un autre enseignant.",
   },
   {
+    selector: '[data-demo="eleve-create"]',
     title: "Créer un élève",
-    text: "« + Ajouter un utilisateur » : prénom, nom, niveau, mot de passe et classe(s). L'identifiant de connexion est généré automatiquement.",
+    text: "Ce bouton ouvre le formulaire : prénom, nom, niveau, mot de passe et classe(s). L'identifiant de connexion est généré automatiquement.",
   },
   {
+    selector: '[data-demo="eleve-import"]',
     title: "Importer toute une classe",
-    text: "« Importer (Excel) » : téléchargez le modèle, remplissez une ligne par élève (plusieurs groupes séparés par « ; »), puis importez. Les identifiants générés sont téléchargeables.",
+    text: "Ici : téléchargez le modèle, remplissez une ligne par élève (plusieurs groupes séparés par « ; »), puis importez. Les identifiants générés sont téléchargeables.",
   },
   {
-    title: "Modifier / réinitialiser",
-    text: "L'icône ✏️ permet de changer la classe d'un élève ou de réinitialiser son mot de passe. La recherche en haut retrouve un élève par nom.",
+    selector: '[data-demo="eleve-search"]',
+    title: "Retrouver un élève",
+    text: "Tapez un nom ou un identifiant pour filtrer la liste. Sur chaque ligne, l'icône ✏️ permet de modifier (classe, mot de passe).",
   },
   {
     title: "Parcours personnalisé",
@@ -569,12 +572,14 @@ export default function UsersPage() {
           <div className="flex items-center gap-2">
             <DemoButton steps={ELEVES_DEMO} />
             <button
+              data-demo="eleve-import"
               onClick={openImport}
               className="px-4 py-2.5 text-sm font-semibold bg-white border border-ms-light-gray text-ms-dark hover:bg-ms-cream rounded-xl transition"
             >
               Importer (Excel)
             </button>
             <button
+              data-demo="eleve-create"
               onClick={openCreate}
               className="px-4 py-2.5 text-sm font-semibold bg-ms-lavender text-white hover:opacity-90 rounded-xl transition shadow-sm"
             >
@@ -587,6 +592,7 @@ export default function UsersPage() {
         <div className="bg-white rounded-2xl border border-ms-light-gray/50 p-4 mb-6 flex flex-col sm:flex-row gap-3">
           <input
             type="text"
+            data-demo="eleve-search"
             placeholder="Rechercher par nom ou identifiant..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}

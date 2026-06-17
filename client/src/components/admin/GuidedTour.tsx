@@ -86,17 +86,30 @@ export default function GuidedTour({ steps, active, onClose }: Props) {
     <div className="fixed inset-0 z-[100]">
       {/* Voile + projecteur */}
       {rect ? (
-        <div
-          className="fixed rounded-xl pointer-events-none transition-all duration-200"
-          style={{
-            top: rect.top - pad,
-            left: rect.left - pad,
-            width: rect.width + pad * 2,
-            height: rect.height + pad * 2,
-            boxShadow: "0 0 0 9999px rgba(15,12,40,0.55)",
-            outline: "3px solid #b9a7f7",
-          }}
-        />
+        <>
+          <div
+            className="fixed rounded-xl pointer-events-none transition-all duration-200"
+            style={{
+              top: rect.top - pad,
+              left: rect.left - pad,
+              width: rect.width + pad * 2,
+              height: rect.height + pad * 2,
+              boxShadow: "0 0 0 9999px rgba(15,12,40,0.55)",
+              outline: "3px solid #b9a7f7",
+            }}
+          />
+          {/* Anneau animé pour attirer l'œil */}
+          <div
+            className="fixed rounded-xl pointer-events-none border-2 border-ms-lavender animate-ping"
+            style={{
+              top: rect.top - pad,
+              left: rect.left - pad,
+              width: rect.width + pad * 2,
+              height: rect.height + pad * 2,
+              opacity: 0.6,
+            }}
+          />
+        </>
       ) : (
         <div className="fixed inset-0 bg-[rgba(15,12,40,0.55)]" />
       )}
