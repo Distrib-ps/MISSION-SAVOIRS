@@ -6,7 +6,7 @@ Ce dossier regroupe la documentation de conformité, renseignée pour ce déploi
 ## Documents
 
 Contexte : projet éducatif développé par **Théo Delhay** (à titre personnel, non commercial) pour
-l'**École Élémentaire Grand Pré Bulcos – B2** (responsable de traitement, représentée par Sabrina
+l'**École Élémentaire Grand Pré Bulcos** (responsable de traitement, représentée par Sabrina
 Letellier).
 
 | Document | Objet | Statut |
@@ -34,6 +34,6 @@ La **politique de confidentialité** et les **mentions légales** sont publiées
 ## Points restant à traiter hors application
 
 - Définir `JWT_SECRET` et `ENCRYPTION_KEY` forts en production (et **sauvegarder la clé de chiffrement**).
-- Vérifier la **région UE** du projet Supabase, activer le RLS, signer le **DPA Supabase**.
-- Compléter et faire valider les documents de ce dossier.
+- Sécuriser le **serveur local** (accès, sauvegardes chiffrées, mises à jour) — hébergement en France.
+- Faire valider les documents de ce dossier.
 - Réaliser l'**AIPD** avant mise en production réelle.

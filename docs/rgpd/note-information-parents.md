@@ -4,7 +4,7 @@
 
 ## Madame, Monsieur,
 
-Dans le cadre des activités pédagogiques de la classe, l'**École Élémentaire Grand Pré Bulcos – B2**
+Dans le cadre des activités pédagogiques de la classe, l'**École Élémentaire Grand Pré Bulcos**
 utilise la plateforme éducative **Mission Savoirs** pour proposer à votre enfant des exercices
 adaptés et suivre sa progression.
 
@@ -33,15 +33,14 @@ Les résultats sont conservés pendant la scolarité de votre enfant dans l'éta
 
 ### Où sont stockées les données ?
 
-Sur une infrastructure sécurisée et chiffrée (hébergeur Supabase, Union européenne), avec une
-migration vers un hébergement local / en France prévue.
+Sur un serveur local sécurisé et chiffré, en France. Aucun hébergeur tiers, aucun transfert hors UE.
 
 ### Vos droits
 
 Vous pouvez demander à **accéder** aux données de votre enfant, les faire **rectifier** ou
 **supprimer**, en obtenir une **copie**, ou vous **opposer** à leur traitement. Pour cela, contactez :
 
-- **Sabrina Letellier — École Élémentaire Grand Pré Bulcos – B2 (7 bis Av. du Vercors, 38240 Meylan)** — delhay70@gmail.com
+- **Sabrina Letellier — École Élémentaire Grand Pré Bulcos (7 bis Av. du Vercors, 38240 Meylan)** — delhay70@gmail.com
 
 Vous pouvez également saisir la **CNIL** (www.cnil.fr) si vous estimez que vos droits ne sont pas
 respectés.
@@ -51,4 +50,4 @@ respectés.
 Cette note vous est communiquée à titre d'information. Pour toute question ou pour exercer les
 droits de votre enfant, contactez la personne indiquée ci-dessus.
 
-_Document établi en juin 2026 par l'École Élémentaire Grand Pré Bulcos – B2._
+_Document établi en juin 2026 par l'École Élémentaire Grand Pré Bulcos._

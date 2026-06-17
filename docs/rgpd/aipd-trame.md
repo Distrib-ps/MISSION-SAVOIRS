@@ -10,7 +10,7 @@
 - **Données** : identité, niveau, classe(s), résultats, réponses, indices, parcours, dessins (temporaire).
 - **Personnes concernées** : mineurs de 6 à 10 ans.
 - **Durées** : résultats jusqu'au départ de l'élève ; dessins purgés à la validation.
-- **Acteurs** : établissement (responsable), éditeur (sous-traitant), Supabase (hébergeur).
+- **Acteurs** : établissement (responsable), développeur (sous-traitant). Hébergement local, en France.
 - **Flux** : navigateur ↔ API ↔ base de données ; export manuel possible par l'établissement.
 
 ## 2. Évaluation de la proportionnalité et de la nécessité
@@ -32,18 +32,18 @@
 | Accès illégitime aux données | Vol de session, compte compromis | Importante | Limitée | JWT secret fort, rôle relu en base, rate-limit, audit log, chiffrement des noms | Limité |
 | Divulgation de dessins sensibles | Conservation prolongée | Importante | Négligeable | Purge des dessins à la validation | Négligeable |
 | Profilage stigmatisant (difficultés) | Accès large aux stats | Limitée | Limitée | Accès restreint + journalisé | Limité |
-| Transfert hors UE | Région d'hébergement | Limitée | Limitée | Hébergement UE + migration locale prévue ; DPA/SCC à défaut | Limité |
+| Transfert hors UE | Région d'hébergement | Limitée | Négligeable | Hébergement local, en France (aucun transfert) | Négligeable |
 | Perte de la clé de chiffrement | Mauvaise gestion des secrets | Limitée | Limitée | Sauvegarde sécurisée de ENCRYPTION_KEY | Limité |
 
 ## 4. Mesures complémentaires envisagées
 
-- Finaliser la migration vers un hébergement local / en France.
+- Sécuriser le serveur local (accès physique, mises à jour, sauvegardes chiffrées).
 - Envisager, si besoin, des identifiants non nominatifs (le username révèle aujourd'hui le prénom).
 - Sauvegarder ENCRYPTION_KEY de façon sécurisée et documenter la procédure.
 
 ## 5. Avis et validation
 
 - Avis du DPO : sans objet (aucun DPO désigné — petit projet scolaire)
-- Position du responsable de traitement : École Élémentaire Grand Pré Bulcos – B2 (Sabrina Letellier) — à formaliser
+- Position du responsable de traitement : École Élémentaire Grand Pré Bulcos (Sabrina Letellier) — à formaliser
 - Consultation des personnes/représentants : information des familles via la note dédiée
 - Date de l'analyse / révision : juin 2026
