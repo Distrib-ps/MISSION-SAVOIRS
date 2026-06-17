@@ -20,6 +20,7 @@ import ClassesPage from "./pages/admin/ClassesPage";
 import SharedWithMePage from "./pages/admin/SharedWithMePage";
 import DrawingsPage from "./pages/admin/DrawingsPage";
 import AuditPage from "./pages/admin/AuditPage";
+import AidePage from "./pages/admin/AidePage";
 
 function App() {
   return (
@@ -108,6 +109,15 @@ function App() {
           element={
             <ProtectedRoute requiredRole="ADMIN">
               <AuditPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/aide"
+          element={
+            <ProtectedRoute requiredRole="STAFF">
+              <AidePage />
             </ProtectedRoute>
           }
         />
