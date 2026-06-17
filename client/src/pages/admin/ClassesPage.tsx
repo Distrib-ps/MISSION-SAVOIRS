@@ -12,13 +12,7 @@ const CLASSES_DEMO: TourStep[] = [
   {
     selector: '[data-demo="class-create"]',
     title: "Créer",
-    text: "Cliquez ce bouton pour ouvrir le formulaire.",
-    advanceOn: "click",
-  },
-  {
-    selector: '[data-demo="class-name"]',
-    title: "Nom & niveau",
-    text: "Donnez un nom (ex. CE2-2 ou Groupe lecture) et choisissez le niveau, puis Enregistrer.",
+    text: "Ce bouton ouvre un formulaire : un nom (ex. CE2-2 ou Groupe lecture) et un niveau, puis Enregistrer.",
   },
   {
     title: "Multi-appartenance",
