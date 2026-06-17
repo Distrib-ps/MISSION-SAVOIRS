@@ -3,6 +3,8 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { AccessibilityProvider } from "./contexts/AccessibilityContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import LandingPage from "./pages/LandingPage";
+import ConfidentialitePage from "./pages/ConfidentialitePage";
+import MentionsLegalesPage from "./pages/MentionsLegalesPage";
 import LoginPage from "./pages/LoginPage";
 import StudentDashboard from "./pages/StudentDashboard";
 import SubThemesPage from "./pages/student/SubThemesPage";
@@ -26,6 +28,8 @@ function App() {
         <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/confidentialite" element={<ConfidentialitePage />} />
+        <Route path="/mentions-legales" element={<MentionsLegalesPage />} />
 
         {/* Student routes */}
         <Route

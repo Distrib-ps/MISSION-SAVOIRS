@@ -179,8 +179,17 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="bg-white px-6 py-6 border-t border-ms-light-gray">
-        <div className="max-w-5xl mx-auto text-center text-ms-gray text-sm">
-          Mission Savoirs — Plateforme pédagogique pour les élèves du primaire
+        <div className="max-w-5xl mx-auto text-center text-ms-gray text-sm space-y-2">
+          <div>Mission Savoirs — Plateforme pédagogique pour les élèves du primaire</div>
+          <div className="flex items-center justify-center gap-4">
+            <Link to="/confidentialite" className="hover:text-ms-lavender transition">
+              Confidentialité
+            </Link>
+            <span aria-hidden>·</span>
+            <Link to="/mentions-legales" className="hover:text-ms-lavender transition">
+              Mentions légales
+            </Link>
+          </div>
         </div>
       </footer>
     </div>
