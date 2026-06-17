@@ -9,13 +9,15 @@ const router = Router();
 router.use(authenticate, requireStaff);
 
 // ---------- GET / - List all themes with subThemes count ----------
+// Les thèmes sont partagés (taxonomie commune) : tous les profs les voient.
+// Le comptage de sous-thèmes est filtré sur ceux que le prof peut réellement voir.
 router.get("/", async (req: Request, res: Response): Promise<void> => {
   try {
+    const subThemeFilter = contentOwnerWhere(req); // {} pour Owner, { createdById } pour prof
     const themes = await prisma.theme.findMany({
-      where: { ...contentOwnerWhere(req) },
       orderBy: { order: "asc" },
       include: {
-        _count: { select: { subThemes: true } },
+        _count: { select: { subThemes: { where: subThemeFilter } } },
       },
     });
 
@@ -169,6 +171,20 @@ router.delete("/:id", async (req: Request, res: Response): Promise<void> => {
     if (!isOwner(req) && existing.createdById !== currentUserId(req)) {
       res.status(403).json({ error: "Accès refusé : contenu d'un autre professeur" });
       return;
+    }
+
+    // Thème partagé : ne pas supprimer s'il contient du contenu d'autres professeurs
+    // (la suppression cascade détruirait leurs sous-thèmes/quiz).
+    if (!isOwner(req)) {
+      const foreign = await prisma.subTheme.count({
+        where: { themeId: id, createdById: { not: currentUserId(req) } },
+      });
+      if (foreign > 0) {
+        res.status(409).json({
+          error: "Ce thème contient du contenu d'autres professeurs et ne peut pas être supprimé.",
+        });
+        return;
+      }
     }
 
     await prisma.theme.delete({ where: { id } });
