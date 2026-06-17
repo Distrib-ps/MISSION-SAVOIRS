@@ -1,15 +1,15 @@
 # Registre des activités de traitement (RGPD art. 30)
 
-> Modèle à compléter par le responsable de traitement (l'établissement scolaire).
-> Les champs `[À COMPLÉTER]` doivent être renseignés.
+> Renseigné pour l'École Élémentaire Grand Pré Bulcos – B2. Quelques coordonnées restent à préciser
+> par l'établissement (entre crochets).
 
 ## Identification
 
-- **Responsable de traitement** : [À COMPLÉTER — établissement scolaire, coordonnées]
-- **Représentant / contact** : [À COMPLÉTER — nom, fonction, email]
-- **Délégué à la protection des données (DPO)** : [À COMPLÉTER si désigné]
-- **Sous-traitant** : éditeur de Mission Savoirs — [À COMPLÉTER — identité, coordonnées]
-- **Sous-traitant ultérieur** : Supabase Inc. (hébergement base de données, région [À CONFIRMER])
+- **Responsable de traitement** : École Élémentaire Grand Pré Bulcos – B2
+- **Représentant / contact** : Sabrina Letellier (enseignante) — [email de l'établissement à préciser]
+- **Délégué à la protection des données (DPO)** : aucun désigné
+- **Sous-traitant** : Théo Delhay, développeur (projet éducatif personnel, non commercial) — delhay70@gmail.com
+- **Sous-traitant ultérieur** : Supabase Inc. (hébergement base de données, UE — région à confirmer ; migration vers un hébergement local / France prévue). Front hébergé chez OVH.
 
 ## Traitement : « Suivi pédagogique des élèves »
 
@@ -21,7 +21,7 @@
 | **Catégories de données** | Identité (prénom, nom, identifiant, niveau), rattachement classe/groupe, résultats aux quiz, réponses, indices utilisés, parcours personnalisés, dessins (temporairement) |
 | **Données sensibles (art. 9)** | Aucune catégorie particulière collectée intentionnellement. Vigilance sur les dessins libres (purgés après validation) |
 | **Destinataires** | Personnel autorisé de l'établissement uniquement |
-| **Transferts hors UE** | À éviter — vérifier la région UE de Supabase. À défaut : encadrer par clauses contractuelles types (SCC) |
+| **Transferts hors UE** | Hébergement UE visé ; migration locale/France prévue. Vérifier la région Supabase d'ici là ; à défaut, encadrer par clauses contractuelles types (SCC) |
 | **Durées de conservation** | Résultats : tant que le compte de l'élève existe, supprimés à sa suppression (départ). Dessins : image supprimée dès validation/refus par l'enseignant (seul le statut est conservé) |
 | **Mesures de sécurité** | Voir section ci-dessous |
 
@@ -34,10 +34,10 @@
 - Chiffrement au repos de la base (Supabase) et en transit (HTTPS/TLS).
 - **Journal d'accès** aux données sensibles (consultations stats/dessins, exports, suppressions).
 - En-têtes de sécurité HTTP (Helmet), CORS restreint à l'origine de l'application.
-- Sauvegardes gérées par l'hébergeur — [préciser fréquence/rétention].
+- Sauvegardes gérées par l'hébergeur (fréquence/rétention selon le plan Supabase — à préciser).
 
 ## Exercice des droits
 
-Procédure : voir [note-information-parents.md](./note-information-parents.md). Contact : [À COMPLÉTER].
+Procédure : voir [note-information-parents.md](./note-information-parents.md). Contact : Sabrina Letellier (établissement) ; contact technique delhay70@gmail.com.
 
-_Dernière mise à jour : [À COMPLÉTER]._
+_Dernière mise à jour : juin 2026._

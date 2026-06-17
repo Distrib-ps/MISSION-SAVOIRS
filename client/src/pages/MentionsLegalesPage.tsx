@@ -20,19 +20,21 @@ export default function MentionsLegalesPage() {
 
         <Section title="Éditeur">
           <p>
-            Mission Savoirs — [À COMPLÉTER : nom / raison sociale de l'éditeur, statut, adresse,
-            email de contact, numéro SIREN le cas échéant].
+            Mission Savoirs est un projet éducatif développé par <strong>Théo Delhay</strong>, à
+            titre personnel et non commercial (aucune structure juridique). Contact :
+            delhay70@gmail.com.
           </p>
         </Section>
 
         <Section title="Directeur de la publication">
-          <p>[À COMPLÉTER].</p>
+          <p>Théo Delhay.</p>
         </Section>
 
         <Section title="Hébergeur">
           <p>
-            Base de données et hébergement applicatif : Supabase Inc. (infrastructure dans l'Union
-            européenne — [À CONFIRMER la région]). [Préciser ici l'hébergeur du front si distinct.]
+            Application (front) : OVH. Base de données : actuellement Supabase Inc. (infrastructure
+            dans l'Union européenne, région à confirmer) ; une migration vers un hébergement local /
+            en France est prévue.
           </p>
         </Section>
 
@@ -54,7 +56,7 @@ export default function MentionsLegalesPage() {
         </Section>
 
         <p className="text-xs text-ms-gray/70 mt-10">
-          Modèle à compléter et à faire valider par l'établissement / un conseil juridique.
+          Utilisé par l'École Élémentaire Grand Pré Bulcos – B2. Dernière mise à jour : juin 2026.
         </p>
       </div>
     </div>

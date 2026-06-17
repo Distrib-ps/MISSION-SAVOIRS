@@ -1,13 +1,12 @@
 # Note d'information aux parents — Mission Savoirs
 
-> Modèle à adapter par l'établissement et à diffuser aux familles avant l'inscription des élèves.
-> Champs `[À COMPLÉTER]` à renseigner.
+> Prêt à diffuser aux familles. Seule l'adresse email de contact de l'établissement reste à ajouter.
 
 ## Madame, Monsieur,
 
-Dans le cadre des activités pédagogiques de la classe, l'école [À COMPLÉTER] utilise la plateforme
-éducative **Mission Savoirs** pour proposer à votre enfant des exercices adaptés et suivre sa
-progression.
+Dans le cadre des activités pédagogiques de la classe, l'**École Élémentaire Grand Pré Bulcos – B2**
+utilise la plateforme éducative **Mission Savoirs** pour proposer à votre enfant des exercices
+adaptés et suivre sa progression.
 
 ### Quelles données sont utilisées ?
 
@@ -34,21 +33,22 @@ Les résultats sont conservés pendant la scolarité de votre enfant dans l'éta
 
 ### Où sont stockées les données ?
 
-Sur une infrastructure sécurisée (hébergeur Supabase), avec chiffrement. [Préciser la région UE.]
+Sur une infrastructure sécurisée et chiffrée (hébergeur Supabase, Union européenne), avec une
+migration vers un hébergement local / en France prévue.
 
 ### Vos droits
 
 Vous pouvez demander à **accéder** aux données de votre enfant, les faire **rectifier** ou
 **supprimer**, en obtenir une **copie**, ou vous **opposer** à leur traitement. Pour cela, contactez :
 
-- **[À COMPLÉTER — nom du contact à l'école, email]**
+- **Sabrina Letellier — École Élémentaire Grand Pré Bulcos – B2** [email de l'établissement à préciser]
 
 Vous pouvez également saisir la **CNIL** (www.cnil.fr) si vous estimez que vos droits ne sont pas
 respectés.
 
-### Votre accord
+### Information
 
-[Selon le choix de l'établissement : information simple, ou recueil d'un accord parental.]
-[ ] J'ai pris connaissance de cette note. — Nom du responsable légal : [À COMPLÉTER] — Date / Signature.
+Cette note vous est communiquée à titre d'information. Pour toute question ou pour exercer les
+droits de votre enfant, contactez la personne indiquée ci-dessus.
 
-_Document établi le [À COMPLÉTER] par [À COMPLÉTER]._
+_Document établi en juin 2026 par l'École Élémentaire Grand Pré Bulcos – B2._

@@ -27,10 +27,11 @@ export default function ConfidentialitePage() {
 
         <Section title="Responsable de traitement">
           <p>
-            Dans le cadre scolaire, le responsable de traitement est l'établissement scolaire qui
-            utilise la plateforme. L'éditeur de Mission Savoirs agit en tant que sous-traitant
-            (article 28 du RGPD). Coordonnées : [À COMPLÉTER — nom de l'éditeur, adresse, email de
-            contact].
+            Dans le cadre scolaire, le responsable de traitement est l'établissement qui utilise la
+            plateforme : <strong>École Élémentaire Grand Pré Bulcos – B2</strong>, représentée par
+            Sabrina Letellier. Mission Savoirs a été développée par Théo Delhay (projet éducatif, à
+            titre personnel et non commercial), qui agit en tant que sous-traitant technique
+            (article 28 du RGPD). Contact technique : delhay70@gmail.com.
           </p>
         </Section>
 
@@ -84,9 +85,9 @@ export default function ConfidentialitePage() {
 
         <Section title="Hébergement">
           <p>
-            Les données sont hébergées chez Supabase, sur une infrastructure située dans l'Union
-            européenne [À CONFIRMER — région du projet], avec chiffrement au repos. Un accord de
-            sous-traitance (DPA) encadre cet hébergement.
+            Les données sont actuellement hébergées chez Supabase (infrastructure dans l'Union
+            européenne, région à confirmer), avec chiffrement au repos. Une migration vers un
+            hébergement local / en France est prévue.
           </p>
         </Section>
 
@@ -106,12 +107,14 @@ export default function ConfidentialitePage() {
             l'établissement scolaire (responsable de traitement), qui peut solliciter l'éditeur.
             Une copie des données d'un élève peut être exportée à tout moment par l'établissement.
           </p>
-          <p>Contact pour l'exercice des droits : [À COMPLÉTER — email].</p>
+          <p>
+            Contact pour l'exercice des droits : Sabrina Letellier (École Élémentaire Grand Pré
+            Bulcos – B2). Pour toute question technique : delhay70@gmail.com.
+          </p>
         </Section>
 
         <p className="text-xs text-ms-gray/70 mt-10">
-          Dernière mise à jour : à compléter. Ce document est un modèle à adapter et à faire valider
-          par l'établissement et, si nécessaire, un conseil juridique / DPO.
+          Dernière mise à jour : juin 2026. Projet éducatif à titre personnel et non commercial.
         </p>
       </div>
     </div>
