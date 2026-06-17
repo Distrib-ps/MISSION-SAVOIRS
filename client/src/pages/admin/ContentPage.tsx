@@ -2,59 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import type { FormEvent } from "react";
 import AdminLayout from "../../components/admin/AdminLayout";
 import ContentTreeSidebar, { type Selection, type TreeTheme } from "../../components/admin/ContentTreeSidebar";
-import DemoButton from "../../components/admin/DemoButton";
-import type { TourStep } from "../../components/admin/GuidedTour";
-
-const CONTENT_DEMO: TourStep[] = [
-  {
-    selector: '[data-demo="content-tree"]',
-    title: "Vos contenus 📚",
-    text: "Tout s'organise en arborescence : Thème → Sous-thème → Quiz → Questions. Cette colonne permet de naviguer. Suivez la visite, je vous guide clic par clic !",
-  },
-  {
-    selector: '[data-demo="content-add-theme"]',
-    title: "1) Créer un thème",
-    text: "On commence toujours par un thème (ex. Histoire). Cliquez ce bouton pour ouvrir le formulaire.",
-    advanceOn: "click",
-  },
-  {
-    selector: '[data-demo="theme-name"]',
-    title: "Nommer le thème",
-    text: "Donnez un nom à votre thème, choisissez un emoji si vous voulez, puis enregistrez. Cliquez « Ignorer → » pour continuer la visite.",
-  },
-  {
-    selector: '[data-demo="content-add-subtheme"]',
-    title: "2) Ajouter un sous-thème",
-    text: "Vous êtes maintenant dans votre thème (cliquez-le dans la liste si besoin). Cliquez « Ajouter un sous-thème ».",
-    advanceOn: "click",
-  },
-  {
-    selector: '[data-demo="content-add-quiz"]',
-    title: "3) Ajouter un quiz",
-    text: "Dans le sous-thème, créez un quiz. Cliquez « Ajouter un quiz ».",
-    advanceOn: "click",
-  },
-  {
-    selector: '[data-demo="content-visibility"]',
-    title: "Public ou privé",
-    text: "Dans le formulaire du quiz, choisissez sa visibilité : Public (tous les élèves) ou Privé (seulement vos élèves). Enregistrez, puis « Ignorer → ».",
-  },
-  {
-    selector: '[data-demo="content-add-question"]',
-    title: "4) Ajouter une question",
-    text: "Ouvrez votre quiz, puis cliquez « Ajouter une question ».",
-    advanceOn: "click",
-  },
-  {
-    selector: '[data-demo="content-qtype"]',
-    title: "Le type de question",
-    text: "Choisissez le type : QCM, texte, glisser-déposer, association, classement ou dessin. Renseignez ensuite l'énoncé, les réponses, et (option) un indice et une solution.",
-  },
-  {
-    title: "C'est tout ! 🎉",
-    text: "Côté élève, les quiz se débloquent au fur et à mesure (≈ 70 % de réussite). L'icône 🔗 sur un quiz permet aussi de le partager à un collègue. Vous savez tout faire !",
-  },
-];
+import ContentDemo from "../../components/admin/ContentDemo";
 import type { Theme, SubTheme, Quiz, Question, Answer } from "../../types";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -2052,7 +2000,7 @@ export default function ContentPage() {
   return (
     <AdminLayout>
       <div className="flex justify-end mb-2">
-        <DemoButton steps={CONTENT_DEMO} />
+        <ContentDemo />
       </div>
       <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
         {/* Mobile toggle */}

@@ -12,13 +12,7 @@ const ELEVES_DEMO: TourStep[] = [
   {
     selector: '[data-demo="eleve-create"]',
     title: "Créer un élève",
-    text: "Cliquez ce bouton pour ouvrir le formulaire.",
-    advanceOn: "click",
-  },
-  {
-    selector: '[data-demo="eleve-form"]',
-    title: "Remplir la fiche",
-    text: "Prénom, nom, niveau, mot de passe et classe(s). L'identifiant de connexion est généré automatiquement. Enregistrez puis « Ignorer → ».",
+    text: "Ce bouton ouvre un formulaire : prénom, nom, niveau, mot de passe et classe(s). L'identifiant de connexion est généré automatiquement.",
   },
   {
     selector: '[data-demo="eleve-import"]',

@@ -11,13 +11,7 @@ const REVISIONS_DEMO: TourStep[] = [
   {
     selector: '[data-demo="rev-create"]',
     title: "Créer une révision",
-    text: "Cliquez ce bouton pour ouvrir le formulaire.",
-    advanceOn: "click",
-  },
-  {
-    selector: '[data-demo="rev-name"]',
-    title: "Nom & niveau",
-    text: "Nommez la révision et choisissez le niveau ciblé. Vous pouvez aussi ajouter une date de fin.",
+    text: "Ce bouton ouvre le formulaire : nommez la révision, choisissez le niveau ciblé, et éventuellement une date de fin.",
   },
   {
     title: "Choisir les questions",
