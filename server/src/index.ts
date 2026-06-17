@@ -2,6 +2,7 @@ import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import dotenv from "dotenv";
+import { encryptionKeyIsValid } from "./lib/crypto";
 import authRouter from "./routes/auth";
 import adminUsersRouter from "./routes/admin/users";
 import adminThemesRouter from "./routes/admin/themes";
@@ -28,6 +29,15 @@ if (!process.env.JWT_SECRET || FORBIDDEN_SECRETS.has(process.env.JWT_SECRET)) {
   console.error(
     "[FATAL] JWT_SECRET manquant ou laissé à sa valeur par défaut. " +
       "Générez un secret fort, ex. : openssl rand -base64 48"
+  );
+  process.exit(1);
+}
+
+// Clé de chiffrement des données personnelles (noms). Obligatoire.
+if (!encryptionKeyIsValid()) {
+  console.error(
+    "[FATAL] ENCRYPTION_KEY manquante ou invalide (32 octets en base64 attendus). " +
+      "Générer : openssl rand -base64 32"
   );
   process.exit(1);
 }
