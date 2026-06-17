@@ -1,17 +1,21 @@
 # Conformité RGPD — Mission Savoirs
 
 Application pédagogique traitant des données de **mineurs (6–10 ans)** en milieu scolaire.
-Ce dossier regroupe les modèles documentaires à compléter et faire valider (établissement,
-conseil juridique / DPO).
+Ce dossier regroupe la documentation de conformité, renseignée pour ce déploiement (quelques
+coordonnées de l'établissement restent à ajouter).
 
 ## Documents
 
+Contexte : projet éducatif développé par **Théo Delhay** (à titre personnel, non commercial) pour
+l'**École Élémentaire Grand Pré Bulcos – B2** (responsable de traitement, représentée par Sabrina
+Letellier).
+
 | Document | Objet | Statut |
 |---|---|---|
-| [registre-traitements.md](./registre-traitements.md) | Registre des activités de traitement (art. 30) | Modèle à compléter |
-| [note-information-parents.md](./note-information-parents.md) | Information des familles (art. 12-14) | Modèle à compléter |
-| [aipd-trame.md](./aipd-trame.md) | Trame d'analyse d'impact (AIPD/DPIA) | Modèle à compléter |
-| [dpa-ecole-editeur.md](./dpa-ecole-editeur.md) | Accord de sous-traitance (art. 28) école ↔ éditeur | Modèle à compléter |
+| [registre-traitements.md](./registre-traitements.md) | Registre des activités de traitement (art. 30) | Renseigné (email établissement à préciser) |
+| [note-information-parents.md](./note-information-parents.md) | Information des familles (art. 12-14) | Renseigné (à diffuser) |
+| [aipd-trame.md](./aipd-trame.md) | Trame d'analyse d'impact (AIPD/DPIA) | Pré-rempli (à valider) |
+| [dpa-ecole-editeur.md](./dpa-ecole-editeur.md) | Accord de sous-traitance (art. 28) école ↔ éditeur | Renseigné (à signer) |
 
 La **politique de confidentialité** et les **mentions légales** sont publiées dans l'application
 (pages `/confidentialite` et `/mentions-legales`).

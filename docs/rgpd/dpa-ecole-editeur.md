@@ -6,8 +6,8 @@
 
 ## Parties
 
-- **Responsable de traitement** : [À COMPLÉTER — établissement, représentant légal, coordonnées]
-- **Sous-traitant** : [À COMPLÉTER — éditeur de Mission Savoirs, coordonnées]
+- **Responsable de traitement** : École Élémentaire Grand Pré Bulcos – B2, représentée par Sabrina Letellier — [adresse de l'établissement à préciser]
+- **Sous-traitant** : Théo Delhay, développeur de Mission Savoirs (projet éducatif personnel, non commercial) — delhay70@gmail.com
 
 ## 1. Objet
 
@@ -38,7 +38,8 @@ mise à disposition de la plateforme Mission Savoirs (suivi pédagogique des él
 
 | Sous-traitant | Rôle | Localisation | Garanties |
 |---|---|---|---|
-| Supabase Inc. | Hébergement base de données | [À CONFIRMER — région UE] | DPA Supabase + SCC le cas échéant |
+| Supabase Inc. | Hébergement base de données | UE — région à confirmer (migration locale/France prévue) | DPA Supabase + SCC le cas échéant |
+| OVH | Hébergement de l'application (front) | France / UE | Conditions OVH |
 
 ## 5. Sécurité et transferts
 
@@ -48,9 +49,10 @@ mise à disposition de la plateforme Mission Savoirs (suivi pédagogique des él
 
 ## 6. Droits du responsable
 
-Audit, information, récupération des données, instructions. [À préciser.]
+Audit, information, récupération/export des données (fonction d'export intégrée à l'application),
+instructions documentées.
 
 ## Signatures
 
-- Pour le responsable de traitement : [Nom, fonction, date, signature]
-- Pour le sous-traitant : [Nom, fonction, date, signature]
+- Pour le responsable de traitement : Sabrina Letellier, École Élémentaire Grand Pré Bulcos – B2 — date / signature : __________
+- Pour le sous-traitant : Théo Delhay — date / signature : __________
