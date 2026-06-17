@@ -73,7 +73,7 @@ function RoleBadge({ role }: { role: Role }) {
   }
   return (
     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-ms-green-light text-ms-dark">
-      Eleve
+      Élève
     </span>
   );
 }
@@ -589,7 +589,7 @@ export default function UsersPage() {
             className="px-4 py-2.5 text-sm border border-ms-light-gray rounded-xl bg-white text-ms-dark focus:outline-none focus:ring-2 focus:ring-ms-lavender/40"
           >
             <option value="ALL">Tous les roles</option>
-            <option value="STUDENT">Eleves</option>
+            <option value="STUDENT">Élèves</option>
             <option value="TEACHER">Enseignants</option>
             <option value="ADMIN">Admins</option>
           </select>
@@ -967,7 +967,7 @@ export default function UsersPage() {
                     onChange={(e) => setFormRole(e.target.value as Role)}
                     className="w-full px-4 py-2.5 text-sm border border-ms-light-gray rounded-xl bg-white text-ms-dark focus:outline-none focus:ring-2 focus:ring-ms-lavender/40"
                   >
-                    <option value="STUDENT">Eleve</option>
+                    <option value="STUDENT">Élève</option>
                     <option value="TEACHER">Enseignant</option>
                     <option value="ADMIN">Admin</option>
                   </select>
