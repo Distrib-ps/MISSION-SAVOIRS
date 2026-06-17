@@ -22,6 +22,7 @@ export interface TreeQuiz {
   timeLimit: number | null;
   order: number;
   subThemeId: number;
+  visibility?: "PUBLIC" | "PRIVATE";
   _count: { questions: number };
 }
 

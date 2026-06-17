@@ -79,6 +79,7 @@ export interface Quiz {
   order: number;
   subThemeId: number;
   createdById?: number | null;
+  visibility?: "PUBLIC" | "PRIVATE";
   _count?: { questions: number };
   classes?: { classId: number }[];
 }

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import type { FormEvent } from "react";
 import AdminLayout from "../../components/admin/AdminLayout";
 import ContentTreeSidebar, { type Selection, type TreeTheme } from "../../components/admin/ContentTreeSidebar";
-import type { Theme, SubTheme, Quiz, Question, Answer, Classe } from "../../types";
+import type { Theme, SubTheme, Quiz, Question, Answer } from "../../types";
 import { useAuth } from "../../contexts/AuthContext";
 
 /* ------------------------------------------------------------------ */
@@ -193,8 +193,8 @@ export default function ContentPage() {
   const [formDescription, setFormDescription] = useState("");
   const [formEmoji, setFormEmoji] = useState("📚");
   const [formTimeLimit, setFormTimeLimit] = useState<string>(""); // minutes, empty = no timer
-  const [formClassIds, setFormClassIds] = useState<number[]>([]); // classes ciblées par le quiz (vide = toutes)
-  const [classesList, setClassesList] = useState<Classe[]>([]);
+  const [formClassIds, setFormClassIds] = useState<number[]>([]); // ciblage legacy par classe (préservé à l'édition)
+  const [formVisibility, setFormVisibility] = useState<"PUBLIC" | "PRIVATE">("PUBLIC");
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState("");
 
@@ -308,12 +308,6 @@ export default function ContentPage() {
     fetchTree();
   }, [fetchThemes, fetchTree]);
 
-  useEffect(() => {
-    fetch("/api/admin/classes", { headers: authHeaders() })
-      .then((r) => (r.ok ? r.json() : { classes: [] }))
-      .then((d) => setClassesList(d.classes ?? []))
-      .catch(() => setClassesList([]));
-  }, []);
 
   /* ---- Handle sidebar selection ---- */
   /* Uses the in-memory tree to set selected entities synchronously (no extra fetch).
@@ -373,7 +367,7 @@ export default function ContentPage() {
     setSelectedSubTheme(subTheme);
     setQuizzes(treeSubTheme.quizzes.map((qz) => ({
       id: qz.id, title: qz.title, description: qz.description, timeLimit: qz.timeLimit,
-      order: qz.order, subThemeId: qz.subThemeId,
+      order: qz.order, subThemeId: qz.subThemeId, visibility: qz.visibility,
       _count: { questions: qz._count.questions },
     })));
 
@@ -630,6 +624,7 @@ export default function ContentPage() {
     setFormDescription("");
     setFormTimeLimit("");
     setFormClassIds([]);
+    setFormVisibility("PUBLIC");
     setFormError("");
     setShowQuizModal(true);
   }
@@ -640,6 +635,7 @@ export default function ContentPage() {
     setFormDescription(q.description ?? "");
     setFormTimeLimit(q.timeLimit ? String(Math.round(q.timeLimit / 60)) : "");
     setFormClassIds(q.classes?.map((c) => c.classId) ?? []);
+    setFormVisibility(q.visibility ?? "PUBLIC");
     setFormError("");
     setShowQuizModal(true);
   }
@@ -658,7 +654,7 @@ export default function ContentPage() {
         const res = await fetch(`${API_QUIZZES}/${editingQuiz.id}`, {
           method: "PUT",
           headers: authHeaders(),
-          body: JSON.stringify({ title: formName, description: formDescription || null, timeLimit: timeLimitSeconds, classIds: formClassIds }),
+          body: JSON.stringify({ title: formName, description: formDescription || null, timeLimit: timeLimitSeconds, classIds: formClassIds, visibility: formVisibility }),
         });
         if (!res.ok) {
           const d = await res.json().catch(() => null);
@@ -668,7 +664,7 @@ export default function ContentPage() {
         const res = await fetch(API_QUIZZES, {
           method: "POST",
           headers: authHeaders(),
-          body: JSON.stringify({ title: formName, description: formDescription || null, timeLimit: timeLimitSeconds, subThemeId: selectedSubTheme.id, classIds: formClassIds }),
+          body: JSON.stringify({ title: formName, description: formDescription || null, timeLimit: timeLimitSeconds, subThemeId: selectedSubTheme.id, classIds: formClassIds, visibility: formVisibility }),
         });
         if (!res.ok) {
           const d = await res.json().catch(() => null);
@@ -1268,8 +1264,13 @@ export default function ContentPage() {
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-base font-bold text-ms-dark group-hover:text-ms-lavender transition">
-                    {quiz.title}
+                  <h3 className="text-base font-bold text-ms-dark group-hover:text-ms-lavender transition flex items-center gap-2">
+                    <span className="truncate">{quiz.title}</span>
+                    {quiz.visibility === "PRIVATE" && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-ms-lavender-light text-ms-lavender whitespace-nowrap">
+                        🔒 Privé
+                      </span>
+                    )}
                   </h3>
                   {quiz.description && (
                     <p className="text-sm text-ms-gray mt-0.5 truncate">{quiz.description}</p>
@@ -2199,36 +2200,38 @@ export default function ContentPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-ms-dark mb-1">
-                    Classes ciblées
-                    <span className="font-normal text-ms-gray ml-1">(aucune = visible par toutes)</span>
+                    Visibilité
                   </label>
-                  {classesList.length === 0 ? (
-                    <p className="text-xs text-ms-gray">Aucune classe créée pour le moment.</p>
-                  ) : (
-                    <div className="flex flex-wrap gap-2">
-                      {classesList.map((c) => {
-                        const checked = formClassIds.includes(c.id);
-                        return (
-                          <button
-                            type="button"
-                            key={c.id}
-                            onClick={() =>
-                              setFormClassIds((prev) =>
-                                prev.includes(c.id) ? prev.filter((x) => x !== c.id) : [...prev, c.id]
-                              )
-                            }
-                            className={`px-3 py-1.5 rounded-full text-sm font-semibold border transition ${
-                              checked
-                                ? "bg-ms-lavender text-white border-ms-lavender"
-                                : "bg-white text-ms-dark border-ms-light-gray hover:bg-ms-cream"
-                            }`}
-                          >
-                            {c.name} ({c.level})
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
+                  <div className="grid grid-cols-2 gap-2">
+                    {(
+                      [
+                        { v: "PUBLIC" as const, title: "Public", desc: "Tous les élèves" },
+                        { v: "PRIVATE" as const, title: "Privé", desc: "Seulement mes élèves" },
+                      ]
+                    ).map((opt) => {
+                      const active = formVisibility === opt.v;
+                      return (
+                        <button
+                          type="button"
+                          key={opt.v}
+                          onClick={() => setFormVisibility(opt.v)}
+                          className={`text-left px-4 py-2.5 rounded-xl border transition ${
+                            active
+                              ? "bg-ms-lavender text-white border-ms-lavender"
+                              : "bg-white text-ms-dark border-ms-light-gray hover:bg-ms-cream"
+                          }`}
+                        >
+                          <span className="block text-sm font-semibold">{opt.title}</span>
+                          <span className={`block text-xs ${active ? "text-white/80" : "text-ms-gray"}`}>
+                            {opt.desc}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-xs text-ms-gray mt-1">
+                    « Privé » : visible uniquement par les élèves de vos classes/groupes.
+                  </p>
                 </div>
                 <div className="flex items-center justify-end gap-3 pt-2">
                   <button

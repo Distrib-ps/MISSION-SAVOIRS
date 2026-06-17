@@ -8,15 +8,33 @@ const router = Router();
 router.use(authenticate);
 
 /**
- * Filtre de visibilité d'un quiz pour un élève selon sa classe :
- * - quiz non ciblé (aucune classe) → visible par tous ;
- * - quiz ciblé → visible seulement si ciblé sur la classe de l'élève.
- * Un élève sans classe ne voit que les quiz non ciblés.
+ * Filtre d'accès d'un quiz pour un élève, combinant :
+ *  1. Ciblage par classe (legacy) : quiz non ciblé = visible par tous ; ciblé =
+ *     visible seulement par les classes visées (un élève sans classe ne voit que les non-ciblés).
+ *  2. Visibilité : PUBLIC = tous les élèves ; PRIVATE = uniquement les élèves
+ *     d'une classe dont le créateur du quiz est le professeur gestionnaire.
  */
-function quizClassFilter(classIds: number[]) {
-  return classIds.length === 0
-    ? { classes: { none: {} } }
-    : { OR: [{ classes: { none: {} } }, { classes: { some: { classId: { in: classIds } } } }] };
+function quizAccessWhere(classIds: number[]) {
+  const classFilter =
+    classIds.length === 0
+      ? { classes: { none: {} } }
+      : { OR: [{ classes: { none: {} } }, { classes: { some: { classId: { in: classIds } } } }] };
+
+  const visibilityFilter = {
+    OR: [
+      { visibility: "PUBLIC" as const },
+      ...(classIds.length > 0
+        ? [
+            {
+              visibility: "PRIVATE" as const,
+              creator: { managedClasses: { some: { id: { in: classIds } } } },
+            },
+          ]
+        : []),
+    ],
+  };
+
+  return { AND: [classFilter, visibilityFilter] };
 }
 
 async function getClassIds(userId: number): Promise<number[]> {
@@ -38,7 +56,7 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
             quizzes: {
               some: {
                 questions: { some: {} },
-                ...quizClassFilter(classIds),
+                ...quizAccessWhere(classIds),
               },
             },
           },
@@ -77,7 +95,7 @@ router.get("/:id", async (req: Request, res: Response): Promise<void> => {
             quizzes: {
               some: {
                 questions: { some: {} },
-                ...quizClassFilter(classIds),
+                ...quizAccessWhere(classIds),
               },
             },
           },
@@ -134,7 +152,7 @@ router.get(
         where: {
           subThemeId,
           questions: { some: {} },
-          ...quizClassFilter(classIds),
+          ...quizAccessWhere(classIds),
         },
         orderBy: { order: "asc" },
         include: {
