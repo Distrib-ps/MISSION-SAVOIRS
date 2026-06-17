@@ -52,7 +52,7 @@ export default function StudentDashboard() {
       {/* Welcome */}
       <div className="mb-8">
         <h1 className="text-3xl font-extrabold text-ms-dark mb-1">
-          Salut {user?.firstName} !
+          Bonjour {user?.firstName} !
         </h1>
         <p className="text-lg text-ms-gray">Choisis un theme</p>
       </div>
