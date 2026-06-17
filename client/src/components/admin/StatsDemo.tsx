@@ -86,7 +86,7 @@ const SCENES: DemoScene[] = [
     screen: (
       <>
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-          <h1 className="text-2xl font-extrabold text-ms-dark">KPI &amp; Statistiques</h1>
+          <h1 className="text-2xl font-extrabold text-ms-dark">Statistiques</h1>
           <Spot><Tabs active="global" /></Spot>
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -141,7 +141,7 @@ const SCENES: DemoScene[] = [
     screen: (
       <>
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-          <h1 className="text-2xl font-extrabold text-ms-dark">KPI &amp; Statistiques</h1>
+          <h1 className="text-2xl font-extrabold text-ms-dark">Statistiques</h1>
           <Tabs active="student" />
         </div>
         <div className="flex items-center gap-2 flex-wrap mb-4">

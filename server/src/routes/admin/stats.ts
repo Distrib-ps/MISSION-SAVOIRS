@@ -68,7 +68,8 @@ function parseLevel(raw: unknown): SchoolLevel | undefined {
 router.get("/overview", async (req: Request, res: Response): Promise<void> => {
   try {
     const level = parseLevel(req.query.level);
-    const studentWhere = { role: "STUDENT" as const, ...(level ? { level } : {}), ...studentScope(req) };
+    // Le nombre d'élèves est global (pool partagé entre profs), pas restreint aux classes du prof.
+    const studentWhere = { role: "STUDENT" as const, ...(level ? { level } : {}) };
 
     // Tentatives de quiz (classiques + parcours perso) — révisions exclues (quizId null)
     // Cloisonnement prof : seulement les tentatives sur SES quiz.
@@ -142,7 +143,7 @@ router.get("/overview", async (req: Request, res: Response): Promise<void> => {
     // Par niveau
     const studentsByLevel = await prisma.user.groupBy({
       by: ["level"],
-      where: { role: "STUDENT", ...studentScope(req) },
+      where: { role: "STUDENT" },
       _count: { _all: true },
     });
     const byLevel = LEVELS.map((lv) => {
