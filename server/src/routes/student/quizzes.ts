@@ -211,6 +211,7 @@ router.post(
       // Verify the attempt belongs to the current user and is for this quiz
       const attempt = await prisma.quizAttempt.findFirst({
         where: { id: attemptId, userId, quizId },
+        include: { quiz: { select: { subThemeId: true } } },
       });
 
       if (!attempt) {
@@ -218,14 +219,37 @@ router.post(
         return;
       }
 
-      // Fetch the question with answers (no quizId filter: question may be reinjected from another quiz)
+      // Périmètre autorisé : la question doit appartenir à un quiz du MÊME sous-thème
+      // que la tentative ET accessible à l'élève (classe + visibilité). Empêche un élève
+      // de répondre à / lire la solution d'une question arbitraire (réinjection légitime incluse).
+      const student = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { classes: { select: { id: true } } },
+      });
+      const classIds = student?.classes.map((c) => c.id) ?? [];
+      const classFilter =
+        classIds.length === 0
+          ? { classes: { none: {} } }
+          : { OR: [{ classes: { none: {} } }, { classes: { some: { classId: { in: classIds } } } }] };
+      const visibilityFilter = {
+        OR: [
+          { visibility: "PUBLIC" as const },
+          ...(classIds.length > 0
+            ? [{ visibility: "PRIVATE" as const, creator: { managedClasses: { some: { id: { in: classIds } } } } }]
+            : []),
+        ],
+      };
+
       const question = await prisma.question.findFirst({
-        where: { id: questionId },
+        where: {
+          id: questionId,
+          quiz: { subThemeId: attempt.quiz?.subThemeId, AND: [classFilter, visibilityFilter] },
+        },
         include: { answers: true },
       });
 
       if (!question) {
-        res.status(404).json({ error: "Question introuvable" });
+        res.status(403).json({ error: "Question non accessible" });
         return;
       }
 

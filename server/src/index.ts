@@ -1,5 +1,6 @@
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
+import helmet from "helmet";
 import dotenv from "dotenv";
 import authRouter from "./routes/auth";
 import adminUsersRouter from "./routes/admin/users";
@@ -21,12 +22,27 @@ import studentRevisionsRouter from "./routes/student/revisions";
 
 dotenv.config();
 
+// Garde-fou : refuse de démarrer avec un secret JWT absent ou laissé à sa valeur par défaut.
+const FORBIDDEN_SECRETS = new Set(["", "change-me-in-production", "secret", "dev"]);
+if (!process.env.JWT_SECRET || FORBIDDEN_SECRETS.has(process.env.JWT_SECRET)) {
+  console.error(
+    "[FATAL] JWT_SECRET manquant ou laissé à sa valeur par défaut. " +
+      "Générez un secret fort, ex. : openssl rand -base64 48"
+  );
+  process.exit(1);
+}
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middlewares
+// Derrière un reverse-proxy (HTTPS, IP réelle pour le rate-limiting)
+app.set("trust proxy", 1);
+
+// Middlewares de sécurité
+app.use(helmet());
 app.use(cors({ origin: process.env.CLIENT_URL || "http://localhost:5173" }));
-app.use(express.json({ limit: "10mb" })); // 10mb pour supporter les dessins base64
+// 2mb : suffisant pour un dessin (validé/plafonné séparément), limite l'abus mémoire
+app.use(express.json({ limit: "2mb" }));
 
 // Health check
 app.get("/api/health", (_req, res) => {

@@ -77,8 +77,19 @@ router.post("/:id/start", async (req: Request, res: Response): Promise<void> => 
 
     const userId = req.user!.userId;
 
-    const revision = await prisma.revision.findUnique({
-      where: { id },
+    // L'élève ne peut démarrer qu'une révision de SON niveau et non expirée.
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { level: true } });
+    if (!user?.level) {
+      res.status(403).json({ error: "Aucun niveau scolaire associé à votre compte" });
+      return;
+    }
+    const now = new Date();
+    const revision = await prisma.revision.findFirst({
+      where: {
+        id,
+        targetLevel: user.level,
+        OR: [{ endDate: null }, { endDate: { gte: now } }],
+      },
       include: {
         questions: {
           orderBy: { order: "asc" },
@@ -88,7 +99,7 @@ router.post("/:id/start", async (req: Request, res: Response): Promise<void> => 
     });
 
     if (!revision) {
-      res.status(404).json({ error: "Révision introuvable" });
+      res.status(404).json({ error: "Révision introuvable ou non accessible" });
       return;
     }
 
@@ -150,12 +161,14 @@ router.post("/:id/answer", async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    const question = await prisma.question.findFirst({
-      where: { id: questionId },
-      include: { answers: true },
+    // La question doit faire partie de CETTE révision (pas une question arbitraire).
+    const revisionQuestion = await prisma.revisionQuestion.findFirst({
+      where: { revisionId: id, questionId },
+      include: { question: { include: { answers: true } } },
     });
+    const question = revisionQuestion?.question ?? null;
     if (!question) {
-      res.status(404).json({ error: "Question introuvable" });
+      res.status(403).json({ error: "Question non accessible" });
       return;
     }
 
