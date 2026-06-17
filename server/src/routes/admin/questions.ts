@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import prisma from "../../lib/prisma";
 import { authenticate, requireStaff } from "../../middleware/auth";
 import { contentOwnerWhere, currentUserId, isOwner } from "../../lib/ownership";
+import { logAudit } from "../../lib/audit";
 import { QuestionType } from "@prisma/client";
 
 const router = Router();
@@ -320,6 +321,9 @@ router.get("/:id/drawings", async (req: Request, res: Response): Promise<void> =
       submittedAt: a.quizAttempt.completedAt,
     }));
 
+    if (drawings.length > 0) {
+      logAudit(req, "DRAWINGS_VIEW", { targetType: "QUESTION", targetId: id });
+    }
     res.json({ drawings });
   } catch (error) {
     console.error("Erreur lors de la récupération des dessins:", error);

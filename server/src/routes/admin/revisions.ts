@@ -10,6 +10,15 @@ router.use(authenticate, requireStaff);
 
 const LEVELS: SchoolLevel[] = ["CP", "CE1", "CE2", "CM1", "CM2"];
 
+/** Vérifie que toutes les questions appartiennent au prof courant (Owner = OK). */
+async function questionsOwnedByUser(req: Request, questionIds: number[]): Promise<boolean> {
+  if (isOwner(req)) return true;
+  const owned = await prisma.question.count({
+    where: { id: { in: questionIds }, createdById: currentUserId(req) },
+  });
+  return owned === new Set(questionIds).size;
+}
+
 // Inclusion commune : questions ordonnées avec fil d'ariane (thème > sous-thème > quiz)
 const questionInclude = {
   questions: {
@@ -86,6 +95,10 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
       res.status(400).json({ error: "Au moins une question est requise" });
       return;
     }
+    if (!(await questionsOwnedByUser(req, questionIds))) {
+      res.status(403).json({ error: "Une des questions sélectionnées n'est pas la vôtre" });
+      return;
+    }
 
     const revision = await prisma.revision.create({
       data: {
@@ -155,6 +168,9 @@ router.put("/:id", async (req: Request, res: Response): Promise<void> => {
       if (questionIds !== undefined) {
         if (!Array.isArray(questionIds) || questionIds.length === 0) {
           throw new Error("Au moins une question est requise");
+        }
+        if (!(await questionsOwnedByUser(req, questionIds))) {
+          throw new Error("Une des questions sélectionnées n'est pas la vôtre");
         }
         await tx.revisionQuestion.deleteMany({ where: { revisionId: id } });
         await tx.revisionQuestion.createMany({
