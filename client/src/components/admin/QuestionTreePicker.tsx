@@ -64,7 +64,7 @@ export default function QuestionTreePicker({ selectedIds, onChange }: Props) {
 
   useEffect(() => {
     setLoading(true);
-    fetch("/api/admin/tree?includeQuestions=true", { headers: authHeaders() })
+    fetch("/api/admin/tree?includeQuestions=true&includePublic=true", { headers: authHeaders() })
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error("Erreur"))))
       .then((data) => setTree(data.themes ?? []))
       .catch(() => setTree([]))

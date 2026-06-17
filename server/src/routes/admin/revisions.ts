@@ -10,13 +10,17 @@ router.use(authenticate, requireStaff);
 
 const LEVELS: SchoolLevel[] = ["CP", "CE1", "CE2", "CM1", "CM2"];
 
-/** Vérifie que toutes les questions appartiennent au prof courant (Owner = OK). */
+/** Vérifie que les questions sont utilisables par le prof : les siennes OU issues d'un quiz public (Owner = tout). */
 async function questionsOwnedByUser(req: Request, questionIds: number[]): Promise<boolean> {
   if (isOwner(req)) return true;
-  const owned = await prisma.question.count({
-    where: { id: { in: questionIds }, createdById: currentUserId(req) },
+  const uid = currentUserId(req);
+  const usable = await prisma.question.count({
+    where: {
+      id: { in: questionIds },
+      OR: [{ createdById: uid }, { quiz: { visibility: "PUBLIC" } }],
+    },
   });
-  return owned === new Set(questionIds).size;
+  return usable === new Set(questionIds).size;
 }
 
 // Inclusion commune : questions ordonnées avec fil d'ariane (thème > sous-thème > quiz)
