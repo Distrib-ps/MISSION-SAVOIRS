@@ -323,11 +323,63 @@ const SECTIONS: Section[] = [
   },
 ];
 
+/* ---------- Assistant local (sans IA externe) ---------- */
+
+const STOPWORDS = new Set(
+  "je tu il elle on nous vous le la les un une des du de des au aux et ou est sont a as ai avec dans pour par sur que qui quoi quel quelle comment faire mon ma mes ton ta tes son sa ses ce cette cet plus moins comme quand donc car".split(
+    " "
+  )
+);
+
+function tokenize(s: string): string[] {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .split(/[^a-z0-9]+/)
+    .filter((t) => t.length >= 3 && !STOPWORDS.has(t));
+}
+
+/** Classe les sections par pertinence vis-à-vis de la question (titre + mots-clés). */
+function rankSections(question: string): Section[] {
+  const toks = tokenize(question);
+  if (toks.length === 0) return [];
+  return SECTIONS.map((s) => {
+    const title = s.title.toLowerCase();
+    const kw = s.keywords.toLowerCase();
+    let score = 0;
+    for (const t of toks) {
+      if (title.includes(t)) score += 3;
+      if (kw.includes(t)) score += 2;
+    }
+    return { s, score };
+  })
+    .filter((x) => x.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .map((x) => x.s);
+}
+
 /* ---------- Page ---------- */
 
 export default function AidePage() {
   const [query, setQuery] = useState("");
   const [openId, setOpenId] = useState<string | null>(SECTIONS[0].id);
+  const [question, setQuestion] = useState("");
+  const [answer, setAnswer] = useState<Section[] | null>(null);
+
+  function ask(e: React.FormEvent) {
+    e.preventDefault();
+    setAnswer(rankSections(question));
+  }
+
+  function goToSection(id: string) {
+    setQuery("");
+    setOpenId(id);
+    setTimeout(
+      () => document.getElementById(`sec-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" }),
+      0
+    );
+  }
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
@@ -352,11 +404,65 @@ export default function AidePage() {
         </button>
       </div>
 
+      {/* Assistant local : répond à partir du guide (aucune donnée envoyée à l'extérieur) */}
+      <div className="mb-5 bg-white border border-ms-lavender/30 rounded-2xl p-4">
+        <p className="font-bold text-ms-dark mb-1">🤖 Pose ta question</p>
+        <p className="text-xs text-ms-gray mb-3">
+          L'assistant cherche la réponse dans ce guide. Tout reste local — aucune donnée n'est envoyée à l'extérieur.
+        </p>
+        <form onSubmit={ask} className="flex gap-2">
+          <input
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            placeholder="Ex. : comment importer ma classe ? comment partager un quiz ?"
+            className="flex-1 px-4 py-2.5 text-sm border border-ms-light-gray rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-ms-lavender/40"
+          />
+          <button
+            type="submit"
+            className="px-5 py-2.5 text-sm font-semibold bg-ms-lavender text-white rounded-xl hover:opacity-90 transition shrink-0"
+          >
+            Demander
+          </button>
+        </form>
+
+        {answer !== null && (
+          answer.length === 0 ? (
+            <p className="mt-3 text-sm text-ms-gray">
+              Je n'ai pas trouvé de réponse précise. Reformule, ou parcours les sections ci-dessous.
+            </p>
+          ) : (
+            <div className="mt-4">
+              <div className="rounded-xl border border-ms-lavender/30 bg-ms-lavender-light/30 p-4">
+                <p className="font-bold text-ms-dark flex items-center gap-2 mb-2">
+                  <span className="text-xl">{answer[0].icon}</span>
+                  {answer[0].title}
+                </p>
+                <div className="text-sm text-ms-dark leading-relaxed">{answer[0].body}</div>
+              </div>
+              {answer.length > 1 && (
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <span className="text-xs text-ms-gray">Sujets liés :</span>
+                  {answer.slice(1, 4).map((s) => (
+                    <button
+                      key={s.id}
+                      onClick={() => goToSection(s.id)}
+                      className="text-xs font-semibold text-ms-lavender border border-ms-lavender/40 rounded-full px-3 py-1 hover:bg-ms-lavender-light/50 transition"
+                    >
+                      {s.icon} {s.title}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        )}
+      </div>
+
       <div className="mb-5">
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Rechercher dans l'aide (ex. import, dessin, mot de passe…)"
+          placeholder="Ou parcourir : rechercher dans l'aide (import, dessin, mot de passe…)"
           className="w-full px-4 py-2.5 text-sm border border-ms-light-gray rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-ms-lavender/40"
         />
       </div>
