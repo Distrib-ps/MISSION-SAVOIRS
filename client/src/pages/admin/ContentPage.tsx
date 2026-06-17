@@ -369,6 +369,7 @@ export default function ContentPage() {
     setQuizzes(treeSubTheme.quizzes.map((qz) => ({
       id: qz.id, title: qz.title, description: qz.description, timeLimit: qz.timeLimit,
       order: qz.order, subThemeId: qz.subThemeId, visibility: qz.visibility,
+      createdById: qz.createdById,
       _count: { questions: qz._count.questions },
     })));
 
@@ -387,6 +388,8 @@ export default function ContentPage() {
       timeLimit: treeQuiz.timeLimit,
       order: treeQuiz.order,
       subThemeId: treeQuiz.subThemeId,
+      visibility: treeQuiz.visibility,
+      createdById: treeQuiz.createdById,
       _count: { questions: treeQuiz._count.questions },
     };
     setSelectedQuiz(quiz);
@@ -1328,18 +1331,32 @@ export default function ContentPage() {
     const sorted = [...questions].sort((a, b) => a.order - b.order);
     return (
       <>
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
           <h2 className="text-xl font-extrabold text-ms-dark">
             Questions de &laquo; {selectedQuiz?.title} &raquo;
           </h2>
-          <button
-            data-demo="content-add-question"
-            onClick={openQuestionCreate}
-            className="flex items-center gap-2 px-5 py-2.5 bg-ms-lavender text-white font-semibold text-sm rounded-xl hover:opacity-90 transition shadow-sm"
-          >
-            <PlusIcon />
-            Ajouter une question
-          </button>
+          <div className="flex items-center gap-2">
+            {selectedQuiz && canShare(selectedQuiz) && (
+              <button
+                onClick={() => openShare(selectedQuiz)}
+                className="flex items-center gap-2 px-4 py-2.5 bg-white border border-ms-light-gray text-ms-dark font-semibold text-sm rounded-xl hover:bg-ms-cream transition"
+                title="Partager ce quiz à un autre professeur"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                </svg>
+                Partager
+              </button>
+            )}
+            <button
+              data-demo="content-add-question"
+              onClick={openQuestionCreate}
+              className="flex items-center gap-2 px-5 py-2.5 bg-ms-lavender text-white font-semibold text-sm rounded-xl hover:opacity-90 transition shadow-sm"
+            >
+              <PlusIcon />
+              Ajouter une question
+            </button>
+          </div>
         </div>
 
         {sorted.length === 0 && !loading && (

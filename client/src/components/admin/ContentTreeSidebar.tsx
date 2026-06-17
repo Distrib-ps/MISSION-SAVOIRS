@@ -23,6 +23,7 @@ export interface TreeQuiz {
   order: number;
   subThemeId: number;
   visibility?: "PUBLIC" | "PRIVATE";
+  createdById?: number | null;
   _count: { questions: number };
 }
 
