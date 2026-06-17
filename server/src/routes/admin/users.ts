@@ -6,6 +6,7 @@ import { Readable } from "stream";
 import prisma from "../../lib/prisma";
 import { authenticate, requireAdmin, requireStaff } from "../../middleware/auth";
 import { isOwner, currentUserId } from "../../lib/ownership";
+import { logAudit } from "../../lib/audit";
 import { SchoolLevel } from "@prisma/client";
 
 const router = Router();
@@ -385,6 +386,11 @@ router.delete("/:id", async (req: Request, res: Response): Promise<void> => {
     }
 
     await prisma.user.delete({ where: { id } });
+    logAudit(req, "USER_DELETE", {
+      targetType: "USER",
+      targetId: id,
+      detail: `${existingUser.role} ${existingUser.username}`,
+    });
 
     res.json({ message: "Utilisateur supprimé avec succès" });
   } catch (error) {
@@ -581,6 +587,7 @@ router.post(
         }
       }
 
+      logAudit(req, "USERS_IMPORT", { detail: `${created} élève(s) importé(s)` });
       // Réponse contenant des mots de passe en clair : ne jamais mettre en cache.
       res.set("Cache-Control", "no-store");
       res.json({ created, errors, createdUsers });
@@ -649,6 +656,7 @@ router.delete(
       const result = await prisma.user.deleteMany({
         where: { id: { in: ids } },
       });
+      logAudit(req, "USER_BULK_DELETE", { detail: `${result.count} compte(s) supprimé(s)` });
 
       res.json({ deleted: result.count });
     } catch (error) {
@@ -657,5 +665,105 @@ router.delete(
     }
   }
 );
+
+// ---------- GET /:id/export - Export RGPD des données d'un élève (accès/portabilité) ----------
+router.get("/:id/export", async (req: Request, res: Response): Promise<void> => {
+  try {
+    const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+    if (isNaN(id)) {
+      res.status(400).json({ error: "ID invalide" });
+      return;
+    }
+
+    const student = await prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        username: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        level: true,
+        createdAt: true,
+        classes: { select: { name: true, level: true } },
+        quizAttempts: {
+          select: {
+            score: true,
+            totalQuestions: true,
+            completedAt: true,
+            quiz: { select: { title: true } },
+            questionAttempts: {
+              select: {
+                givenAnswer: true,
+                isCorrect: true,
+                usedHint: true,
+                attempts: true,
+                validationStatus: true,
+                question: { select: { text: true, type: true } },
+              },
+            },
+          },
+        },
+        customPaths: { select: { name: true, description: true, createdAt: true } },
+      },
+    });
+
+    if (!student || student.role !== "STUDENT") {
+      res.status(404).json({ error: "Élève introuvable" });
+      return;
+    }
+    // Un prof ne peut exporter qu'un compte élève (pas un compte staff) — déjà filtré ci-dessus.
+
+    logAudit(req, "STUDENT_EXPORT", { targetType: "USER", targetId: id });
+
+    res.set("Cache-Control", "no-store");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="export_eleve_${id}.json"`
+    );
+    res.json({
+      exporteLe: new Date().toISOString(),
+      eleve: {
+        identifiant: student.username,
+        prenom: student.firstName,
+        nom: student.lastName,
+        niveau: student.level,
+        compteCreeLe: student.createdAt,
+        classes: student.classes,
+      },
+      resultats: student.quizAttempts,
+      parcoursPersonnalises: student.customPaths,
+    });
+  } catch (error) {
+    console.error("Erreur export élève:", error);
+    res.status(500).json({ error: "Erreur interne du serveur" });
+  }
+});
+
+// ---------- GET /audit/logs - Journal d'accès (Owner uniquement) ----------
+router.get("/audit/logs", requireAdmin, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const take = Math.min(parseInt(String(req.query.take ?? "100"), 10) || 100, 500);
+    const logs = await prisma.auditLog.findMany({
+      orderBy: { createdAt: "desc" },
+      take,
+      include: { actor: { select: { firstName: true, lastName: true, username: true } } },
+    });
+    res.json({
+      logs: logs.map((l) => ({
+        id: l.id,
+        action: l.action,
+        targetType: l.targetType,
+        targetId: l.targetId,
+        detail: l.detail,
+        createdAt: l.createdAt,
+        actor: l.actor ? `${l.actor.firstName} ${l.actor.lastName}` : "—",
+      })),
+    });
+  } catch (error) {
+    console.error("Erreur audit logs:", error);
+    res.status(500).json({ error: "Erreur interne du serveur" });
+  }
+});
 
 export default router;

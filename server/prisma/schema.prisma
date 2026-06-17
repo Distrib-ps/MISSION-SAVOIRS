@@ -49,8 +49,27 @@ model User {
   createdQuestions Question[]
   createdRevisions Revision[]
   sharedQuizzes    QuizShare[]
+  auditLogs        AuditLog[] @relation("AuditActor")
 
   @@map("users")
+}
+
+// Journal d'accès (RGPD art. 30/32) : trace les opérations sensibles sur les
+// données d'élèves (consultation de dessins/stats, export, suppression, import).
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  actorId    Int? // staff ayant effectué l'action (null si compte supprimé)
+  action     String // ex: USER_DELETE, STUDENT_EXPORT, STUDENT_STATS_VIEW, DRAWINGS_VIEW
+  targetType String? // ex: USER
+  targetId   Int?
+  detail     String?
+  createdAt  DateTime @default(now())
+
+  actor User? @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([targetType, targetId])
+  @@map("audit_logs")
 }
 
 // ========== CLASSES ==========

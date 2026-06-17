@@ -17,6 +17,7 @@ import StatsPage from "./pages/admin/StatsPage";
 import ClassesPage from "./pages/admin/ClassesPage";
 import SharedWithMePage from "./pages/admin/SharedWithMePage";
 import DrawingsPage from "./pages/admin/DrawingsPage";
+import AuditPage from "./pages/admin/AuditPage";
 
 function App() {
   return (
@@ -94,6 +95,15 @@ function App() {
           element={
             <ProtectedRoute requiredRole="STAFF">
               <UsersPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/audit"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <AuditPage />
             </ProtectedRoute>
           }
         />
