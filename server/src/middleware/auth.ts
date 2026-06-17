@@ -40,7 +40,7 @@ export const authenticate = async (
       return;
     }
 
-    const decoded = jwt.verify(token, secret) as JwtPayload;
+    const decoded = jwt.verify(token, secret, { algorithms: ["HS256"] }) as JwtPayload;
 
     // Verify the user still exists in the database
     const user = await prisma.user.findUnique({
@@ -52,7 +52,9 @@ export const authenticate = async (
       return;
     }
 
-    req.user = { userId: decoded.userId, role: decoded.role };
+    // Le rôle d'autorisation est relu en base (et non pris du token) : un compte
+    // rétrogradé/révoqué perd ses droits immédiatement, sans attendre l'expiration.
+    req.user = { userId: user.id, role: user.role };
     next();
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError) {

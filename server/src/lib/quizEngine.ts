@@ -139,7 +139,15 @@ export function checkAnswer(question: QuestionWithAnswers, answer: string): Chec
       .join(" ; ");
     correctAnswerText = question.answers.map((a) => `${a.text} ↔ ${a.zone ?? ""}`).join(" ; ");
   } else if (question.type === "DRAWING") {
-    // Dessin : toujours « correct » (évaluation manuelle par le prof). On stocke le base64.
+    // Dessin : on stocke le base64 (évaluation manuelle par le prof). On valide
+    // strictement que c'est une image data-URL et qu'elle reste sous une taille raisonnable.
+    if (!/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(answer)) {
+      return { ok: false, error: "Format de dessin invalide (image attendue)" };
+    }
+    if (answer.length > 1_400_000) {
+      // ~1 Mo d'image décodée
+      return { ok: false, error: "Dessin trop volumineux" };
+    }
     isCorrect = true;
     givenAnswerText = answer;
     correctAnswerText = "";

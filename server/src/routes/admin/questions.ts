@@ -89,6 +89,11 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
       res.status(404).json({ error: "Quiz introuvable" });
       return;
     }
+    // Cloisonnement : un prof ne peut ajouter des questions qu'à ses propres quiz.
+    if (!isOwner(req) && quiz.createdById !== currentUserId(req)) {
+      res.status(403).json({ error: "Accès refusé : ce quiz appartient à un autre professeur" });
+      return;
+    }
 
     // Auto-set order to max + 1 within this quiz
     const maxOrder = await prisma.question.aggregate({

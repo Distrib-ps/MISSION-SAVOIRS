@@ -1,13 +1,33 @@
 import { Router, Request, Response } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import prisma from "../lib/prisma";
 import { authenticate } from "../middleware/auth";
 
 const router = Router();
 
+const RESET_MESSAGE =
+  "Trop de tentatives de connexion. Demande à ton enseignant de réinitialiser ton accès.";
+
+// Anti-bruteforce : limite les tentatives par IP + identifiant.
+// Mots de passe élèves courts → cette limite est la principale protection.
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 8,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    const username = typeof req.body?.username === "string" ? req.body.username.toLowerCase() : "";
+    return `${ipKeyGenerator(req.ip ?? "")}:${username}`;
+  },
+  handler: (_req, res) => {
+    res.status(429).json({ error: RESET_MESSAGE });
+  },
+});
+
 // POST /login - Authenticate user and return JWT
-router.post("/login", async (req: Request, res: Response): Promise<void> => {
+router.post("/login", loginLimiter, async (req: Request, res: Response): Promise<void> => {
   try {
     const { username, password } = req.body;
 

@@ -9,8 +9,23 @@ import { SchoolLevel } from "@prisma/client";
 
 const router = Router();
 
-// Multer config: memory storage (buffer, no disk)
-const upload = multer({ storage: multer.memoryStorage() });
+// Multer config: memory storage (buffer, no disk), plafonné + type restreint
+const ALLOWED_IMPORT_MIME = new Set([
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // .xlsx
+  "application/vnd.ms-excel",
+  "text/csv",
+  "application/csv",
+  "text/plain", // certains navigateurs envoient les .csv ainsi
+]);
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 2 * 1024 * 1024, files: 1 }, // 2 Mo max
+  fileFilter: (_req, file, cb) => {
+    const okExt = /\.(xlsx|csv)$/i.test(file.originalname);
+    if (ALLOWED_IMPORT_MIME.has(file.mimetype) && okExt) cb(null, true);
+    else cb(new Error("Type de fichier non autorisé (.xlsx ou .csv attendu)"));
+  },
+});
 
 // All routes require authentication + admin role
 router.use(authenticate, requireStaff);
@@ -211,7 +226,7 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
     }
 
     const username = await generateUsername(firstName, lastName);
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     const user = await prisma.user.create({
       data: {
@@ -308,7 +323,7 @@ router.put("/:id", async (req: Request, res: Response): Promise<void> => {
     }
 
     if (password !== undefined) {
-      data.password = await bcrypt.hash(password, 10);
+      data.password = await bcrypt.hash(password, 12);
     }
 
     // Regenerate username if firstName or lastName changed
@@ -487,7 +502,7 @@ router.post(
         try {
           const username = await generateUsername(prenom, nom);
           const plainPassword = randomPassword();
-          const hashedPassword = await bcrypt.hash(plainPassword, 10);
+          const hashedPassword = await bcrypt.hash(plainPassword, 12);
 
           await prisma.user.create({
             data: {
@@ -513,6 +528,8 @@ router.post(
         }
       }
 
+      // Réponse contenant des mots de passe en clair : ne jamais mettre en cache.
+      res.set("Cache-Control", "no-store");
       res.json({ created, errors, createdUsers });
     } catch (error) {
       console.error("Erreur lors de l'import:", error);
