@@ -108,8 +108,8 @@ export default function ConfidentialitePage() {
             Une copie des données d'un élève peut être exportée à tout moment par l'établissement.
           </p>
           <p>
-            Contact pour l'exercice des droits : Sabrina Letellier (École Élémentaire Grand Pré
-            Bulcos – B2). Pour toute question technique : delhay70@gmail.com.
+            Contact pour l'exercice des droits : Sabrina Letellier — École Élémentaire Grand Pré
+            Bulcos – B2, 7 bis Av. du Vercors, 38240 Meylan — delhay70@gmail.com.
           </p>
         </Section>
 

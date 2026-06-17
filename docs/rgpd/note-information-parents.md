@@ -1,6 +1,6 @@
 # Note d'information aux parents — Mission Savoirs
 
-> Prêt à diffuser aux familles. Seule l'adresse email de contact de l'établissement reste à ajouter.
+> Prêt à diffuser aux familles.
 
 ## Madame, Monsieur,
 
@@ -41,7 +41,7 @@ migration vers un hébergement local / en France prévue.
 Vous pouvez demander à **accéder** aux données de votre enfant, les faire **rectifier** ou
 **supprimer**, en obtenir une **copie**, ou vous **opposer** à leur traitement. Pour cela, contactez :
 
-- **Sabrina Letellier — École Élémentaire Grand Pré Bulcos – B2** [email de l'établissement à préciser]
+- **Sabrina Letellier — École Élémentaire Grand Pré Bulcos – B2 (7 bis Av. du Vercors, 38240 Meylan)** — delhay70@gmail.com
 
 Vous pouvez également saisir la **CNIL** (www.cnil.fr) si vous estimez que vos droits ne sont pas
 respectés.

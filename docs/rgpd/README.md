@@ -1,8 +1,7 @@
 # Conformité RGPD — Mission Savoirs
 
 Application pédagogique traitant des données de **mineurs (6–10 ans)** en milieu scolaire.
-Ce dossier regroupe la documentation de conformité, renseignée pour ce déploiement (quelques
-coordonnées de l'établissement restent à ajouter).
+Ce dossier regroupe la documentation de conformité, renseignée pour ce déploiement.
 
 ## Documents
 
@@ -12,7 +11,7 @@ Letellier).
 
 | Document | Objet | Statut |
 |---|---|---|
-| [registre-traitements.md](./registre-traitements.md) | Registre des activités de traitement (art. 30) | Renseigné (email établissement à préciser) |
+| [registre-traitements.md](./registre-traitements.md) | Registre des activités de traitement (art. 30) | Renseigné |
 | [note-information-parents.md](./note-information-parents.md) | Information des familles (art. 12-14) | Renseigné (à diffuser) |
 | [aipd-trame.md](./aipd-trame.md) | Trame d'analyse d'impact (AIPD/DPIA) | Pré-rempli (à valider) |
 | [dpa-ecole-editeur.md](./dpa-ecole-editeur.md) | Accord de sous-traitance (art. 28) école ↔ éditeur | Renseigné (à signer) |
