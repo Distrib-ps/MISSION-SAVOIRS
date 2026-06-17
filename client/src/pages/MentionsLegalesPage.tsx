@@ -32,9 +32,8 @@ export default function MentionsLegalesPage() {
 
         <Section title="Hébergeur">
           <p>
-            Application (front) : OVH. Base de données : actuellement Supabase Inc. (infrastructure
-            dans l'Union européenne, région à confirmer) ; une migration vers un hébergement local /
-            en France est prévue.
+            Application et base de données hébergées localement, en France (auto-hébergement).
+            Aucun hébergeur tiers.
           </p>
         </Section>
 
@@ -56,7 +55,7 @@ export default function MentionsLegalesPage() {
         </Section>
 
         <p className="text-xs text-ms-gray/70 mt-10">
-          Utilisé par l'École Élémentaire Grand Pré Bulcos – B2. Dernière mise à jour : juin 2026.
+          Utilisé par l'École Élémentaire Grand Pré Bulcos. Dernière mise à jour : juin 2026.
         </p>
       </div>
     </div>

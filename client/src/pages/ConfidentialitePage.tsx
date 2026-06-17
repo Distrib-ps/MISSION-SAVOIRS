@@ -28,7 +28,7 @@ export default function ConfidentialitePage() {
         <Section title="Responsable de traitement">
           <p>
             Dans le cadre scolaire, le responsable de traitement est l'établissement qui utilise la
-            plateforme : <strong>École Élémentaire Grand Pré Bulcos – B2</strong>, représentée par
+            plateforme : <strong>École Élémentaire Grand Pré Bulcos</strong>, représentée par
             Sabrina Letellier. Mission Savoirs a été développée par Théo Delhay (projet éducatif, à
             titre personnel et non commercial), qui agit en tant que sous-traitant technique
             (article 28 du RGPD). Contact technique : delhay70@gmail.com.
@@ -85,9 +85,8 @@ export default function ConfidentialitePage() {
 
         <Section title="Hébergement">
           <p>
-            Les données sont actuellement hébergées chez Supabase (infrastructure dans l'Union
-            européenne, région à confirmer), avec chiffrement au repos. Une migration vers un
-            hébergement local / en France est prévue.
+            Les données sont hébergées localement, en France (auto-hébergement), avec chiffrement.
+            Aucun hébergeur tiers ni transfert hors de l'Union européenne.
           </p>
         </Section>
 
@@ -109,7 +108,7 @@ export default function ConfidentialitePage() {
           </p>
           <p>
             Contact pour l'exercice des droits : Sabrina Letellier — École Élémentaire Grand Pré
-            Bulcos – B2, 7 bis Av. du Vercors, 38240 Meylan — delhay70@gmail.com.
+            Bulcos, 7 bis Av. du Vercors, 38240 Meylan — delhay70@gmail.com.
           </p>
         </Section>
 

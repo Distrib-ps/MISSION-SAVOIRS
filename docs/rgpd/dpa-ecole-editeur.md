@@ -6,7 +6,7 @@
 
 ## Parties
 
-- **Responsable de traitement** : École Élémentaire Grand Pré Bulcos – B2 (7 bis Av. du Vercors, 38240 Meylan), représentée par Sabrina Letellier
+- **Responsable de traitement** : École Élémentaire Grand Pré Bulcos (7 bis Av. du Vercors, 38240 Meylan), représentée par Sabrina Letellier
 - **Sous-traitant** : Théo Delhay, développeur de Mission Savoirs (projet éducatif personnel, non commercial) — delhay70@gmail.com
 
 ## 1. Objet
@@ -28,22 +28,20 @@ mise à disposition de la plateforme Mission Savoirs (suivi pédagogique des él
 - Garantir la **confidentialité** (personnes autorisées soumises à confidentialité).
 - Mettre en œuvre les **mesures de sécurité** (art. 32) : chiffrement des noms au repos, chiffrement
   en transit, contrôle d'accès, journalisation, anti-bruteforce, sauvegardes.
-- Ne recourir à un **sous-traitant ultérieur** (ex. Supabase) qu'avec autorisation et garanties
-  équivalentes (DPA en cascade).
+- Ne recourir à un **sous-traitant ultérieur** qu'avec autorisation et garanties équivalentes
+  (DPA en cascade).
 - **Assister** le responsable pour l'exercice des droits, les notifications de violation, l'AIPD.
 - **Notifier** toute violation de données dans les meilleurs délais (objectif : 48 h).
 - Au terme du contrat : **supprimer ou restituer** les données, et supprimer les copies.
 
 ## 4. Sous-traitants ultérieurs autorisés
 
-| Sous-traitant | Rôle | Localisation | Garanties |
-|---|---|---|---|
-| Supabase Inc. | Hébergement base de données | UE — région à confirmer (migration locale/France prévue) | DPA Supabase + SCC le cas échéant |
-| OVH | Hébergement de l'application (front) | France / UE | Conditions OVH |
+Aucun à ce jour : l'application et les données sont hébergées **localement, en France**
+(auto-hébergement). Tout recours futur à un hébergeur tiers devra être encadré par un DPA.
 
 ## 5. Sécurité et transferts
 
-- Pas de transfert hors UE sans encadrement (région UE privilégiée ; à défaut, clauses types).
+- Aucun transfert hors UE : hébergement local, en France.
 - ⚠️ La clé de chiffrement des noms (`ENCRYPTION_KEY`) est conservée de façon sécurisée ; sa perte
   rend les noms illisibles.
 
@@ -54,5 +52,5 @@ instructions documentées.
 
 ## Signatures
 
-- Pour le responsable de traitement : Sabrina Letellier, École Élémentaire Grand Pré Bulcos – B2 — date / signature : __________
+- Pour le responsable de traitement : Sabrina Letellier, École Élémentaire Grand Pré Bulcos — date / signature : __________
 - Pour le sous-traitant : Théo Delhay — date / signature : __________
