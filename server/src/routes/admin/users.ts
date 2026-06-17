@@ -1,7 +1,8 @@
 import { Router, Request, Response } from "express";
 import bcrypt from "bcrypt";
 import multer from "multer";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
+import { Readable } from "stream";
 import prisma from "../../lib/prisma";
 import { authenticate, requireAdmin, requireStaff } from "../../middleware/auth";
 import { isOwner, currentUserId } from "../../lib/ownership";
@@ -392,11 +393,23 @@ router.delete("/:id", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
+// Encapsule multer pour renvoyer un 400 explicite (type/taille invalide) au lieu d'un 500.
+function importUpload(req: Request, res: Response, next: () => void): void {
+  upload.single("file")(req, res, (err: unknown) => {
+    if (err) {
+      const message = err instanceof Error ? err.message : "Fichier invalide";
+      res.status(400).json({ error: message });
+      return;
+    }
+    next();
+  });
+}
+
 // ---------- POST /import - Bulk import students from Excel/CSV (Owner uniquement) ----------
 router.post(
   "/import",
   requireAdmin,
-  upload.single("file"),
+  importUpload,
   async (req: Request, res: Response): Promise<void> => {
     try {
       if (!req.file) {
@@ -404,16 +417,56 @@ router.post(
         return;
       }
 
-      // Parse the file from buffer
-      const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
-      const sheetName = workbook.SheetNames[0];
-      if (!sheetName) {
+      // Parse le fichier (xlsx ou csv) avec exceljs, en reconstruisant des lignes
+      // { ENTÊTE: valeur } pour conserver la suite du traitement inchangée.
+      const isCsv =
+        /\.csv$/i.test(req.file.originalname) || req.file.mimetype.includes("csv");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- conflit de types Buffer entre @types/node et exceljs
+      const buf: any = Buffer.from(req.file.buffer);
+      const workbook = new ExcelJS.Workbook();
+      let worksheet: ExcelJS.Worksheet | undefined;
+      if (isCsv) {
+        worksheet = await workbook.csv.read(Readable.from(buf));
+      } else {
+        await workbook.xlsx.load(buf);
+        worksheet = workbook.worksheets[0];
+      }
+      if (!worksheet) {
         res.status(400).json({ error: "Le fichier ne contient aucune feuille" });
         return;
       }
 
-      const sheet = workbook.Sheets[sheetName];
-      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet);
+      const cellText = (v: ExcelJS.CellValue): string => {
+        if (v === null || v === undefined) return "";
+        if (typeof v === "object") {
+          // RichText / formule / hyperlink
+          const o = v as { text?: string; result?: unknown };
+          if (typeof o.text === "string") return o.text;
+          if (o.result !== undefined) return String(o.result);
+          return "";
+        }
+        return String(v);
+      };
+
+      const headers: string[] = [];
+      worksheet.getRow(1).eachCell((cell, col) => {
+        headers[col] = cellText(cell.value).trim();
+      });
+
+      const rows: Record<string, unknown>[] = [];
+      worksheet.eachRow((row, rowNumber) => {
+        if (rowNumber === 1) return; // ligne d'entêtes
+        const obj: Record<string, unknown> = {};
+        let hasValue = false;
+        row.eachCell((cell, col) => {
+          const key = headers[col];
+          if (!key) return;
+          const text = cellText(cell.value);
+          if (text !== "") hasValue = true;
+          obj[key] = text;
+        });
+        if (hasValue) rows.push(obj);
+      });
 
       if (rows.length === 0) {
         res.status(400).json({ error: "Le fichier est vide" });
