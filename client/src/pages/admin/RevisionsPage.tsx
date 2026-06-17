@@ -11,7 +11,13 @@ const REVISIONS_DEMO: TourStep[] = [
   {
     selector: '[data-demo="rev-create"]',
     title: "Créer une révision",
-    text: "Ce bouton ouvre le formulaire : nommez la révision et choisissez le niveau ciblé.",
+    text: "Cliquez ce bouton pour ouvrir le formulaire.",
+    advanceOn: "click",
+  },
+  {
+    selector: '[data-demo="rev-name"]',
+    title: "Nom & niveau",
+    text: "Nommez la révision et choisissez le niveau ciblé. Vous pouvez aussi ajouter une date de fin.",
   },
   {
     title: "Choisir les questions",
@@ -163,7 +169,7 @@ export default function RevisionsPage() {
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
-            <div className="sm:col-span-2">
+            <div className="sm:col-span-2" data-demo="rev-name">
               <label className="block text-xs font-bold uppercase text-ms-gray mb-1">Nom</label>
               <input
                 value={formName}

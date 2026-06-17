@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export interface TourStep {
   /** Sélecteur CSS de l'élément à mettre en avant (absent = étape centrée). */
   selector?: string;
   title: string;
   text: string;
+  /** "click" = l'étape avance quand l'utilisateur clique l'élément éclairé. */
+  advanceOn?: "click";
 }
 
 interface Props {
@@ -15,53 +17,75 @@ interface Props {
 
 /**
  * Visite guidée maison (sans dépendance) : projecteur sur un élément ciblé
- * + bulle explicative. Si la cible est absente (ex. menu masqué sur mobile),
- * l'étape s'affiche centrée.
+ * + bulle explicative. L'élément est attendu (polling) tant qu'il n'apparaît
+ * pas (utile pour les formulaires/boutons qui s'affichent après une action).
+ * Une étape peut avancer automatiquement quand on clique l'élément éclairé.
  */
 export default function GuidedTour({ steps, active, onClose }: Props) {
   const [i, setI] = useState(0);
   const [rect, setRect] = useState<DOMRect | null>(null);
+  const [waiting, setWaiting] = useState(false);
+  const lastElRef = useRef<Element | null>(null);
 
   const step = steps[i];
-
-  const measure = useCallback(() => {
-    if (!step?.selector) {
-      setRect(null);
-      return;
-    }
-    const el = document.querySelector(step.selector) as HTMLElement | null;
-    if (!el) {
-      setRect(null);
-      return;
-    }
-    el.scrollIntoView({ block: "nearest", behavior: "smooth" });
-    const r = el.getBoundingClientRect();
-    setRect(r.width === 0 && r.height === 0 ? null : r);
-  }, [step]);
 
   useEffect(() => {
     if (active) setI(0);
   }, [active]);
 
   useEffect(() => {
-    if (!active) return;
-    // petit délai pour laisser le scroll se faire avant de mesurer
-    const t = setTimeout(measure, 60);
-    window.addEventListener("resize", measure);
-    window.addEventListener("scroll", measure, true);
-    return () => {
-      clearTimeout(t);
-      window.removeEventListener("resize", measure);
-      window.removeEventListener("scroll", measure, true);
+    if (!active || !step) return;
+
+    const goNext = () => setI((n) => Math.min(steps.length - 1, n + 1));
+
+    const onClick = (e: MouseEvent) => {
+      if (step.advanceOn !== "click") return;
+      const el = lastElRef.current;
+      if (el && el.contains(e.target as Node)) {
+        // laisse l'action de l'élément se produire (ouverture de modale, navigation)
+        setTimeout(goNext, 350);
+      }
     };
-  }, [active, measure]);
+
+    const tick = () => {
+      if (!step.selector) {
+        setRect(null);
+        setWaiting(false);
+        lastElRef.current = null;
+        return;
+      }
+      const el = document.querySelector(step.selector) as HTMLElement | null;
+      if (!el) {
+        setRect(null);
+        setWaiting(true);
+        lastElRef.current = null;
+        return;
+      }
+      if (lastElRef.current !== el) {
+        el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        lastElRef.current = el;
+      }
+      const r = el.getBoundingClientRect();
+      setRect(r.width === 0 && r.height === 0 ? null : r);
+      setWaiting(r.width === 0 && r.height === 0);
+    };
+
+    tick();
+    const id = setInterval(tick, 150);
+    document.addEventListener("click", onClick, true);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("click", onClick, true);
+    };
+  }, [active, i, step, steps.length]);
 
   if (!active || !step) return null;
 
   const last = i === steps.length - 1;
   const pad = 6;
+  const clickable = step.advanceOn === "click" && !!rect;
 
-  // Position de la bulle : à droite de la cible (menu), sinon centrée.
+  // Position de la bulle : à droite de la cible si possible, sinon en dessous, sinon centrée.
   const tooltipWidth = 320;
   let tooltipStyle: React.CSSProperties;
   if (rect) {
@@ -69,8 +93,8 @@ export default function GuidedTour({ steps, active, onClose }: Props) {
     const left =
       spaceRight > tooltipWidth + 24
         ? rect.right + 16
-        : Math.max(16, rect.left + rect.width / 2 - tooltipWidth / 2);
-    const top = Math.min(Math.max(16, rect.top), window.innerHeight - 220);
+        : Math.max(16, Math.min(rect.left, window.innerWidth - tooltipWidth - 16));
+    const top = Math.min(Math.max(16, rect.top), window.innerHeight - 240);
     tooltipStyle = { position: "fixed", top, left, width: tooltipWidth };
   } else {
     tooltipStyle = {
@@ -83,12 +107,12 @@ export default function GuidedTour({ steps, active, onClose }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-[100]">
+    <div className="fixed inset-0 z-[100] pointer-events-none">
       {/* Voile + projecteur */}
       {rect ? (
         <>
           <div
-            className="fixed rounded-xl pointer-events-none transition-all duration-200"
+            className="fixed rounded-xl transition-all duration-200"
             style={{
               top: rect.top - pad,
               left: rect.left - pad,
@@ -98,9 +122,8 @@ export default function GuidedTour({ steps, active, onClose }: Props) {
               outline: "3px solid #b9a7f7",
             }}
           />
-          {/* Anneau animé (clignotement doux) pour attirer l'œil */}
           <div
-            className="fixed rounded-xl pointer-events-none border-4 border-ms-lavender animate-pulse"
+            className="fixed rounded-xl border-4 border-ms-lavender animate-pulse"
             style={{
               top: rect.top - pad,
               left: rect.left - pad,
@@ -113,10 +136,10 @@ export default function GuidedTour({ steps, active, onClose }: Props) {
         <div className="fixed inset-0 bg-[rgba(15,12,40,0.55)]" />
       )}
 
-      {/* Bulle */}
+      {/* Bulle (cliquable) */}
       <div
         style={tooltipStyle}
-        className="bg-white rounded-2xl shadow-xl p-5 border border-ms-light-gray"
+        className="bg-white rounded-2xl shadow-xl p-5 border border-ms-light-gray pointer-events-auto"
       >
         <div className="flex items-center justify-between mb-1">
           <span className="text-xs font-bold text-ms-lavender">
@@ -132,6 +155,15 @@ export default function GuidedTour({ steps, active, onClose }: Props) {
         </div>
         <h3 className="text-lg font-extrabold text-ms-dark mb-1">{step.title}</h3>
         <p className="text-sm text-ms-gray leading-relaxed">{step.text}</p>
+
+        {clickable && (
+          <p className="mt-2 text-sm font-semibold text-ms-lavender">
+            👆 Cliquez sur l'élément en surbrillance pour continuer.
+          </p>
+        )}
+        {waiting && (
+          <p className="mt-2 text-sm text-ms-gray italic">⏳ En attente de l'écran concerné…</p>
+        )}
 
         <div className="flex items-center justify-between gap-2 mt-4">
           <button
@@ -153,7 +185,7 @@ export default function GuidedTour({ steps, active, onClose }: Props) {
               onClick={() => setI((n) => Math.min(steps.length - 1, n + 1))}
               className="px-5 py-2 text-sm font-semibold bg-ms-lavender text-white rounded-xl hover:opacity-90 transition"
             >
-              Suivant
+              {clickable ? "Ignorer →" : "Suivant"}
             </button>
           )}
         </div>

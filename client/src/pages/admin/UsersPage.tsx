@@ -12,12 +12,18 @@ const ELEVES_DEMO: TourStep[] = [
   {
     selector: '[data-demo="eleve-create"]',
     title: "Créer un élève",
-    text: "Ce bouton ouvre le formulaire : prénom, nom, niveau, mot de passe et classe(s). L'identifiant de connexion est généré automatiquement.",
+    text: "Cliquez ce bouton pour ouvrir le formulaire.",
+    advanceOn: "click",
+  },
+  {
+    selector: '[data-demo="eleve-form"]',
+    title: "Remplir la fiche",
+    text: "Prénom, nom, niveau, mot de passe et classe(s). L'identifiant de connexion est généré automatiquement. Enregistrez puis « Ignorer → ».",
   },
   {
     selector: '[data-demo="eleve-import"]',
     title: "Importer toute une classe",
-    text: "Ici : téléchargez le modèle, remplissez une ligne par élève (plusieurs groupes séparés par « ; »), puis importez. Les identifiants générés sont téléchargeables.",
+    text: "Plutôt qu'un par un : téléchargez le modèle, remplissez une ligne par élève (plusieurs groupes séparés par « ; »), puis importez. Les identifiants générés sont téléchargeables.",
   },
   {
     selector: '[data-demo="eleve-search"]',
@@ -839,7 +845,7 @@ export default function UsersPage() {
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
+              <div data-demo="eleve-form">
                 <label className="block text-sm font-semibold text-ms-dark mb-1">
                   Prenom
                 </label>
