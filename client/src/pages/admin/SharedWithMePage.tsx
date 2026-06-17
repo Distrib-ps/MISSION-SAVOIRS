@@ -1,6 +1,23 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminLayout from "../../components/admin/AdminLayout";
+import DemoButton from "../../components/admin/DemoButton";
+import type { TourStep } from "../../components/admin/GuidedTour";
+
+const SHARED_DEMO: TourStep[] = [
+  {
+    title: "Partagés avec moi 🤝",
+    text: "Vous trouvez ici les quiz qu'un collègue a choisi de vous partager.",
+  },
+  {
+    title: "Lecture seule",
+    text: "Vous pouvez utiliser ces quiz et consulter leurs statistiques, mais pas les modifier (ils appartiennent à leur auteur).",
+  },
+  {
+    title: "Partager les vôtres",
+    text: "Pour partager un de vos quiz à un collègue, allez dans « Contenus » et utilisez l'icône de partage 🔗 sur le quiz.",
+  },
+];
 import type { SharedQuizRow } from "../../types";
 
 function authHeaders(): Record<string, string> {
@@ -50,9 +67,12 @@ export default function SharedWithMePage() {
 
   return (
     <AdminLayout>
-      <div className="mb-6">
-        <h1 className="text-2xl font-extrabold text-ms-dark">Partagés avec moi</h1>
-        <p className="text-ms-gray">Quiz que d'autres professeurs vous ont partagés (lecture seule).</p>
+      <div className="mb-6 flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-extrabold text-ms-dark">Partagés avec moi</h1>
+          <p className="text-ms-gray">Quiz que d'autres professeurs vous ont partagés (lecture seule).</p>
+        </div>
+        <DemoButton steps={SHARED_DEMO} />
       </div>
 
       {loading && (

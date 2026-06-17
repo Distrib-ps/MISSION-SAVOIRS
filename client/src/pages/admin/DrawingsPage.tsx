@@ -1,5 +1,26 @@
 import { useEffect, useState } from "react";
 import AdminLayout from "../../components/admin/AdminLayout";
+import DemoButton from "../../components/admin/DemoButton";
+import type { TourStep } from "../../components/admin/GuidedTour";
+
+const DRAWINGS_DEMO: TourStep[] = [
+  {
+    title: "Dessins à valider 🎨",
+    text: "Quand un élève répond à une question « Dessin », sa réponse arrive ici en attente de votre correction.",
+  },
+  {
+    title: "Valider ou refuser",
+    text: "Regardez le dessin, puis « ✅ Valider » (réponse comptée juste) ou « ❌ Refuser » (l'élève pourra retenter).",
+  },
+  {
+    title: "Le badge du menu",
+    text: "Le chiffre rouge à côté de « Dessins à valider » indique le nombre de dessins en attente.",
+  },
+  {
+    title: "Vie privée",
+    text: "Dès la validation/refus, l'image est supprimée (on ne garde que le résultat). Pensez donc à corriger assez vite. Vous ne voyez que les dessins liés à vos questions.",
+  },
+];
 import type { PendingDrawing } from "../../types";
 
 function authHeaders(): Record<string, string> {
@@ -40,9 +61,12 @@ export default function DrawingsPage() {
 
   return (
     <AdminLayout>
-      <div className="mb-6">
-        <h1 className="text-2xl font-extrabold text-ms-dark">Dessins à valider</h1>
-        <p className="text-ms-gray">Les dessins rendus par les élèves sur vos questions, en attente de validation.</p>
+      <div className="mb-6 flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-extrabold text-ms-dark">Dessins à valider</h1>
+          <p className="text-ms-gray">Les dessins rendus par les élèves sur vos questions, en attente de validation.</p>
+        </div>
+        <DemoButton steps={DRAWINGS_DEMO} />
       </div>
 
       {loading && (

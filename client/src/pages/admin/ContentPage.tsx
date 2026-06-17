@@ -2,6 +2,35 @@ import { useState, useEffect, useCallback } from "react";
 import type { FormEvent } from "react";
 import AdminLayout from "../../components/admin/AdminLayout";
 import ContentTreeSidebar, { type Selection, type TreeTheme } from "../../components/admin/ContentTreeSidebar";
+import DemoButton from "../../components/admin/DemoButton";
+import type { TourStep } from "../../components/admin/GuidedTour";
+
+const CONTENT_DEMO: TourStep[] = [
+  {
+    title: "Vos contenus 📚",
+    text: "Le contenu s'organise en arborescence : Thème → Sous-thème → Quiz → Questions. La colonne de gauche permet de naviguer.",
+  },
+  {
+    title: "Créer l'arborescence",
+    text: "Créez d'abord un Thème (ex. Histoire), puis un Sous-thème (ex. La Préhistoire), puis un Quiz à l'intérieur.",
+  },
+  {
+    title: "Ajouter des questions",
+    text: "Dans un quiz, ajoutez des questions et choisissez le type : QCM, texte, glisser-déposer, association, classement ou dessin. On peut ajouter un indice et une solution.",
+  },
+  {
+    title: "Public ou privé",
+    text: "À la création d'un quiz, choisissez sa visibilité : Public (tous les élèves) ou Privé (seulement vos élèves). Un badge 🔒 signale les quiz privés.",
+  },
+  {
+    title: "Déblocage progressif",
+    text: "Côté élève, les quiz se débloquent au fur et à mesure (≈ 70 % de réussite pour passer au suivant). Les questions ratées peuvent revenir automatiquement.",
+  },
+  {
+    title: "Partager",
+    text: "L'icône 🔗 sur un quiz permet de le partager en lecture à un collègue, qui le retrouvera dans « Partagés avec moi ».",
+  },
+];
 import type { Theme, SubTheme, Quiz, Question, Answer } from "../../types";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -1994,6 +2023,10 @@ export default function ContentPage() {
 
   return (
     <AdminLayout>
+      <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+        <h1 className="text-xl font-extrabold text-ms-dark">Contenus</h1>
+        <DemoButton steps={CONTENT_DEMO} />
+      </div>
       <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
         {/* Mobile toggle */}
         <button
