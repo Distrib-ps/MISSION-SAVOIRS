@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useState } from "react";
-import * as XLSX from "xlsx";
+import { downloadCsv } from "../../lib/spreadsheet";
 import {
   ResponsiveContainer,
   BarChart,
@@ -76,12 +76,6 @@ function HBarChart({
   );
 }
 
-function downloadCsv(filename: string, rows: (string | number)[][]) {
-  const ws = XLSX.utils.aoa_to_sheet(rows);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Stats");
-  XLSX.writeFile(wb, filename, { bookType: "csv" });
-}
 
 export default function StatsPage() {
   const [tab, setTab] = useState<"global" | "student">("global");
