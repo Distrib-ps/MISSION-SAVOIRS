@@ -6,8 +6,8 @@ Ce dossier regroupe la documentation de conformité, renseignée pour ce déploi
 ## Documents
 
 Contexte : projet éducatif développé par **Théo Delhay** (à titre personnel, non commercial) pour
-l'**École Élémentaire Grand Pré Bulcos** (responsable de traitement, représentée par Sabrina
-Letellier).
+l'**École Élémentaire Grand Pré Bulcos** (responsable de traitement). Le projet y est porté par
+Sabrina Letellier (enseignante référente).
 
 | Document | Objet | Statut |
 |---|---|---|

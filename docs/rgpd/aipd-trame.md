@@ -44,6 +44,6 @@
 ## 5. Avis et validation
 
 - Avis du DPO : sans objet (aucun DPO désigné — petit projet scolaire)
-- Position du responsable de traitement : École Élémentaire Grand Pré Bulcos (Sabrina Letellier) — à formaliser
+- Position du responsable de traitement : École Élémentaire Grand Pré Bulcos (projet porté par Sabrina Letellier, enseignante référente) — à formaliser
 - Consultation des personnes/représentants : information des familles via la note dédiée
 - Date de l'analyse / révision : juin 2026
