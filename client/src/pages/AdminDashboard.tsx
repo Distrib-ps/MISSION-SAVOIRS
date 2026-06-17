@@ -105,7 +105,7 @@ export default function AdminDashboard() {
               </svg>
             </div>
             <h3 className="text-lg font-bold text-ms-dark mb-1">
-              KPI &amp; Statistiques
+              Statistiques
             </h3>
             <p className="text-sm text-ms-gray">
               Suivre la progression et les taux de réussite.

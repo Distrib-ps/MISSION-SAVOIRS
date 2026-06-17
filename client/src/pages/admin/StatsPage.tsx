@@ -143,7 +143,7 @@ export default function StatsPage() {
   function exportGlobal() {
     if (!overview) return;
     downloadCsv(`kpi_global_${level || "tous"}_${today()}.csv`, [
-      ["KPI", "Valeur"],
+      ["Indicateur", "Valeur"],
       ["Élèves", overview.cards.students],
       ["Tentatives", overview.cards.attempts],
       ["Quiz terminés", overview.cards.completed],
@@ -200,7 +200,7 @@ export default function StatsPage() {
     <AdminLayout>
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-extrabold text-ms-dark">KPI &amp; Statistiques</h1>
+          <h1 className="text-2xl font-extrabold text-ms-dark">Statistiques</h1>
           <StatsDemo />
         </div>
         {Tabs}
