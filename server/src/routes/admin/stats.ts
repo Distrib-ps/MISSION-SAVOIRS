@@ -194,7 +194,7 @@ router.get("/students", async (req: Request, res: Response): Promise<void> => {
     const students = await prisma.user.findMany({
       where: { role: "STUDENT", ...(level ? { level } : {}), ...studentScope(req) },
       select: { id: true, firstName: true, lastName: true, level: true },
-      orderBy: [{ level: "asc" }, { firstName: "asc" }],
+      orderBy: [{ level: "asc" }],
     });
 
     const attempts = await prisma.quizAttempt.findMany({
@@ -224,6 +224,14 @@ router.get("/students", async (req: Request, res: Response): Promise<void> => {
         lastActivity: last,
       };
     });
+
+    // Tri par niveau puis par nom (noms chiffrés en base → tri applicatif)
+    const LEVEL_ORDER = ["CP", "CE1", "CE2", "CM1", "CM2"];
+    rows.sort(
+      (a, b) =>
+        LEVEL_ORDER.indexOf(a.level ?? "") - LEVEL_ORDER.indexOf(b.level ?? "") ||
+        a.name.localeCompare(b.name, "fr")
+    );
 
     res.json({ students: rows });
   } catch (error) {

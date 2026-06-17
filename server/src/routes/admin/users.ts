@@ -38,8 +38,9 @@ router.get("/teachers", async (req: Request, res: Response): Promise<void> => {
     const teachers = await prisma.user.findMany({
       where: { role: "TEACHER", id: { not: currentUserId(req) } },
       select: { id: true, firstName: true, lastName: true },
-      orderBy: { firstName: "asc" },
     });
+    // Tri par nom côté applicatif (noms chiffrés en base)
+    teachers.sort((a, b) => a.firstName.localeCompare(b.firstName, "fr"));
     res.json({ teachers });
   } catch (error) {
     console.error("Erreur teachers GET:", error);
@@ -148,22 +149,26 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
       where.role = upperRole;
     }
 
-    // Search by firstName, lastName, or username
+    // Les noms étant chiffrés en base, la recherche par nom et le tri par nom
+    // se font côté applicatif (après déchiffrement par l'extension Prisma).
+    // La recherche par username reste possible en SQL.
+    const users = await prisma.user.findMany({ where, select: userSelect });
+
+    let result = users;
     if (search && typeof search === "string") {
-      where.OR = [
-        { firstName: { contains: search, mode: "insensitive" } },
-        { lastName: { contains: search, mode: "insensitive" } },
-        { username: { contains: search, mode: "insensitive" } },
-      ];
+      const q = search.toLowerCase().trim();
+      result = users.filter(
+        (u) =>
+          u.firstName.toLowerCase().includes(q) ||
+          u.lastName.toLowerCase().includes(q) ||
+          u.username.toLowerCase().includes(q)
+      );
     }
+    result = [...result].sort((a, b) =>
+      `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`, "fr")
+    );
 
-    const users = await prisma.user.findMany({
-      where,
-      select: userSelect,
-      orderBy: { firstName: "asc" },
-    });
-
-    res.json({ users });
+    res.json({ users: result });
   } catch (error) {
     console.error("Erreur lors de la récupération des utilisateurs:", error);
     res.status(500).json({ error: "Erreur interne du serveur" });
