@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import type { ChangeEvent, FormEvent, DragEvent } from "react";
-import * as XLSX from "xlsx";
+import { readSpreadsheet, downloadXlsx } from "../../lib/spreadsheet";
 import AdminLayout from "../../components/admin/AdminLayout";
 import UserPathsModal from "../../components/admin/UserPathsModal";
 import { useAuth } from "../../contexts/AuthContext";
@@ -82,35 +82,29 @@ function RoleBadge({ role }: { role: Role }) {
 /* ------------------------------------------------------------------ */
 
 function downloadCredentials(users: ImportedUser[]) {
-  const wsData = [
+  const wsData: (string | number)[][] = [
     ["PRENOM", "NOM", "NIVEAU", "IDENTIFIANT", "MOT DE PASSE"],
     ...users.map((u) => [u.prenom, u.nom, u.niveau, u.identifiant, u.motDePasse]),
   ];
-  const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-  // Auto column widths
-  ws["!cols"] = [{ wch: 15 }, { wch: 15 }, { wch: 8 }, { wch: 20 }, { wch: 15 }];
-
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Identifiants");
-  XLSX.writeFile(wb, `identifiants_eleves_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  void downloadXlsx(
+    `identifiants_eleves_${new Date().toISOString().slice(0, 10)}.xlsx`,
+    "Identifiants",
+    wsData,
+    [15, 15, 8, 20, 15]
+  );
 }
 
 /* Modèle d'import prêt à remplir (avec exemples, dont un élève multi-groupes) */
 function downloadImportTemplate(classes: Classe[]) {
   const g1 = classes[0]?.name ?? "CE2-2";
   const g2 = classes[1]?.name ?? "Groupe 1";
-  const wsData = [
+  const wsData: (string | number)[][] = [
     ["PRENOM", "NOM", "NIVEAU", "CLASSE"],
     ["Lina", "Dupont", "CE1", ""],
     ["Adam", "Martin", "CM2", g1],
     ["Lucas", "Bernard", "CM1", `${g1} ; ${g2}`],
   ];
-  const ws = XLSX.utils.aoa_to_sheet(wsData);
-  ws["!cols"] = [{ wch: 15 }, { wch: 15 }, { wch: 8 }, { wch: 30 }];
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Élèves");
-  XLSX.writeFile(wb, "modele_import_eleves.xlsx");
+  void downloadXlsx("modele_import_eleves.xlsx", "Élèves", wsData, [15, 15, 8, 30]);
 }
 
 /* ------------------------------------------------------------------ */
@@ -426,22 +420,16 @@ export default function UsersPage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  function parseFile(file: File) {
+  async function parseFile(file: File) {
     setImportFile(file);
     setImportError("");
     setImportResult(null);
 
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      try {
-        const data = new Uint8Array(evt.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: "array" });
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        if (!sheet) { setImportError("Le fichier ne contient aucune feuille"); return; }
+    try {
+      const rows = await readSpreadsheet(file);
+      if (rows.length === 0) { setImportError("Le fichier est vide"); return; }
 
-        const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet);
-        if (rows.length === 0) { setImportError("Le fichier est vide"); return; }
-
+      {
         const validLevels = ["CP", "CE1", "CE2", "CM1", "CM2"];
         // Résolution des classes par nom (insensible à la casse) → niveau
         const classByName = new Map(classesList.map((c) => [c.name.toLowerCase().trim(), c]));
@@ -470,23 +458,22 @@ export default function UsersPage() {
         });
 
         setImportPreview(parsed);
-      } catch {
-        setImportError("Impossible de lire le fichier");
       }
-    };
-    reader.readAsArrayBuffer(file);
+    } catch {
+      setImportError("Impossible de lire le fichier");
+    }
   }
 
   function handleDrop(e: DragEvent<HTMLDivElement>) {
     e.preventDefault();
     setDragOver(false);
     const file = e.dataTransfer.files[0];
-    if (file) parseFile(file);
+    if (file) void parseFile(file);
   }
 
   function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null;
-    if (file) parseFile(file);
+    if (file) void parseFile(file);
   }
 
   async function handleImport() {
