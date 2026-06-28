@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<title>Mission Savoirs — Dossier technique</title>
+<style>
+  :root { --lav:#7c5cff; --lav2:#b9a7f7; --ink:#1f2433; --gray:#5b6172; --light:#e7e3f5; --cream:#f7f5ff; }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--ink); margin:0; font-size: 12px; line-height: 1.55; }
+  h1,h2,h3 { color: var(--ink); line-height:1.2; }
+  h2 { font-size: 20px; border-bottom: 3px solid var(--lav); padding-bottom:6px; margin:0 0 14px; }
+  h3 { font-size: 14.5px; color: var(--lav); margin: 18px 0 6px; }
+  h4 { font-size: 12.5px; margin: 12px 0 4px; }
+  p { margin: 6px 0; }
+  ul,ol { margin: 6px 0; padding-left: 20px; }
+  li { margin: 3px 0; }
+  code { background: var(--cream); border:1px solid var(--light); border-radius:4px; padding:0 4px; font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 11px; }
+  .page { padding: 26mm 20mm; }
+  .break { page-break-before: always; }
+  table { border-collapse: collapse; width:100%; margin: 8px 0; font-size: 11px; }
+  th,td { border:1px solid var(--light); padding: 5px 8px; text-align:left; vertical-align: top; }
+  th { background: var(--cream); }
+  .muted { color: var(--gray); }
+  .tag { display:inline-block; background:var(--cream); border:1px solid var(--light); border-radius:20px; padding:1px 9px; font-size:10.5px; margin:2px 3px 2px 0; }
+  .ok { color:#15803d; font-weight:700; }
+  .card { border:1px solid var(--light); border-radius:10px; padding:10px 12px; margin:8px 0; background:#fff; }
+  .cap { border:2px dashed var(--lav2); border-radius:10px; padding:18px; text-align:center; color:var(--gray); background:var(--cream); margin:8px 0; font-style:italic; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .kpi { text-align:center; border:1px solid var(--light); border-radius:10px; padding:10px; background:var(--cream); }
+  .kpi b { display:block; font-size:22px; color:var(--lav); }
+  /* Architecture flow */
+  .flow { margin: 10px auto; max-width: 360px; }
+  .node { border:2px solid var(--lav); border-radius:10px; padding:10px 12px; text-align:center; font-weight:700; background:#fff; }
+  .node small { display:block; font-weight:400; color:var(--gray); }
+  .arrow { text-align:center; color:var(--lav); font-size:18px; line-height:1; margin:3px 0; }
+  /* Cover */
+  .cover { height: 247mm; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; }
+  .cover .logo { width:70px; height:70px; border-radius:18px; background:var(--lav); color:#fff; font-size:38px; font-weight:800; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 24px rgba(124,92,255,.3); }
+  .cover h1 { font-size:44px; letter-spacing:1px; margin:22px 0 4px; }
+  .cover .sub { font-size:18px; color:var(--lav); font-weight:700; }
+  .cover .meta { margin-top:34px; color:var(--gray); font-size:14px; }
+  .cover .meta strong { color:var(--ink); font-size:16px; }
+  .toc li { margin:6px 0; }
+  .toc .n { color:var(--lav); font-weight:700; }
+</style>
+</head>
+<body>
+
+<!-- ============ COUVERTURE ============ -->
+<section class="page cover">
+  <div class="logo">M</div>
+  <h1>MISSION SAVOIRS</h1>
+  <div class="sub">Workshop Client</div>
+  <div class="meta">
+    <p><strong>MBA Développeur Full Stack</strong></p>
+    <p>Dossier technique</p>
+    <p style="margin-top:18px;"><strong>Théo Delhay</strong></p>
+    <p>Juin 2026</p>
+  </div>
+  <p class="muted" style="position:absolute; bottom:18mm; font-size:11px;">Plateforme pédagogique adaptative pour l'école primaire</p>
+</section>
+
+<!-- ============ SOMMAIRE ============ -->
+<section class="page break">
+  <h2>Sommaire</h2>
+  <ol class="toc">
+    <li><span class="n">1.</span> Présentation du projet — contexte, objectifs, client</li>
+    <li><span class="n">2.</span> Cahier des charges / Note de cadrage</li>
+    <li><span class="n">3.</span> Pilotage — comptes rendus</li>
+    <li><span class="n">4.</span> Gestion de projet — planning, GitHub, issues, PR, Kanban</li>
+    <li><span class="n">5.</span> Architecture technique</li>
+    <li><span class="n">6.</span> Base de données — schéma, relations, choix</li>
+    <li><span class="n">7.</span> Fonctionnalités</li>
+    <li><span class="n">8.</span> Sécurité &amp; RGPD</li>
+    <li><span class="n">9.</span> Tests &amp; vérifications</li>
+    <li><span class="n">10.</span> Déploiement</li>
+    <li><span class="n">11.</span> Difficultés rencontrées</li>
+    <li><span class="n">12.</span> Conclusion — maintenance &amp; évolutions</li>
+  </ol>
+
+  <h3>Le projet en chiffres</h3>
+  <div class="grid2" style="grid-template-columns:repeat(4,1fr);">
+    <div class="kpi"><b>103</b>commits</div>
+    <div class="kpi"><b>45</b>pull requests</div>
+    <div class="kpi"><b>18</b>migrations BDD</div>
+    <div class="kpi"><b>21</b>modèles de données</div>
+  </div>
+  <div class="grid2" style="grid-template-columns:repeat(4,1fr); margin-top:6px;">
+    <div class="kpi"><b>~70</b>fichiers TypeScript</div>
+    <div class="kpi"><b>6</b>types de questions</div>
+    <div class="kpi"><b>3</b>rôles</div>
+    <div class="kpi"><b>100%</b>TypeScript</div>
+  </div>
+</section>
+
+<!-- ============ 1. PRÉSENTATION ============ -->
+<section class="page break">
+  <h2>1. Présentation du projet</h2>
+
+  <h3>Contexte</h3>
+  <p>Mission Savoirs est une <strong>plateforme pédagogique adaptative</strong> destinée aux élèves de l'école
+  primaire (CP à CM2). Elle permet aux enseignants de créer des contenus (quiz, exercices interactifs) et de
+  suivre la progression de chaque élève, tandis que les élèves avancent dans des parcours qui se débloquent
+  progressivement et rejouent automatiquement les notions ratées.</p>
+  <p>Le projet a été mené dans le cadre du Workshop Client du MBA Développeur Full Stack, en conditions proches
+  du réel : un client (une école), un besoin pédagogique, et un cycle de développement itératif piloté par
+  tickets et pull requests.</p>
+
+  <h3>Objectifs</h3>
+  <ul>
+    <li>Proposer aux jeunes élèves une interface <strong>simple, ludique et accessible</strong>.</li>
+    <li>Offrir aux enseignants un <strong>back-office complet</strong> : gestion des élèves, des classes/groupes,
+      du contenu, et suivi statistique.</li>
+    <li>Adapter le parcours : <strong>déblocage progressif</strong>, <strong>réinjection</strong> des questions
+      ratées, <strong>révisions</strong> par niveau, <strong>parcours personnalisés</strong>.</li>
+    <li>Garantir un haut niveau de <strong>sécurité</strong> et de <strong>conformité RGPD</strong>, l'application
+      traitant des données de mineurs.</li>
+  </ul>
+
+  <h3>Client &amp; acteurs</h3>
+  <table>
+    <tr><th>Acteur</th><th>Rôle</th></tr>
+    <tr><td>École Élémentaire Grand Pré Bulcos (Meylan)</td><td>Client / établissement utilisateur — responsable de traitement RGPD</td></tr>
+    <tr><td>Enseignant·e référent·e (Sabrina Letellier)</td><td>Porteuse du projet au sein de l'établissement, retours fonctionnels</td></tr>
+    <tr><td>Théo Delhay</td><td>Conception, développement full-stack, déploiement</td></tr>
+  </table>
+
+  <h3>Profils utilisateurs</h3>
+  <table>
+    <tr><th>Rôle</th><th>Accès</th></tr>
+    <tr><td><strong>Élève</strong> (STUDENT)</td><td>Espace de jeu : thèmes, quiz, révisions, parcours personnalisés.</td></tr>
+    <tr><td><strong>Professeur</strong> (TEACHER)</td><td>Back-office : son contenu, tous les élèves, classes, statistiques, validation des dessins.</td></tr>
+    <tr><td><strong>Administrateur / Owner</strong> (ADMIN)</td><td>Tout le contenu, gestion des comptes staff, journal d'accès, export RGPD.</td></tr>
+  </table>
+</section>
+
+<!-- ============ 2. CAHIER DES CHARGES ============ -->
+<section class="page break">
+  <h2>2. Cahier des charges / Note de cadrage</h2>
+  <p>La note de cadrage initiale (document fourni par le client) définit le périmètre fonctionnel, les profils
+  utilisateurs et les contraintes. Elle est jointe au présent dossier.</p>
+  <div class="cap">[ Insérer ici la note de cadrage / le cahier des charges (PDF d'origine) ]</div>
+
+  <h3>Périmètre fonctionnel retenu</h3>
+  <table>
+    <tr><th>Domaine</th><th>Besoins</th></tr>
+    <tr><td>Contenu</td><td>Arborescence Thème → Sous-thème → Quiz → Questions ; 6 types de questions ; visibilité public/privé.</td></tr>
+    <tr><td>Élèves &amp; classes</td><td>Comptes élèves, import en masse, classes/groupes multi-appartenance, niveaux.</td></tr>
+    <tr><td>Pédagogie adaptative</td><td>Déblocage progressif, réinjection des erreurs, révisions par niveau, parcours personnalisés.</td></tr>
+    <tr><td>Suivi</td><td>Statistiques globales et par élève, points faibles, export.</td></tr>
+    <tr><td>Transverse</td><td>Authentification, rôles &amp; permissions, conformité RGPD.</td></tr>
+  </table>
+</section>
+
+<!-- ============ 3. PILOTAGE ============ -->
+<section class="page break">
+  <h2>3. Pilotage — comptes rendus</h2>
+  <p>Le projet a été piloté de façon itérative. Chaque itération livre une fonctionnalité validée (typecheck +
+  build + vérification end-to-end) puis intégrée via une pull request. Les comptes rendus de suivi sont
+  consignés ci-dessous.</p>
+  <div class="cap">[ Insérer ici les comptes rendus de réunion / points client (CR1, CR2, …) ]</div>
+
+  <h3>Synthèse des itérations (extrait de l'historique réel)</h3>
+  <table>
+    <tr><th>Itération</th><th>Livrables</th></tr>
+    <tr><td>Fondations</td><td>Auth JWT, modèle de contenu, types de questions (QCM, texte, drag &amp; drop, association, classement, dessin).</td></tr>
+    <tr><td>Pédagogie</td><td>Parcours personnalisés à progression isolée, révisions par niveau, tableau de bord KPI.</td></tr>
+    <tr><td>Multi-acteurs</td><td>Rôle professeur, propriété &amp; cloisonnement du contenu, co-accès (partage de quiz), classes &amp; ciblage.</td></tr>
+    <tr><td>Affinages</td><td>Multi-classe, pool d'élèves partagé, visibilité public/privé, import multi-groupes, thèmes partagés.</td></tr>
+    <tr><td>Sécurité &amp; RGPD</td><td>Audit complet, durcissement, chiffrement des noms, journal d'accès, export, documentation de conformité.</td></tr>
+    <tr><td>Onboarding</td><td>Guide intégré, visite guidée, démos fidèles par catégorie, assistant local.</td></tr>
+  </table>
+</section>
+
+<!-- ============ 4. GESTION DE PROJET ============ -->
+<section class="page break">
+  <h2>4. Gestion de projet</h2>
+
+  <h3>Planning &amp; méthode</h3>
+  <p>Développement itératif inspiré du flux GitHub : un ticket (issue) → une branche → une pull request →
+  revue/validation → merge sur <code>main</code>. Chaque PR est autonome, testée et documentée. Le travail a été
+  suivi sur un tableau Kanban (À faire / En cours / Terminé).</p>
+
+  <h3>GitHub — dépôt</h3>
+  <table>
+    <tr><th>Élément</th><th>Valeur</th></tr>
+    <tr><td>Dépôt</td><td><code>Distrib-ps/MISSION-SAVOIRS</code></td></tr>
+    <tr><td>Branche principale</td><td><code>main</code> (toujours déployable)</td></tr>
+    <tr><td>Commits</td><td>103</td></tr>
+    <tr><td>Pull requests fusionnées</td><td>45</td></tr>
+    <tr><td>Stratégie</td><td>1 fonctionnalité = 1 branche = 1 PR ; merge après typecheck + build + e2e</td></tr>
+  </table>
+
+  <h3>Kanban</h3>
+  <div class="cap">[ Insérer ici une capture du tableau Kanban / projet GitHub ]</div>
+
+  <h3>Issues &amp; Pull Requests (extrait)</h3>
+  <p class="muted">45 PR fusionnées. Extrait représentatif :</p>
+  <table>
+    <tr><th>#</th><th>Pull request</th></tr>
+    <tr><td>16</td><td>Parcours personnalisés — progression isolée par parcours</td></tr>
+    <tr><td>19</td><td>Révisions par niveau — mix de questions existantes</td></tr>
+    <tr><td>20</td><td>KPI &amp; tableau de bord de progression</td></tr>
+    <tr><td>21–25</td><td>Classes &amp; ciblage, rôle professeur &amp; cloisonnement, co-accès, validation des dessins</td></tr>
+    <tr><td>27–33</td><td>Multi-classe, pool d'élèves partagé, visibilité public/privé, import multi-groupes</td></tr>
+    <tr><td>34–46</td><td>Sécurité (lots 1-2) &amp; RGPD (lots 3-5) : durcissement, chiffrement, journal, export</td></tr>
+    <tr><td>47–56</td><td>Onboarding : guide, visite guidée, démos fidèles par catégorie</td></tr>
+    <tr><td>59–63</td><td>Total élèves global, partage depuis l'arbo, questions publiques en révision, thèmes partagés, assistant d'aide</td></tr>
+  </table>
+  <div class="cap">[ Insérer ici une capture de la liste des Issues et/ou des PR GitHub ]</div>
+</section>
+
+<!-- ============ 5. ARCHITECTURE ============ -->
+<section class="page break">
+  <h2>5. Architecture technique</h2>
+  <p>Architecture <strong>client / serveur</strong> découplée : une application web (SPA) communique avec une API
+  REST, elle-même adossée à une base de données relationnelle via un ORM.</p>
+
+  <div class="flow">
+    <div class="node">React + Vite <small>SPA TypeScript · Tailwind CSS</small></div>
+    <div class="arrow">↓ &nbsp; API REST (JSON, JWT Bearer)</div>
+    <div class="node">Express + TypeScript <small>API REST · middlewares auth/rôles</small></div>
+    <div class="arrow">↓ &nbsp; requêtes typées</div>
+    <div class="node">Prisma ORM <small>schéma typé · migrations versionnées</small></div>
+    <div class="arrow">↓</div>
+    <div class="node">PostgreSQL <small>Supabase (dév) → hébergement local / France (cible prod)</small></div>
+  </div>
+
+  <h3>Stack &amp; choix techniques</h3>
+  <table>
+    <tr><th>Couche</th><th>Technologie</th><th>Pourquoi</th></tr>
+    <tr><td>Front-end</td><td>React 18 + Vite, TypeScript, Tailwind CSS</td><td>DX rapide (HMR), typage de bout en bout, UI cohérente et accessible.</td></tr>
+    <tr><td>Back-end</td><td>Node.js + Express, TypeScript</td><td>API REST légère, middlewares clairs pour l'auth et le cloisonnement.</td></tr>
+    <tr><td>ORM</td><td>Prisma</td><td>Schéma unique typé, migrations versionnées, requêtes paramétrées (anti-injection).</td></tr>
+    <tr><td>Base de données</td><td>PostgreSQL</td><td>Relationnel robuste, contraintes d'unicité, intégrité référentielle (cascade).</td></tr>
+    <tr><td>Graphiques</td><td>Recharts</td><td>Visualisation des statistiques de progression.</td></tr>
+  </table>
+
+  <h3>Aspects transverses</h3>
+  <ul>
+    <li><strong>Authentification</strong> : JWT signé HS256 ; le rôle est <em>relu en base</em> à chaque requête
+      (une rétrogradation prend effet immédiatement).</li>
+    <li><strong>Permissions (RBAC)</strong> : middlewares <code>authenticate</code>, <code>requireStaff</code>
+      (ADMIN/TEACHER) et <code>requireAdmin</code> (Owner) ; cloisonnement métier par propriété du contenu.</li>
+    <li><strong>Sécurité HTTP</strong> : Helmet (CSP, HSTS, nosniff…), CORS restreint, limite de charge utile,
+      anti-bruteforce sur la connexion.</li>
+    <li><strong>Organisation du code</strong> : routes par domaine (<code>admin/</code>, <code>student/</code>),
+      moteur de quiz partagé, helpers d'ownership et de chiffrement isolés.</li>
+  </ul>
+</section>
+
+<!-- ============ 6. BASE DE DONNÉES ============ -->
+<section class="page break">
+  <h2>6. Base de données</h2>
+  <p>Schéma relationnel de 21 modèles/énumérations, géré par Prisma et 18 migrations versionnées.</p>
+
+  <h3>Entités principales</h3>
+  <table>
+    <tr><th>Modèle</th><th>Rôle</th></tr>
+    <tr><td><code>User</code></td><td>Comptes (élève / prof / admin). Noms chiffrés au repos.</td></tr>
+    <tr><td><code>Class</code></td><td>Classes &amp; groupes ; relation N–N avec les élèves ; propriétaire (prof).</td></tr>
+    <tr><td><code>Theme</code> / <code>SubTheme</code></td><td>Taxonomie du contenu. Thèmes partagés ; sous-thèmes propres à chaque créateur.</td></tr>
+    <tr><td><code>Quiz</code> / <code>Question</code> / <code>Answer</code></td><td>Contenu pédagogique. Quiz à visibilité Public/Privé ; 6 types de questions.</td></tr>
+    <tr><td><code>QuizClass</code></td><td>Ciblage d'un quiz vers des classes (N–N).</td></tr>
+    <tr><td><code>QuizShare</code></td><td>Co-accès en lecture d'un quiz à un autre professeur.</td></tr>
+    <tr><td><code>QuizAttempt</code> / <code>QuestionAttempt</code></td><td>Tentatives et réponses des élèves (scores, indices, statut de validation des dessins).</td></tr>
+    <tr><td><code>CustomPath</code> / <code>CustomPathQuiz</code></td><td>Parcours personnalisés par élève (progression isolée).</td></tr>
+    <tr><td><code>Revision</code> / <code>RevisionQuestion</code></td><td>Révisions par niveau mixant des questions de plusieurs quiz.</td></tr>
+    <tr><td><code>AuditLog</code></td><td>Journal d'accès aux données sensibles (RGPD, traçabilité).</td></tr>
+  </table>
+
+  <h3>Relations &amp; intégrité</h3>
+  <ul>
+    <li><strong>Cascade</strong> : la suppression d'un élève efface ses tentatives, réponses, dessins et parcours
+      (conformité au droit à l'effacement).</li>
+    <li><strong>SetNull</strong> : la suppression d'un compte staff conserve le contenu créé (auteur dissocié).</li>
+    <li><strong>Unicité</strong> : nom de thème unique (taxonomie commune) ; sous-thème unique
+      <em>par créateur</em> <code>(themeId, name, createdById)</code> ; appartenance élève↔classe en N–N.</li>
+  </ul>
+
+  <h3>Choix structurants</h3>
+  <ul>
+    <li><strong>Thèmes partagés / sous-thèmes privés</strong> : évite les doublons de matières (un seul
+      « Français ») tout en laissant chaque prof organiser son propre contenu.</li>
+    <li><strong>Niveau décorrélé de la classe</strong> : un élève multi-classe a un niveau propre.</li>
+    <li><strong>Chiffrement applicatif</strong> des noms (AES-256-GCM) directement au niveau de l'ORM.</li>
+  </ul>
+
+  <div class="cap">[ Insérer ici le schéma relationnel (diagramme ERD Prisma / dbdiagram) ]</div>
+</section>
+
+<!-- ============ 7. FONCTIONNALITÉS ============ -->
+<section class="page break">
+  <h2>7. Fonctionnalités</h2>
+  <p class="muted">Chaque fonctionnalité est présentée par : objectif, capture (à insérer), explication.</p>
+
+  <h3>7.1 Espace élève — jeu adaptatif</h3>
+  <p><strong>Objectif</strong> : un parcours ludique où l'élève progresse thème par thème.</p>
+  <div class="cap">[ Capture : tableau de bord élève « Bonjour {prénom} ! » + thèmes ]</div>
+  <p><strong>Explication</strong> : les quiz se débloquent progressivement (≈ 70 % de réussite requis). Les
+  questions ratées sont <em>réinjectées</em> automatiquement plus tard dans le même sous-thème. Indice après une
+  première erreur, solution ensuite.</p>
+
+  <h3>7.2 Six types de questions interactives</h3>
+  <p><strong>Objectif</strong> : varier les activités selon l'apprentissage visé.</p>
+  <div class="cap">[ Capture : exemples de questions (QCM, glisser-déposer, association, dessin) ]</div>
+  <p><strong>Explication</strong> : QCM, réponse libre (corrigée avec tolérance accents/casse), glisser-déposer,
+  association, classement, et dessin (zone de dessin, validé manuellement par le prof).</p>
+
+  <h3>7.3 Gestion du contenu (back-office)</h3>
+  <p><strong>Objectif</strong> : créer et organiser thèmes, sous-thèmes, quiz et questions.</p>
+  <div class="cap">[ Capture : page Contenus avec arborescence à gauche ]</div>
+  <p><strong>Explication</strong> : navigation en arborescence, réordonnancement, visibilité Public/Privé par quiz,
+  partage en lecture à un collègue. Les thèmes sont partagés (anti-doublon avec proposition de réutilisation).</p>
+
+  <h3>7.4 Élèves &amp; import en masse</h3>
+  <p><strong>Objectif</strong> : créer rapidement les comptes d'une classe.</p>
+  <div class="cap">[ Capture : fenêtre d'import Excel avec aperçu valides/erreurs ]</div>
+  <p><strong>Explication</strong> : création unitaire ou import Excel/CSV (modèle téléchargeable, colonne CLASSE
+  multi-groupes séparés par « ; »). Identifiants et mots de passe générés automatiquement et exportables. Pool
+  d'élèves partagé entre profs (évite les doublons de comptes).</p>
+
+  <h3>7.5 Classes &amp; groupes (multi-appartenance)</h3>
+  <p><strong>Objectif</strong> : organiser les élèves et cibler le contenu.</p>
+  <div class="cap">[ Capture : page Classes &amp; groupes ]</div>
+  <p><strong>Explication</strong> : un élève peut appartenir à plusieurs classes/groupes ; un quiz « Privé » n'est
+  visible que par les élèves du créateur.</p>
+
+  <h3>7.6 Parcours personnalisés &amp; révisions</h3>
+  <p><strong>Objectif</strong> : différencier et préparer les évaluations.</p>
+  <div class="cap">[ Capture : parcours personnalisé d'un élève + création de révision ]</div>
+  <p><strong>Explication</strong> : parcours sur mesure par élève (progression isolée) ; révisions par niveau
+  mixant des questions de plusieurs quiz, y compris des questions de quiz publics.</p>
+
+  <h3>7.7 Validation des dessins</h3>
+  <p><strong>Objectif</strong> : corriger les réponses libres dessinées.</p>
+  <div class="cap">[ Capture : page « Dessins à valider » avec ✅ / ❌ ]</div>
+  <p><strong>Explication</strong> : badge de notification ; l'image est purgée dès la validation (vie privée).</p>
+
+  <h3>7.8 Statistiques de progression</h3>
+  <p><strong>Objectif</strong> : suivre élèves et contenus.</p>
+  <div class="cap">[ Capture : statistiques globales + détail par élève ]</div>
+  <p><strong>Explication</strong> : indicateurs globaux, vue par élève (progression, points faibles, détail
+  question par question), export CSV.</p>
+
+  <h3>7.9 Onboarding intégré</h3>
+  <p><strong>Objectif</strong> : rendre un prof autonome sans formation.</p>
+  <div class="cap">[ Capture : page Aide + démo « fausse page » d'une catégorie ]</div>
+  <p><strong>Explication</strong> : visite guidée au premier login, bouton « Démo » par catégorie (reproduction
+  fidèle des écrans), guide cherchable et assistant local de questions (sans IA externe).</p>
+</section>
+
+<!-- ============ 8. SÉCURITÉ & RGPD ============ -->
+<section class="page break">
+  <h2>8. Sécurité &amp; RGPD</h2>
+  <p>L'application traitant des <strong>données de mineurs</strong>, la sécurité et la conformité ont fait l'objet
+  d'un audit complet (4 axes) suivi d'une remédiation en plusieurs lots, puis d'un <em>second audit de
+  vérification</em>.</p>
+
+  <h3>Authentification &amp; mots de passe</h3>
+  <ul>
+    <li>Mots de passe <strong>hachés bcrypt</strong> (coût 12) ; jamais renvoyés par l'API.</li>
+    <li>JWT <strong>HS256</strong>, secret obligatoire (refus de démarrage si secret par défaut), algorithme épinglé.</li>
+    <li>Rôle <strong>relu en base</strong> à chaque requête (révocation immédiate).</li>
+    <li><strong>Anti-bruteforce</strong> sur la connexion (limite par IP + identifiant) avec message de déblocage par l'enseignant.</li>
+  </ul>
+
+  <h3>Permissions &amp; cloisonnement</h3>
+  <ul>
+    <li>RBAC à 3 niveaux ; un professeur ne gère que <strong>son</strong> contenu (propriété <code>createdById</code>).</li>
+    <li>Données élèves scopées sur l'utilisateur du token (pas de fuite inter-élèves).</li>
+    <li><strong>IDOR fermés</strong> : réponses aux questions, révisions et parcours validés contre la propriété / l'accessibilité.</li>
+  </ul>
+
+  <h3>Protection des entrées</h3>
+  <ul>
+    <li>Requêtes Prisma <strong>paramétrées</strong> (aucune SQL brute) ; pas de rendu HTML non échappé côté client.</li>
+    <li>Upload borné (taille + type), validation stricte des dessins (data-URL image + plafond).</li>
+    <li>En-têtes Helmet, CORS restreint ; dépendances assainies (remplacement de la lib <code>xlsx</code> vulnérable).</li>
+  </ul>
+
+  <h3>RGPD</h3>
+  <table>
+    <tr><th>Exigence</th><th>Mise en œuvre</th></tr>
+    <tr><td>Minimisation</td><td>Aucun email/date de naissance/géolocalisation d'élève. Données strictement pédagogiques.</td></tr>
+    <tr><td>Chiffrement au repos</td><td>Noms (prénom/nom) chiffrés <strong>AES-256-GCM</strong> via extension Prisma (clé en variable d'environnement).</td></tr>
+    <tr><td>Conservation</td><td>Dessins purgés dès validation ; résultats supprimés au départ de l'élève (cascade).</td></tr>
+    <tr><td>Droits des personnes</td><td>Export des données d'un élève (accès/portabilité) réservé à l'administrateur.</td></tr>
+    <tr><td>Traçabilité</td><td>Journal d'accès (consultations, exports, suppressions).</td></tr>
+    <tr><td>Transparence</td><td>Pages Confidentialité &amp; Mentions légales ; documentation (registre art. 30, note parents, AIPD, DPA).</td></tr>
+    <tr><td>Hébergement</td><td>Cible : local, en France — aucun transfert hors UE, aucun sous-traitant tiers.</td></tr>
+  </table>
+</section>
+
+<!-- ============ 9. TESTS ============ -->
+<section class="page break">
+  <h2>9. Tests &amp; vérifications</h2>
+  <p>La stratégie de qualité repose sur trois piliers, appliqués <strong>à chaque pull request</strong> :</p>
+  <ol>
+    <li><strong>Typage statique strict</strong> — TypeScript de bout en bout, <code>tsc --noEmit</code> sans erreur (front + back).</li>
+    <li><strong>Build de production</strong> — <code>vite build</code> vérifié systématiquement.</li>
+    <li><strong>Vérifications fonctionnelles end-to-end</strong> — scripts exécutés contre le serveur réel
+      (JWT forgé, appels API, contrôle en base, puis nettoyage des données de test).</li>
+  </ol>
+
+  <h3>Campagnes de vérification end-to-end exécutées</h3>
+  <table>
+    <tr><th>Scénario</th><th>Vérifie</th><th>Résultat</th></tr>
+    <tr><td>Multi-classe</td><td>Élève dans 2 classes ; login/&laquo;me&raquo; renvoient les classes ; retrait d'une classe</td><td class="ok">✓</td></tr>
+    <tr><td>Import multi-groupes</td><td>Import CSV &amp; XLSX rattache l'élève à plusieurs groupes ; type invalide rejeté</td><td class="ok">✓</td></tr>
+    <tr><td>Pool d'élèves partagé</td><td>Un prof voit/édite tout élève ; ne peut pas toucher un compte staff (403)</td><td class="ok">✓</td></tr>
+    <tr><td>Visibilité quiz</td><td>Privé visible par les élèves du créateur uniquement ; <code>/start</code> 200/403</td><td class="ok">✓</td></tr>
+    <tr><td>Durcissement (lot 1)</td><td>En-têtes Helmet ; rate-limit 8→429 ; IDOR réponse élève 403</td><td class="ok">✓</td></tr>
+    <tr><td>IDOR contenu</td><td>Révision / parcours avec contenu d'autrui → 403</td><td class="ok">✓</td></tr>
+    <tr><td>Journal &amp; export</td><td>Export 200 + action tracée ; journal réservé à l'Owner (prof 403)</td><td class="ok">✓</td></tr>
+    <tr><td>Chiffrement des noms</td><td>Base = chiffré, API = clair ; login &amp; recherche OK</td><td class="ok">✓</td></tr>
+    <tr><td>Export RGPD owner-only</td><td>Admin 200, prof 403</td><td class="ok">✓</td></tr>
+    <tr><td>Total élèves global</td><td>Le tableau de bord prof affiche le total global</td><td class="ok">✓</td></tr>
+    <tr><td>Questions publiques en révision</td><td>Question publique 201, question privée d'autrui 403</td><td class="ok">✓</td></tr>
+    <tr><td>Thèmes partagés</td><td>Thème visible par tous ; sous-thème homonyme par autre prof 201 ; suppression d'autrui 403</td><td class="ok">✓</td></tr>
+  </table>
+  <p class="muted">12 campagnes (≈ 35 assertions), toutes validées. Typecheck et build verts sur l'ensemble des
+  45 PR fusionnées.</p>
+  <p><strong>Axe d'amélioration assumé</strong> : ces vérifications sont scriptées manuellement. La mise en place
+  d'une suite automatisée (Vitest/Jest + Supertest) et d'une CI (GitHub Actions) est identifiée comme évolution
+  prioritaire (cf. section 12).</p>
+</section>
+
+<!-- ============ 10. DÉPLOIEMENT ============ -->
+<section class="page break">
+  <h2>10. Déploiement</h2>
+
+  <h3>Topologie</h3>
+  <ul>
+    <li><strong>Front</strong> : application statique (build Vite) servie par l'hébergeur.</li>
+    <li><strong>API</strong> : service Node/Express derrière un reverse-proxy HTTPS (<code>trust proxy</code> activé).</li>
+    <li><strong>Base</strong> : PostgreSQL — Supabase en développement ; cible production : hébergement local / en France.</li>
+  </ul>
+
+  <h3>Variables d'environnement</h3>
+  <table>
+    <tr><th>Variable</th><th>Rôle</th></tr>
+    <tr><td><code>DATABASE_URL</code></td><td>Connexion runtime à PostgreSQL.</td></tr>
+    <tr><td><code>DIRECT_URL</code></td><td>Connexion directe pour les migrations Prisma.</td></tr>
+    <tr><td><code>JWT_SECRET</code></td><td>Secret de signature des jetons (fort, propre à l'environnement — démarrage refusé sinon).</td></tr>
+    <tr><td><code>ENCRYPTION_KEY</code></td><td>Clé AES-256 (32 octets base64) du chiffrement des noms. À sauvegarder précieusement.</td></tr>
+    <tr><td><code>CLIENT_URL</code></td><td>Origine autorisée (CORS).</td></tr>
+    <tr><td><code>PORT</code></td><td>Port d'écoute de l'API.</td></tr>
+  </table>
+
+  <h3>Procédure</h3>
+  <ol>
+    <li>Configurer les variables d'environnement (jamais commitées — <code>.env</code> gitignoré).</li>
+    <li>Appliquer les migrations : <code>prisma migrate deploy</code> (sans reset).</li>
+    <li>Builder le front (<code>vite build</code>) et démarrer l'API.</li>
+    <li>Première mise en production : exécuter le script de chiffrement des noms existants.</li>
+  </ol>
+</section>
+
+<!-- ============ 11. DIFFICULTÉS ============ -->
+<section class="page break">
+  <h2>11. Difficultés rencontrées</h2>
+
+  <h3>Migrations sur base partagée sans reset</h3>
+  <p><strong>Problème</strong> : la base de développement est partagée ; <code>prisma migrate dev</code>
+  proposait un reset destructeur (drift). <strong>Solution</strong> : génération du SQL via
+  <code>migrate diff</code> puis application avec <code>migrate deploy</code> (jamais de reset), et usage du
+  binaire local de Prisma (la version globale étant incompatible).</p>
+
+  <h3>Chiffrement des noms vs recherche/tri</h3>
+  <p><strong>Problème</strong> : une fois les noms chiffrés, la recherche et le tri SQL par nom ne fonctionnent
+  plus (le texte est illisible en base). <strong>Solution</strong> : extension Prisma chiffrant à l'écriture /
+  déchiffrant à la lecture (y compris les relations imbriquées), et déplacement de la recherche/du tri côté
+  applicatif après déchiffrement.</p>
+
+  <h3>Dépendance vulnérable (xlsx)</h3>
+  <p><strong>Problème</strong> : la librairie <code>xlsx</code> présente des failles sans correctif, sur des
+  fichiers uploadés. <strong>Solution</strong> : remplacement par <code>exceljs</code> (front + back), avec
+  chargement dynamique côté client pour ne pas alourdir le bundle.</p>
+
+  <h3>Modèle de contenu : doublons de thèmes</h3>
+  <p><strong>Problème</strong> : nom de thème unique en base + cloisonnement par prof = le 2ᵉ prof ne pouvait ni
+  voir ni recréer « Français ». <strong>Solution</strong> : thèmes <em>partagés</em> (visibles par tous) avec
+  proposition de réutilisation, et sous-thèmes uniques par créateur (migration de contrainte).</p>
+
+  <h3>Failles débusquées lors de l'audit de vérification</h3>
+  <p>Le second audit a révélé des <strong>IDOR</strong> dans la composition des révisions et parcours (un prof
+  pouvait inclure le contenu d'un autre). Corrigés par un contrôle de propriété / d'accessibilité, puis
+  re-vérifiés (403 attendu).</p>
+
+  <h3>Démos : fidélité sans appel réseau</h3>
+  <p><strong>Problème</strong> : guider l'utilisateur sur les écrans réels impliquait d'attendre l'apparition
+  d'éléments conditionnels. <strong>Solution</strong> : démos jouées sur une « fausse page » reproduisant
+  fidèlement le markup réel avec des données en dur — fluide, sans données créées.</p>
+</section>
+
+<!-- ============ 12. CONCLUSION ============ -->
+<section class="page break">
+  <h2>12. Conclusion</h2>
+  <p>Mission Savoirs est une application full-stack <strong>complète et cohérente</strong> : pédagogie adaptative
+  côté élève, back-office riche côté enseignant, et une attention forte portée à la sécurité et à la conformité
+  RGPD — exigence renforcée par le traitement de données de mineurs. Le projet a été conduit avec une discipline
+  d'intégration continue manuelle (typecheck, build, vérifications e2e à chaque PR).</p>
+
+  <h3>Maintenance</h3>
+  <ul>
+    <li>Code 100 % TypeScript, schéma de données unique et migrations versionnées : évolutions traçables et sûres.</li>
+    <li>Documentation : guide enseignant, dossier RGPD (registre, AIPD, DPA), manuel d'aide intégré.</li>
+    <li>Variables sensibles externalisées ; sauvegarde de la clé de chiffrement documentée.</li>
+  </ul>
+
+  <h3>Évolutions envisagées</h3>
+  <ul>
+    <li><strong>Tests automatisés &amp; CI</strong> : suite Vitest/Jest + Supertest, GitHub Actions (priorité).</li>
+    <li><strong>Sessions</strong> : passage du JWT en cookie <code>HttpOnly</code> + jeton de rafraîchissement.</li>
+    <li><strong>Contenu</strong> : sous-thèmes partagés, catalogue public de quiz, duplication entre profs.</li>
+    <li><strong>Assistant</strong> : éventuel chatbot IA hébergé en UE (sous réserve de mise à jour RGPD).</li>
+    <li><strong>Finalisation conformité</strong> : signature du DPA, AIPD validée, hébergement local en production.</li>
+  </ul>
+
+  <p style="margin-top:24px;" class="muted">Dossier technique — Mission Savoirs · Théo Delhay · MBA Développeur Full Stack · Juin 2026</p>
+</section>
+
+</body>
+</html>
