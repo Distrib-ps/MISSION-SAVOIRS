@@ -140,7 +140,6 @@
   <h2>2. Cahier des charges / Note de cadrage</h2>
   <p>La note de cadrage initiale (document fourni par le client) définit le périmètre fonctionnel, les profils
   utilisateurs et les contraintes. Elle est jointe au présent dossier.</p>
-  <div class="cap">[ Insérer ici la note de cadrage / le cahier des charges (PDF d'origine) ]</div>
 
   <h3>Périmètre fonctionnel retenu</h3>
   <table>
@@ -159,7 +158,6 @@
   <p>Le projet a été piloté de façon itérative. Chaque itération livre une fonctionnalité validée (typecheck +
   build + vérification end-to-end) puis intégrée via une pull request. Les comptes rendus de suivi sont
   consignés ci-dessous.</p>
-  <div class="cap">[ Insérer ici les comptes rendus de réunion / points client (CR1, CR2, …) ]</div>
 
   <h3>Synthèse des itérations (extrait de l'historique réel)</h3>
   <table>
@@ -193,7 +191,6 @@
   </table>
 
   <h3>Kanban</h3>
-  <div class="cap">[ Insérer ici une capture du tableau Kanban / projet GitHub ]</div>
 
   <h3>Issues &amp; Pull Requests (extrait)</h3>
   <p class="muted">45 PR fusionnées. Extrait représentatif :</p>
@@ -208,7 +205,6 @@
     <tr><td>47–56</td><td>Onboarding : guide, visite guidée, démos fidèles par catégorie</td></tr>
     <tr><td>59–63</td><td>Total élèves global, partage depuis l'arbo, questions publiques en révision, thèmes partagés, assistant d'aide</td></tr>
   </table>
-  <div class="cap">[ Insérer ici une capture de la liste des Issues et/ou des PR GitHub ]</div>
 </section>
 
 <!-- ============ 5. ARCHITECTURE ============ -->
@@ -287,66 +283,56 @@
     <li><strong>Chiffrement applicatif</strong> des noms (AES-256-GCM) directement au niveau de l'ORM.</li>
   </ul>
 
-  <div class="cap">[ Insérer ici le schéma relationnel (diagramme ERD Prisma / dbdiagram) ]</div>
 </section>
 
 <!-- ============ 7. FONCTIONNALITÉS ============ -->
 <section class="page break">
   <h2>7. Fonctionnalités</h2>
-  <p class="muted">Chaque fonctionnalité est présentée par : objectif, capture (à insérer), explication.</p>
+  <p class="muted">Chaque fonctionnalitÃ© est prÃ©sentÃ©e par son objectif et son fonctionnement.</p>
 
   <h3>7.1 Espace élève — jeu adaptatif</h3>
   <p><strong>Objectif</strong> : un parcours ludique où l'élève progresse thème par thème.</p>
-  <div class="cap">[ Capture : tableau de bord élève « Bonjour {prénom} ! » + thèmes ]</div>
   <p><strong>Explication</strong> : les quiz se débloquent progressivement (≈ 70 % de réussite requis). Les
   questions ratées sont <em>réinjectées</em> automatiquement plus tard dans le même sous-thème. Indice après une
   première erreur, solution ensuite.</p>
 
   <h3>7.2 Six types de questions interactives</h3>
   <p><strong>Objectif</strong> : varier les activités selon l'apprentissage visé.</p>
-  <div class="cap">[ Capture : exemples de questions (QCM, glisser-déposer, association, dessin) ]</div>
   <p><strong>Explication</strong> : QCM, réponse libre (corrigée avec tolérance accents/casse), glisser-déposer,
   association, classement, et dessin (zone de dessin, validé manuellement par le prof).</p>
 
   <h3>7.3 Gestion du contenu (back-office)</h3>
   <p><strong>Objectif</strong> : créer et organiser thèmes, sous-thèmes, quiz et questions.</p>
-  <div class="cap">[ Capture : page Contenus avec arborescence à gauche ]</div>
   <p><strong>Explication</strong> : navigation en arborescence, réordonnancement, visibilité Public/Privé par quiz,
   partage en lecture à un collègue. Les thèmes sont partagés (anti-doublon avec proposition de réutilisation).</p>
 
   <h3>7.4 Élèves &amp; import en masse</h3>
   <p><strong>Objectif</strong> : créer rapidement les comptes d'une classe.</p>
-  <div class="cap">[ Capture : fenêtre d'import Excel avec aperçu valides/erreurs ]</div>
   <p><strong>Explication</strong> : création unitaire ou import Excel/CSV (modèle téléchargeable, colonne CLASSE
   multi-groupes séparés par « ; »). Identifiants et mots de passe générés automatiquement et exportables. Pool
   d'élèves partagé entre profs (évite les doublons de comptes).</p>
 
   <h3>7.5 Classes &amp; groupes (multi-appartenance)</h3>
   <p><strong>Objectif</strong> : organiser les élèves et cibler le contenu.</p>
-  <div class="cap">[ Capture : page Classes &amp; groupes ]</div>
   <p><strong>Explication</strong> : un élève peut appartenir à plusieurs classes/groupes ; un quiz « Privé » n'est
   visible que par les élèves du créateur.</p>
 
   <h3>7.6 Parcours personnalisés &amp; révisions</h3>
   <p><strong>Objectif</strong> : différencier et préparer les évaluations.</p>
-  <div class="cap">[ Capture : parcours personnalisé d'un élève + création de révision ]</div>
   <p><strong>Explication</strong> : parcours sur mesure par élève (progression isolée) ; révisions par niveau
   mixant des questions de plusieurs quiz, y compris des questions de quiz publics.</p>
 
   <h3>7.7 Validation des dessins</h3>
   <p><strong>Objectif</strong> : corriger les réponses libres dessinées.</p>
-  <div class="cap">[ Capture : page « Dessins à valider » avec ✅ / ❌ ]</div>
   <p><strong>Explication</strong> : badge de notification ; l'image est purgée dès la validation (vie privée).</p>
 
   <h3>7.8 Statistiques de progression</h3>
   <p><strong>Objectif</strong> : suivre élèves et contenus.</p>
-  <div class="cap">[ Capture : statistiques globales + détail par élève ]</div>
   <p><strong>Explication</strong> : indicateurs globaux, vue par élève (progression, points faibles, détail
   question par question), export CSV.</p>
 
   <h3>7.9 Onboarding intégré</h3>
   <p><strong>Objectif</strong> : rendre un prof autonome sans formation.</p>
-  <div class="cap">[ Capture : page Aide + démo « fausse page » d'une catégorie ]</div>
   <p><strong>Explication</strong> : visite guidée au premier login, bouton « Démo » par catégorie (reproduction
   fidèle des écrans), guide cherchable et assistant local de questions (sans IA externe).</p>
 </section>
