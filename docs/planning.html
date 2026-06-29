@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<title>Mission Savoirs — Planning</title>
+<style>
+  @page { size: A4 landscape; margin: 12mm; }
+  :root { --lav:#7c5cff; --ink:#1f2433; --gray:#5b6172; --light:#e7e3f5; --cream:#f7f5ff; }
+  * { box-sizing:border-box; }
+  html { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  body { font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; color:var(--ink); margin:0; font-size:11px; }
+  h1 { font-size:22px; margin:0 0 2px; }
+  .sub { color:var(--gray); margin:0 0 14px; }
+  table { border-collapse:collapse; width:100%; table-layout:fixed; }
+  th,td { border:1px solid var(--light); padding:0; }
+  .phase { text-align:left; padding:6px 8px; width:230px; font-weight:600; background:#fff; }
+  .month { background:var(--cream); font-weight:700; text-align:center; padding:4px 0; }
+  .wk { background:var(--cream); text-align:center; font-size:9.5px; color:var(--gray); padding:3px 0; height:22px; }
+  .cell { height:26px; }
+  .bar { background:var(--lav); height:14px; margin:6px 0; }
+  .bar.l { border-top-left-radius:7px; border-bottom-left-radius:7px; margin-left:3px; }
+  .bar.r { border-top-right-radius:7px; border-bottom-right-radius:7px; margin-right:3px; }
+  .bar.sec { background:#a9bcff; }
+  .bar.green { background:#4ec58a; }
+  .bar.pink { background:#ff8fb0; }
+  .bar.amber { background:#f2b35b; }
+  .legend { margin-top:14px; display:flex; gap:18px; flex-wrap:wrap; font-size:10.5px; color:var(--gray); }
+  .legend span b { display:inline-block; width:14px; height:10px; border-radius:3px; margin-right:5px; vertical-align:middle; }
+  .ms { margin-top:12px; }
+  .ms td,.ms th { border:1px solid var(--light); padding:5px 8px; text-align:left; }
+  .ms th { background:var(--cream); }
+  h2 { font-size:14px; color:var(--lav); margin:18px 0 6px; border:0; }
+</style>
+</head>
+<body>
+  <h1>Planning du projet — Mission Savoirs</h1>
+  <p class="sub">Workshop Client · MBA Développeur Full Stack · Théo Delhay · Mars → Juin 2026</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th class="phase" rowspan="2">Phase</th>
+        <th class="month" colspan="2">Mars</th>
+        <th class="month" colspan="4">Avril</th>
+        <th class="month" colspan="4">Mai</th>
+        <th class="month" colspan="5">Juin</th>
+      </tr>
+      <tr>
+        <th class="wk">S1</th><th class="wk">S2</th>
+        <th class="wk">S3</th><th class="wk">S4</th><th class="wk">S5</th><th class="wk">S6</th>
+        <th class="wk">S7</th><th class="wk">S8</th><th class="wk">S9</th><th class="wk">S10</th>
+        <th class="wk">S11</th><th class="wk">S12</th><th class="wk">S13</th><th class="wk">S14</th><th class="wk">S15</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- chaque ligne : phase + 15 cellules. Barres via <div class="bar"> dans les cellules actives -->
+      <tr>
+        <td class="phase">1 · Cadrage &amp; conception</td>
+        <td class="cell"><div class="bar amber l"></div></td>
+        <td class="cell"><div class="bar amber r"></div></td>
+        <td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td>
+        <td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td>
+        <td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td>
+      </tr>
+      <tr>
+        <td class="phase">2 · Fondations (auth JWT, BDD/Prisma, contenu, QCM &amp; texte)</td>
+        <td class="cell"></td>
+        <td class="cell"><div class="bar l"></div></td>
+        <td class="cell"><div class="bar"></div></td>
+        <td class="cell"><div class="bar r"></div></td>
+        <td class="cell"></td><td class="cell"></td>
+        <td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td>
+        <td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td>
+      </tr>
+      <tr>
+        <td class="phase">3 · Activités interactives (drag &amp; drop, association, classement, dessin)</td>
+        <td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td>
+        <td class="cell"><div class="bar l"></div></td>
+        <td class="cell"><div class="bar r"></div></td>
+        <td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td>
+        <td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td>
+      </tr>
+      <tr>
+        <td class="phase">4 · Itérations contenu &amp; UI</td>
+        <td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td>
+        <td class="cell"><div class="bar sec l"></div></td>
+        <td class="cell"><div class="bar sec"></div></td>
+        <td class="cell"><div class="bar sec"></div></td>
+        <td class="cell"><div class="bar sec r"></div></td>
+        <td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td>
+      </tr>
+      <tr>
+        <td class="phase">5 · Pédagogie adaptative (parcours perso, révisions, tableau de bord KPI)</td>
+        <td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td>
+        <td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td>
+        <td class="cell"><div class="bar l"></div></td>
+        <td class="cell"><div class="bar r"></div></td>
+        <td class="cell"></td><td class="cell"></td><td class="cell"></td>
+      </tr>
+      <tr>
+        <td class="phase">6 · Multi-acteurs (rôle prof, cloisonnement, classes, partage, dessins)</td>
+        <td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td>
+        <td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td>
+        <td class="cell"></td>
+        <td class="cell"><div class="bar l"></div></td>
+        <td class="cell"><div class="bar r"></div></td>
+        <td class="cell"></td><td class="cell"></td>
+      </tr>
+      <tr>
+        <td class="phase">7 · Affinages (multi-classe, visibilité, import multi-groupes, thèmes partagés)</td>
+        <td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td>
+        <td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td>
+        <td class="cell"></td><td class="cell"></td>
+        <td class="cell"><div class="bar green l"></div></td>
+        <td class="cell"><div class="bar green r"></div></td>
+        <td class="cell"></td>
+      </tr>
+      <tr>
+        <td class="phase">8 · Sécurité &amp; RGPD (audit, durcissement, chiffrement, journal, doc)</td>
+        <td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td>
+        <td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td>
+        <td class="cell"></td><td class="cell"></td><td class="cell"></td>
+        <td class="cell"><div class="bar pink l"></div></td>
+        <td class="cell"><div class="bar pink r"></div></td>
+      </tr>
+      <tr>
+        <td class="phase">9 · Onboarding &amp; documentation (guide, visite guidée, démos, dossier)</td>
+        <td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td>
+        <td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td>
+        <td class="cell"></td><td class="cell"></td><td class="cell"></td><td class="cell"></td>
+        <td class="cell"><div class="bar amber l r"></div></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="legend">
+    <span><b style="background:#f2b35b"></b>Cadrage / documentation</span>
+    <span><b style="background:#7c5cff"></b>Développement cœur</span>
+    <span><b style="background:#a9bcff"></b>Itérations / ajustements</span>
+    <span><b style="background:#4ec58a"></b>Affinages fonctionnels</span>
+    <span><b style="background:#ff8fb0"></b>Sécurité &amp; RGPD</span>
+  </div>
+
+  <h2>Jalons clés</h2>
+  <table class="ms">
+    <tr><th>Jalon</th><th>Échéance</th><th>Livrable validé</th></tr>
+    <tr><td>J1 — Cadrage validé</td><td>Fin mars</td><td>Architecture &amp; modèle de données arrêtés, socle d'authentification.</td></tr>
+    <tr><td>J2 — Contenu &amp; activités</td><td>Fin avril</td><td>6 types de questions opérationnels (QCM, texte, drag &amp; drop, association, classement, dessin).</td></tr>
+    <tr><td>J3 — Plateforme multi-acteurs</td><td>Mi-juin</td><td>Rôle professeur, classes, parcours, révisions, partage, tableau de bord.</td></tr>
+    <tr><td>J4 — Sécurité &amp; conformité</td><td>Fin juin</td><td>Audit + remédiation, chiffrement, RGPD, documentation.</td></tr>
+    <tr><td>J5 — Rendu</td><td>Fin juin</td><td>Onboarding intégré, guide enseignant, dossier technique.</td></tr>
+  </table>
+
+  <p class="sub" style="margin-top:16px;">Méthode : développement itératif (1 ticket → 1 branche → 1 pull request → validation → merge). 45 PR fusionnées, 103 commits.</p>
+</body>
+</html>
